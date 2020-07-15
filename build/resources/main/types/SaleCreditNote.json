@@ -1,0 +1,124 @@
+[
+  {
+    "typeName": "CreditNote",
+    "displayName": "Credit Note",
+    "keys": {
+      "description": {
+        "type": "Text",
+        "displayName": "Description",
+        "order": "0"
+      },
+      "comment": {
+        "type": "Text",
+        "displayName": "Comment",
+        "order": "1"
+      },
+      "quantity": {
+        "type": "Number",
+        "displayName": "Quantity",
+        "order": "2"
+      },
+      "price": {
+        "type": "Decimal",
+        "displayName": "Price",
+        "order": "3"
+      },
+      "discount": {
+        "type": "Number",
+        "displayName": "Discount",
+        "order": "4"
+      },
+      "taxRule": {
+        "type": "SalesTaxRule",
+        "displayName": "Tax Rule",
+        "order": "5"
+      },
+      "account": {
+        "type": "Text",
+        "displayName": "Account",
+        "order": "6"
+      },
+      "total": {
+        "type": "Decimal",
+        "displayName": "Total",
+        "order": "7"
+      }
+    }
+  },
+  {
+    "typeName": "SaleCreditNote",
+    "displayName": "Sale Credit Note",
+    "keys": {
+      "customer": {
+        "type": "Customer",
+        "displayName": "Customer",
+        "order": "0"
+      },
+      "contact": {
+        "type": "Text",
+        "displayName": "Contact",
+        "order": "1"
+      },
+      "phone": {
+        "type": "Number",
+        "displayName": "Phone",
+        "order": "2"
+      },
+      "email": {
+        "type": "Text",
+        "displayName": "Email",
+        "order": "3"
+      },
+      "customerReference": {
+        "type": "Text",
+        "displayName": "Customer Reference",
+        "order": "4"
+      },
+      "billingAddress1": {
+        "type": "Text",
+        "displayName": "Billing Address 1",
+        "order": "5"
+      },
+      "billingAddress2": {
+        "type": "Text",
+        "displayName": "Billing Address 2",
+        "order": "6"
+      },
+      "priceTier": {
+        "type": "PriceTierName",
+        "displayName": "Price Tier",
+        "order": "7"
+      },
+      "taxInclusive": {
+        "type": "Boolean",
+        "displayName": "Tax Inclusive",
+        "order": "8"
+      },
+      "taxRule": {
+        "type": "SalesTaxRule",
+        "displayName": "Tax Rule",
+        "order": "9"
+      },
+      "salesRep": {
+        "type": "Text",
+        "displayName": "Sales Rep",
+        "order": "10"
+      },
+      "creditNoteDate": {
+        "type": "Text",
+        "displayName": "Credit Note Date ",
+        "order": "11"
+      },
+      "comments": {
+        "type": "Text",
+        "displayName": "comments",
+        "order": "12"
+      },
+      "creditNote": {
+        "type": "CreditNote",
+        "displayName": "Credit Note",
+        "order": "13"
+      }
+    }
+  }
+]

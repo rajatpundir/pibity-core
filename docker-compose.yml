@@ -1,0 +1,47 @@
+version: '3'
+
+volumes:
+  postgres_data:
+      driver: local
+
+services:
+  postgres:
+      image: postgres
+      restart: always
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+        - ./dbscripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+      environment:
+        POSTGRES_DB: erp
+        POSTGRES_USER: pibity
+        POSTGRES_PASSWORD: password
+      ports:
+        - 5432:5432
+  pgadmin:
+      image: dpage/pgadmin4
+      restart: always
+      ports:
+        - 8082:80
+      environment:
+        PGADMIN_DEFAULT_EMAIL: admin@pibity.com
+        PGADMIN_DEFAULT_PASSWORD: password
+      depends_on:
+        - postgres
+  keycloak:
+      image: jboss/keycloak:latest
+      restart: always
+      environment:
+        DB_VENDOR: POSTGRES
+        DB_ADDR: postgres
+        DB_DATABASE: erp
+        DB_USER: pibity
+        DB_SCHEMA: keycloak
+        DB_PASSWORD: password
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: admin
+        # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
+        #JDBC_PARAMS: "ssl=true"
+      ports:
+        - 8081:8080
+      depends_on:
+        - postgres

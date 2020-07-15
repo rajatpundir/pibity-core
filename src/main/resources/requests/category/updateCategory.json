@@ -1,0 +1,20 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "categoryId": {
+    "type": "Long"
+  },
+  "parentCategoryId?": {
+    "type": "Long"
+  },
+  "name?": {
+    "type": "String"
+  },
+  "nextLabel?": {
+    "type": "String"
+  },
+  "code?": {
+    "type": "String"
+  }
+}

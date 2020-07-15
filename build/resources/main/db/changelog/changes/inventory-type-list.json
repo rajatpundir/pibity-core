@@ -1,0 +1,67 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_type_list_1",
+        "author": "shubham.gupta",
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "list_type",
+              "schemaName": "inventory",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "autoIncrement": "true",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": "true",
+                      "nullable": "false",
+                      "primaryKeyName": "inventory_type_list_pk"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "organization_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "super_type_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_name",
+                    "type": "VARCHAR(255)"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_type_list_2",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_type_list_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "list_type",
+          "baseColumnNames": "organization_id, super_type_name, type_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "type",
+          "referencedColumnNames": "organization_id, super_type_name, type_name"
+        }
+      }
+    }
+  ]
+}

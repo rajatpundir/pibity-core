@@ -1,0 +1,228 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_formula_1",
+        "author": "shubham.gupta",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "mapping_value_formula",
+              "columns": [
+                {
+                  "column": {
+                    "name": "value_key_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_key_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_key_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_key_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_variable_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_variable_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_super_variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_variable_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_key_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_key_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_key_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_key_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_super_variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_variable_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_variable_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependent_value_variable_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_formula_2",
+        "author": "shubham.gupta",
+        "addPrimaryKey": {
+          "constraintName": "inventory_mapping_value_formula_pk",
+          "schemaName": "inventory",
+          "tableName": "mapping_value_formula",
+          "columnNames": "value_key_organization_id, value_key_super_type_name, value_key_type_name, value_key_name, value_variable_organization_id, value_variable_super_type_name, value_variable_type_name, value_super_variable_name, value_variable_name, dependent_value_key_organization_id, dependent_value_key_super_type_name, dependent_value_key_type_name, dependent_value_key_name, dependent_value_variable_organization_id, dependent_value_variable_super_type_name, dependent_value_variable_type_name, dependent_value_super_variable_name, dependent_value_variable_name"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_formula_3",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_value_formula",
+          "baseColumnNames": "value_key_organization_id, value_key_super_type_name, value_key_type_name, value_key_name,value_variable_organization_id, value_variable_super_type_name, value_variable_type_name, value_super_variable_name, value_variable_name ",
+          "constraintName": "inventory_mapping_value_formula_fk_1",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "value",
+          "referencedColumnNames": "key_organization_id, key_super_type_name, key_type_name, key_name, variable_organization_id, variable_super_type_name, variable_type_name, super_variable_name, variable_name "
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_formula_4",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_value_formula_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_value_formula",
+          "baseColumnNames": "dependent_value_key_organization_id, dependent_value_key_super_type_name, dependent_value_key_type_name, dependent_value_key_name,dependent_value_variable_organization_id,dependent_value_variable_super_type_name, dependent_value_variable_type_name, dependent_value_super_variable_name, dependent_value_variable_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "value",
+          "referencedColumnNames": "key_organization_id , key_super_type_name, key_type_name, key_name,variable_organization_id,variable_super_type_name, variable_type_name, super_variable_name, variable_name"
+        }
+      }
+    }
+  ]
+}

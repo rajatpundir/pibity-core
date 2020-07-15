@@ -1,0 +1,84 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_mapping_category_ancestors_1",
+        "author": "shubham.gupta",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "mapping_category_ancestors",
+              "columns": [
+                {
+                  "column": {
+                    "name": "category_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "ancestor_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_category_ancestors_2",
+        "author": "shubham.gupta",
+        "addPrimaryKey": {
+          "constraintName": "inventory_mapping_category_ancestors_pk",
+          "schemaName": "inventory",
+          "tableName": "mapping_category_ancestors",
+          "columnNames": "category_id, ancestor_id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_category_ancestors_3",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_category_ancestors",
+          "baseColumnNames": "category_id",
+          "constraintName": "inventory_mapping_category_ancestors_fk_1",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "category",
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_category_ancestors_4",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_category_ancestors_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_category_ancestors",
+          "baseColumnNames": "ancestor_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "category",
+          "referencedColumnNames": "id"
+        }
+      }
+    }
+  ]
+}

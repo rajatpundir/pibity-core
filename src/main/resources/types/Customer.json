@@ -1,0 +1,354 @@
+[
+  {
+    "typeName": "Location",
+    "displayName": "Location",
+    "keys": {}
+  },
+  {
+    "typeName": "PriceTierName",
+    "displayName": "Price Tier Name",
+    "keys": {},
+    "variables": {
+      "Tier 1": {},
+      "Tier 2": {},
+      "Tier 3": {},
+      "Tier 4": {},
+      "Tier 5": {},
+      "Tier 6": {},
+      "Tier 7": {},
+      "Tier 8": {},
+      "Tier 9": {},
+      "Tier 10": {}
+    }
+  },
+  {
+    "typeName": "OperationType",
+    "displayName": "Operation Type",
+    "keys": {},
+    "variables": {
+      "Append": {},
+      "Markup %": {}
+    }
+  },
+  {
+    "typeName": "Use",
+    "displayName": "Use",
+    "keys": {},
+    "variables": {
+      "Average Cost": {},
+      "Fixed Price": {},
+      "Latest Price": {},
+      "Price Tier Value": {}
+    }
+  },
+  {
+    "typeName": "ProductPrice",
+    "displayName": "Product Price",
+    "keys": {
+      "price": {
+        "type": "Decimal",
+        "displayName": "Price",
+        "order": "1",
+        "default": "0.00000"
+      },
+      "calculated": {
+        "type": "Boolean",
+        "displayName": "Calculated",
+        "order": "2"
+      },
+      "type": {
+        "type": "OperationType",
+        "displayName": "Type",
+        "order": "3",
+        "default": "Markup %"
+      },
+      "use": {
+        "type": "Use",
+        "displayName": "Use",
+        "order": "4",
+        "default": "Average Cost"
+      },
+      "value": {
+        "type": "Number",
+        "displayName": "Value",
+        "order": "5",
+        "default": "0"
+      }
+    },
+    "variables": {
+      "Tier 1": {},
+      "Tier 2": {},
+      "Tier 3": {},
+      "Tier 4": {},
+      "Tier 5": {},
+      "Tier 6": {},
+      "Tier 7": {},
+      "Tier 8": {},
+      "Tier 9": {},
+      "Tier 10": {}
+    }
+  },
+  {
+    "typeName": "SalesTaxRule",
+    "displayName": "Sales Tax Rule",
+    "keys": {},
+    "variables": {
+      "Tax on Sale": {},
+      "Auto Lookup": {},
+      "Tax Exempt": {}
+    }
+  },
+  {
+    "typeName": "CarrierService",
+    "displayName": "Carrier Service",
+    "keys": {},
+    "variables": {
+      "Post": {},
+      "Ups": {}
+    }
+  },
+  {
+    "typeName": "AddressType",
+    "displayName": "Address Type",
+    "keys": {},
+    "variables": {
+      "Billing": {},
+      "Business": {},
+      "Shipping": {}
+    }
+  },
+  {
+    "typeName": "Status",
+    "displayName": "Status",
+    "keys": {},
+    "variables": {
+      "Active": {},
+      "Deprecated": {}
+    }
+  },
+  {
+    "typeName": "PaymentTerm",
+    "displayName": "Payment Term",
+    "keys": {},
+    "variables": {
+      "15 Days": {},
+      "30 Days": {}
+    }
+  },
+  {
+    "typeName": "AttributeSet",
+    "displayName": "Attribute Set",
+    "keys": {},
+    "variables": {
+      "Not Defined": {},
+      "Additional_Properties": {}
+    }
+  },
+  {
+    "typeName": "Make",
+    "displayName": "Make",
+    "keys": {},
+    "variables": {
+      "Local": {},
+      "Imported": {}
+    }
+  },
+  {
+    "typeName": "Customer",
+    "displayName": "Customer",
+    "keys": {
+      "general": {
+        "type":{
+          "typeName": "CustomerGeneralDetails",
+          "displayName": "Customer General Details",
+          "keys": {
+            "currency": {
+              "type": "Currency",
+              "displayName": "Customer Currency",
+              "order": "1"
+            },
+            "paymentTerm": {
+              "type": "PaymentTerm",
+              "displayName": "Payment Term",
+              "order": "2"
+            },
+            "taxRule": {
+              "type": "SalesTaxRule",
+              "displayName": "Tax Rule",
+              "order": "3"
+            },
+            "status": {
+              "type": "Status",
+              "displayName": "status",
+              "order": "4"
+            },
+            "defaultCarrier": {
+              "type": "CarrierService",
+              "displayName": "Default Carrier",
+              "order": "5"
+            },
+            "taxNumber": {
+              "type": "Text",
+              "displayName": "Tax Number",
+              "order": "6"
+            },
+            "discount": {
+              "type": "Decimal",
+              "displayName": "Discount",
+              "order": "7"
+            },
+            "attributeSet": {
+              "type": "AttributeSet",
+              "displayName": "Attribute Set",
+              "order": "8",
+              "default": "Not Defined"
+            },
+            "comments": {
+              "type": "Text",
+              "displayName": "comments",
+              "order": "9"
+            },
+            "creditLimit": {
+              "type": "Decimal",
+              "displayName": "creditLimit",
+              "order": "10"
+            },
+            "onCreditHold": {
+              "type": "Boolean",
+              "displayName": "onCreditHold",
+              "order": "11",
+              "default": "false"
+            },
+            "salesPriceTier": {
+              "type": "PriceTierName",
+              "displayName": "Sales Price Tier",
+              "order": "12"
+            },
+            "defaultLocation": {
+              "type": "Location",
+              "displayName": "Default Location",
+              "order": "13"
+            }
+          }
+        },
+        "displayName": "General",
+        "order": "1"
+      },
+      "addresses": {
+        "type": "List",
+        "listType": {
+          "typeName": "SupplierAddress",
+          "displayName": "Address",
+          "keys": {
+            "name": {
+              "type": "Text",
+              "displayName": "Name",
+              "order": "0"
+            },
+            "line1": {
+              "type": "Text",
+              "displayName": "Line 1",
+              "order": "1"
+            },
+            "line2": {
+              "type": "Text",
+              "displayName": "Line 2",
+              "order": "2"
+            },
+            "city": {
+              "type": "Text",
+              "displayName": "City",
+              "order": "3"
+            },
+            "state": {
+              "type": "Text",
+              "displayName": "State",
+              "order": "4"
+            },
+            "country": {
+              "type": "Country",
+              "displayName": "Country",
+              "order": "5"
+            },
+            "postCode": {
+              "type": "Number",
+              "displayName": "Postcode",
+              "order": "6"
+            },
+            "type": {
+              "type": "AddressType",
+              "displayName": "Type",
+              "order": "7",
+              "default": "Billing"
+            }
+          }
+        },
+        "displayName": "Addresses",
+        "order": "2"
+      },
+      "contacts": {
+        "type": "List",
+        "listType": {
+          "typeName": "Contact",
+          "displayName": "Contact",
+          "keys": {
+            "name": {
+              "type": "Text",
+              "displayName": "Name",
+              "order": "0"
+            },
+            "phone": {
+              "type": "Number",
+              "displayName": "Phone",
+              "order": "1"
+            },
+            "mobile": {
+              "type": "Number",
+              "displayName": "mobile",
+              "order": "2"
+            },
+            "jobTitle": {
+              "type": "Text",
+              "displayName": "jobTitle",
+              "order": "3"
+            },
+            "fax": {
+              "type": "Text",
+              "displayName": "Fax",
+              "order": "4"
+            },
+            "email": {
+              "type": "Text",
+              "displayName": "Email",
+              "order": "5"
+            },
+            "website": {
+              "type": "Text",
+              "displayName": "Website",
+              "order": "6"
+            },
+            "comment": {
+              "type": "Text",
+              "displayName": "Comment",
+              "order": "7"
+            },
+            "default": {
+              "type": "Boolean",
+              "displayName": "default",
+              "order": "8",
+              "default": "false"
+            },
+            "includeInEmail": {
+              "type": "Boolean",
+              "displayName": "includeInEmail",
+              "order": "9",
+              "default": "false"
+            }
+          }
+        },
+        "displayName": "Customer Contacts",
+        "order": "3"
+      }
+    }
+  }
+]

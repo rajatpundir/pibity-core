@@ -1,0 +1,8 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "categoryId": {
+    "type": "Long"
+  }
+}

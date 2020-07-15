@@ -1,0 +1,113 @@
+[
+  {
+    "typeName": "CreditNotePurchase",
+    "displayName": "Credit Note Purchase",
+    "keys": {
+      "supplier": {
+        "type": "Supplier",
+        "displayName": "Supplier",
+        "order": "0"
+      },
+      "contact": {
+        "type": "Text",
+        "displayName": "Contact",
+        "order": "1"
+      },
+      "phone": {
+        "type": "Number",
+        "displayName": "Phone",
+        "order": "2"
+      },
+      "vendorAddress1": {
+        "type": "Text",
+        "displayName": "Vendor Address Line 1",
+        "order": "3"
+      },
+      "vendorAddress2": {
+        "type": "Text",
+        "displayName": "Vendor Address Line 2",
+        "order": "4"
+      },
+      "creditNoteDate": {
+        "type": "Text",
+        "displayName": "Credit Note Date ",
+        "order": "5"
+      },
+      "term": {
+        "type": "PaymentTerm",
+        "displayName": "Term",
+        "order": "6"
+      },
+      "taxRule": {
+        "type": "SalesTaxRule",
+        "displayName": "Tax Rule",
+        "order": "7"
+      },
+      "taxInclusive": {
+        "type": "Boolean",
+        "displayName": "Tax Inclusive",
+        "order": "8"
+      },
+      "purchaseCreditNote": {
+        "type": {
+          "typeName": "PurchaseCreditNote",
+          "displayName": "Purchase Credit Note ",
+          "keys": {
+            "creditNote": {
+              "type": "CreditNote",
+              "displayName": "Credit Note",
+              "order": "0"
+            },
+            "creditNoteMemo": {
+              "type": "Text",
+              "displayName": "Credit Note Memo",
+              "order": "1"
+            },
+            "refunds": {
+              "type": {
+                "typeName": "Refunds",
+                "displayName": "Refunds",
+                "keys": {
+                  "account": {
+                    "type": "Text",
+                    "displayName": "Account",
+                    "order": "0"
+                  },
+                  "reference": {
+                    "type": "Text",
+                    "displayName": "Reference",
+                    "order": "1"
+                  },
+                  "datePaid": {
+                    "type": "Text",
+                    "displayName": "Date Paid",
+                    "order": "2"
+                  },
+                  "amount": {
+                    "type": "Decimal",
+                    "displayName": "Amount",
+                    "order": "3"
+                  },
+                  "conversionRate": {
+                    "type": "Text",
+                    "displayName": "Conversion Rate",
+                    "order": "4"
+                  },
+                  "baseAmount": {
+                    "type": "Text",
+                    "displayName": "Base Amount",
+                    "order": "5"
+                  }
+                }
+              },
+              "displayName": "Refunds",
+              "order": "2"
+            }
+          }
+        },
+        "displayName": " purchase Credit Note",
+        "order": "9"
+      }
+    }
+  }
+]

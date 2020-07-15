@@ -1,0 +1,550 @@
+[
+  {
+    "typeName": "ProductDiscount",
+    "displayName": "Product Discount",
+    "keys": {},
+    "variables": {
+      "No Discount": {}
+    }
+  },
+  {
+    "typeName": "CostingMethod",
+    "displayName": "Costing Method",
+    "keys": {},
+    "variables": {
+      "FIFO": {},
+      "FIFO-Serial Number": {},
+      "FIFO-Batch": {},
+      "Special-Batch": {},
+      "Special-Serial Number": {},
+      "FEFO-Batch": {},
+      "FEFO-Serial Number": {}
+    }
+  },
+  {
+    "typeName": "UnitOfMeasure",
+    "displayName": "Unit Of Measure",
+    "keys": {},
+    "variables": {
+      "Bottle": {},
+      "Each": {},
+      "Item": {},
+      "Kg": {},
+      "Litre": {},
+      "Minutes": {},
+      "other": {},
+      "Sack": {},
+      "Xero": {}
+    }
+  },
+  {
+    "typeName": "BOM",
+    "displayName": "Bill of Material",
+    "keys": {},
+    "variables": {
+      "No BOM": {},
+      "Assembly BOM": {},
+      "Production BOM": {}
+    }
+  },
+  {
+    "typeName": "ProductStatus",
+    "displayName": "Product Status",
+    "keys": {},
+    "variables": {
+      "Active": {},
+      "Deprecated": {},
+      "Setup Required": {}
+    }
+  },
+  {
+    "typeName": "PurchaseTaxRule",
+    "displayName": "Purchase Tax Rule",
+    "keys": {},
+    "variables": {
+      "Auto Lookup": {},
+      "Tax Exempt": {},
+      "Sales Tax on Imports": {},
+      "Tax on Purchase": {}
+    }
+  },
+  {
+    "typeName": "ProductType",
+    "displayName": "Product Type",
+    "keys": {},
+    "variables": {
+      "Stock": {},
+      "Service": {},
+      "Gift Card": {},
+      "Non-Inventory": {},
+      "Fixed Asset": {}
+    }
+  },
+  {
+    "typeName": "DropShip",
+    "displayName": "Drop Ship",
+    "keys": {},
+    "variables": {
+      "No Drop Ship": {},
+      "Optional Drop Ship": {},
+      "Always Drop Ship": {}
+    }
+  },
+  {
+    "typeName": "UnitForDimensions",
+    "displayName": "Unit For Dimensions",
+    "keys": {},
+    "variables": {
+      "inch": {},
+      "foot": {},
+      "yard": {},
+      "mile": {},
+      "millimeter": {},
+      "meter": {},
+      "centimeter": {},
+      "kilometer": {}
+    }
+  },
+  {
+    "typeName": "UnitForWeights",
+    "displayName": "Unit For Weights",
+    "keys": {},
+    "variables": {
+      "ounce": {},
+      "pound": {},
+      "milligram": {},
+      "gram": {},
+      "kilogram": {}
+    }
+  },
+  {
+    "typeName": "Product",
+    "displayName": "Product",
+    "keys": {
+      "general": {
+        "type": {
+          "typeName": "ProductGeneralDetails",
+          "displayName": "general Details",
+          "keys": {
+            "productSKU": {
+              "type": "Text",
+              "displayName": "SKU",
+              "order": "0"
+            },
+            "brand": {
+              "type": {
+                "typeName": "Brand",
+                "displayName": "Brand",
+                "keys": {}
+              },
+              "displayName": "Brand",
+              "order": "1"
+            },
+            "productCostingMethod": {
+              "type": "CostingMethod",
+              "displayName": "Costing Method",
+              "order": "2",
+              "default": "FIFO"
+            },
+            "unitOfMeasure": {
+              "type": "UnitOfMeasure",
+              "displayName": "Unit Of Measure",
+              "order": "3",
+              "default": "Item"
+            },
+            "billOfMaterial": {
+              "type": "BOM",
+              "displayName": "Bill Of Material",
+              "order": "4",
+              "default": "No BOM"
+            },
+            "purchaseTaxRule": {
+              "type": "PurchaseTaxRule",
+              "displayName": "Purchase Tax Rule",
+              "order": "5",
+              "default": "Auto Lookup"
+            },
+            "salesTaxRule": {
+              "type": "SalesTaxRule",
+              "displayName": "Sales Tax Rule",
+              "order": "6"
+            },
+            "stockLocator": {
+              "type": "Text",
+              "displayName": "Stock Locator",
+              "order": "7"
+            },
+            "productWarranty": {
+              "type": "Text",
+              "displayName": "Warranty",
+              "order": "8"
+            },
+            "productStatus": {
+              "type": "ProductStatus",
+              "displayName": "Status",
+              "order": "9",
+              "default": "Active"
+            },
+            "defaultLocation": {
+              "type": "Location",
+              "displayName": "Default Location",
+              "order": "10"
+            },
+            "additionalAttributeSet": {
+              "type": "AttributeSet",
+              "displayName": " Additional Attribute Set",
+              "order": "11",
+              "default": "Not Defined"
+            },
+            "barcode": {
+              "type": "Text",
+              "displayName": "Barcode",
+              "order": "12"
+            },
+            "minimumBeforeReorder": {
+              "type": "Number",
+              "displayName": "Minimum Before Reorder",
+              "order": "13"
+            },
+            "minimumReorderQuantity": {
+              "type": "Number",
+              "displayName": "Minimum Reorder Quantity",
+              "order": "14"
+            },
+            "shortDescription": {
+              "type": "Text",
+              "displayName": "Short Description",
+              "order": "16"
+            },
+            "description": {
+              "type": "Text",
+              "displayName": "Description",
+              "order": "17"
+            },
+            "internalNote": {
+              "type": "Text",
+              "displayName": "Internal Note",
+              "order": "18"
+            },
+            "comment": {
+              "type": "Text",
+              "displayName": "Comment",
+              "order": "19"
+            },
+            "productType": {
+              "type": "ProductType",
+              "displayName": "Product Type",
+              "order": "20",
+              "default": "Stock"
+            },
+            "dropShip": {
+              "type": "DropShip",
+              "displayName": "Drop Ship",
+              "order": "21",
+              "default": "No Drop Ship"
+            },
+            "productDiscount": {
+              "type": "ProductDiscount",
+              "displayName": "Product Discount",
+              "order": "22",
+              "default": "No Discount"
+            }
+          }
+        },
+        "displayName": "General",
+        "order": "0"
+      },
+      "productPrice": {
+        "type": "List",
+        "listType": "ProductPrice",
+        "displayName": "Product Price",
+        "order": "1"
+      },
+      "productStock": {
+        "type": "List",
+        "listType": {
+          "typeName": "Stock",
+          "displayName": "Stock",
+          "keys": {
+            "location": {
+              "type": "Location",
+              "displayName": "Location",
+              "order": "0"
+            },
+            "bin": {
+              "type": {
+                "typeName": "Bin",
+                "displayName": "Bin",
+                "keys": {}
+              },
+              "displayName": "Bin",
+              "order": "1"
+            },
+            "batch": {
+              "type": "Number",
+              "displayName": "Batch",
+              "order": "2"
+            },
+            "expiryDate": {
+              "type": "Text",
+              "displayName": "Expiry Date",
+              "order": "3"
+            },
+            "stockValue": {
+              "type": "Number",
+              "displayName": "Stock Value",
+              "order": "4"
+            },
+            "onHand": {
+              "type": "Number",
+              "displayName": "On Hand",
+              "order": "5"
+            },
+            "available": {
+              "type": "Number",
+              "displayName": "Available",
+              "order": "6"
+            },
+            "onOrder": {
+              "type": "Number",
+              "displayName": "On Order",
+              "order": "7"
+            },
+            "allocated": {
+              "type": "Number",
+              "displayName": "Allocated",
+              "order": "8"
+            },
+            "nextDelivery": {
+              "type": "Number",
+              "displayName": "Next Delivery",
+              "order": "9"
+            }
+          }
+        },
+        "displayName": "Stock",
+        "order": "2"
+      },
+      "productLength": {
+        "type": "Number",
+        "displayName": "Length",
+        "order": "3"
+      },
+      "productWidth": {
+        "type": "Number",
+        "displayName": "Width",
+        "order": "4"
+      },
+      "productHeight": {
+        "type": "Number",
+        "displayName": "Height",
+        "order": "5"
+      },
+      "unitOfDimension": {
+        "type": "UnitForDimensions",
+        "displayName": "Unit Of Dimension",
+        "order": "6"
+      },
+      "productCustomPrice": {
+        "type": "List",
+        "listType": {
+          "typeName": "CustomPrice",
+          "displayName": "Custom Price",
+          "keys": {
+            "customer": {
+              "type": "Customer",
+              "displayName": "Customer",
+              "order": "0"
+            },
+            "customerCurrency": {
+              "type": "Currency",
+              "displayName": "Customer Currency",
+              "order": "1"
+            },
+            "latestPrice": {
+              "type": "Decimal",
+              "displayName": "Latest Price",
+              "order": "2"
+            },
+            "customPrice": {
+              "type": "Decimal",
+              "displayName": "Custom Price",
+              "order": "3"
+            },
+            "lastSold": {
+              "type": "Text",
+              "displayName": "Last Sold",
+              "order": "4"
+            }
+          }
+        },
+        "displayName": "Custom Price",
+        "order": "9"
+      },
+      "productReorderLevels": {
+        "type": "List",
+        "listType": {
+          "typeName": "ReorderLevels",
+          "displayName": "Reorder Levels",
+          "keys": {
+            "location": {
+              "type": "Location",
+              "displayName": "Location",
+              "order": "0"
+            },
+            "minimumBeforeReorder": {
+              "type": "Number",
+              "displayName": "Minimum Before Reorder",
+              "order": "1"
+            },
+            "reorderQuantity": {
+              "type": "Number",
+              "displayName": "Reorder Quantity",
+              "order": "2"
+            },
+            "stockLocator": {
+              "type": "Text",
+              "displayName": "Stock Locator",
+              "order": "3"
+            }
+          }
+        },
+        "displayName": "Reorder Levels",
+        "order": "10"
+      },
+      "productWeight": {
+        "type": "Decimal",
+        "displayName": "Weight",
+        "order": "11"
+      },
+      "unitForWeights": {
+        "type": "UnitForWeights",
+        "displayName": "Unit For Weights",
+        "order": "12"
+      },
+      "supplierProduct": {
+        "type": "List",
+        "listType": {
+          "typeName": "SupplierProduct",
+          "displayName": "Supplier Product",
+          "keys": {
+            "supplier": {
+              "type": "Supplier",
+              "displayName": "Supplier",
+              "order": "0"
+            },
+            "sku": {
+              "type": "Text",
+              "displayName": "SKU",
+              "order": "1"
+            },
+            "productName": {
+              "type": "Text",
+              "displayName": "Product Name",
+              "order": "2"
+            },
+            "productUrl": {
+              "type": "Text",
+              "displayName": "Product Url",
+              "order": "3"
+            },
+            "dropShip": {
+              "type": "Boolean",
+              "displayName": "Drop ship",
+              "order": "4"
+            },
+            "currency": {
+              "type": "Currency",
+              "displayName": "Currency",
+              "order": "5"
+            },
+            "latestPrice": {
+              "type": "Decimal",
+              "displayName": "Latest Price",
+              "order": "6"
+            },
+            "fixedPrice": {
+              "type": "Decimal",
+              "displayName": "Fixed Price",
+              "order": "7"
+            },
+            "lastSupplied": {
+              "type": "Text",
+              "displayName": "Last Supplied",
+              "order": "8"
+            }
+          }
+        },
+        "displayName": "Supplier Product",
+        "order": "13"
+      },
+      "supplierLocation": {
+        "type": "List",
+        "listType": {
+          "typeName": "ProductSupplierLocation",
+          "displayName": "Product Supplier Location",
+          "keys": {
+            "supplier": {
+              "type": "Supplier",
+              "displayName": "Supplier",
+              "order": "0"
+            },
+            "lead": {
+              "type": "Number",
+              "displayName": "Lead",
+              "order": "1"
+            },
+            "safety": {
+              "type": "Number",
+              "displayName": "Safety",
+              "order": "2"
+            },
+            "reorderQuantity": {
+              "type": "Number",
+              "displayName": "Reorder Quantity",
+              "order": "3"
+            },
+            "minimumToReorder": {
+              "type": "Number",
+              "displayName": "Minimum to Reorder",
+              "order": "4"
+            },
+            "locationSetup": {
+              "type": "List",
+              "listType": {
+                "typeName": "LocationSetup",
+                "displayName": "Location Setup",
+                "keys": {
+                  "location": {
+                    "type": "Location",
+                    "displayName": "Location",
+                    "order": "0"
+                  },
+                  "lead": {
+                    "type": "Number",
+                    "displayName": "Lead",
+                    "order": "1"
+                  },
+                  "safety": {
+                    "type": "Number",
+                    "displayName": "Safety",
+                    "order": "2"
+                  },
+                  "reorderQuantity": {
+                    "type": "Number",
+                    "displayName": "Reorder Quantity",
+                    "order": "3"
+                  }
+                }
+              },
+              "displayName": "Location Setup",
+              "order": "5"
+            }
+          }
+        },
+        "displayName": "Supplier Location",
+        "order": "14"
+      }
+    }
+  }
+]

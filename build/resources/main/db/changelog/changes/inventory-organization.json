@@ -1,0 +1,56 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_organization_1",
+        "author": "shubham.gupta",
+        "changes": [
+          {
+            "createTable": {
+              "tableName": "organization",
+              "schemaName": "inventory",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "autoIncrement": "true",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": "true",
+                      "nullable": "false",
+                      "primaryKeyName": "inventory_organization_pk"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "NVARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_organization_2",
+        "author": "shubham.gupta",
+        "addUniqueConstraint": {
+          "constraintName": "inventory_organization_uk",
+          "schemaName": "inventory",
+          "tableName": "organization",
+          "columnNames": "name",
+          "deferrable": "false",
+          "initiallyDeferred": "false",
+          "validate": "true"
+        }
+      }
+    }
+  ]
+}

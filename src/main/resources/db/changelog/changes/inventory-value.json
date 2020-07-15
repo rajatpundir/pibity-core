@@ -1,0 +1,242 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_value_1",
+        "author": "shubham.gupta",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "value",
+              "columns": [
+                {
+                  "column": {
+                    "name": "super_variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+
+                  "column": {
+                    "name": "variable_name",
+                    "type": "NVARCHAR(511)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "variable_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "variable_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "variable_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_organization_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_super_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_type_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "string_value",
+                    "type": "NVARCHAR(511)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "long_value",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "double_value",
+                    "type": "DOUBLE"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "boolean_value",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "referenced_variable_organization_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "referenced_variable_super_type_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "referenced_variable_type_name",
+                    "type": "VARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "referenced_super_variable_name",
+                    "type": "NVARCHAR(511)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "referenced_variable_name",
+                    "type": "NVARCHAR(511)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "list_variable_id",
+                    "type": "BIGINT"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_2",
+        "author": "shubham.gupta",
+        "addPrimaryKey": {
+          "constraintName": "inventory_value_pk",
+          "schemaName": "inventory",
+          "tableName": "value",
+          "columnNames": "key_organization_id, key_super_type_name, key_type_name, key_name, variable_organization_id, variable_super_type_name, variable_type_name, super_variable_name, variable_name"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_3",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_value_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "value",
+          "baseColumnNames": "key_organization_id, key_super_type_name, key_type_name, key_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "key_names",
+          "referencedColumnNames": "parent_type_organization_id, parent_super_type_name, parent_type_name, key_name,"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_4",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_value_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "value",
+          "baseColumnNames": "variable_organization_id, variable_super_type_name, variable_type_name, super_variable_name, variable_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "variable",
+          "referencedColumnNames": "organization_id, super_type_name, type_name, super_variable_name, variable_name"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_5",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_value_fk_3",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "value",
+          "baseColumnNames": "list_variable_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "list_variable",
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_6",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_value_fk_4",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "value",
+          "baseColumnNames": "referenced_variable_organization_id, referenced_variable_super_type_name, referenced_variable_type_name, referenced_super_variable_name, referenced_variable_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "variable",
+          "referencedColumnNames": "organization_id, super_type_name, type_name, super_variable_name, variable_name,"
+        }
+      }
+    }
+  ]
+}

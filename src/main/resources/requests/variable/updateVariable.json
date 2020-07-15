@@ -1,0 +1,17 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "typeName": {
+    "type": "String"
+  },
+  "variableName": {
+    "type": "String"
+  },
+  "updatedVariableName?": {
+    "type": "String"
+  },
+  "values": {
+    "type": "Object"
+  }
+}
