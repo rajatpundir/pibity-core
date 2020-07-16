@@ -13,6 +13,7 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.FormulaUtils
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
+import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.getLeafNameTypeValues
 import com.pibity.erp.commons.validateUpdatedVariableValues
@@ -91,7 +92,7 @@ class VariableService(
                   || (it.id.parentType.id.superTypeName != "Any" && it.id.parentType.id.superTypeName == it.type.id.superTypeName)) {
                 // key is internally reference to local type
                 // Internally local type variables can only be created not referenced.
-                if(ref.isJsonObject) {
+                if (ref.isJsonObject) {
                   val referencedVariable: Variable = try {
                     createVariable(JsonObject().apply {
                       addProperty("organization", organizationName)
@@ -306,6 +307,31 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
+  fun updateLocalVariableNames(variable: Variable, updatedVariableName: String) {
+    variable.id.superVariableName = updatedVariableName
+    variable.values.filter { it.id.key.type.id.name !in primitiveTypes }.forEach { value ->
+      when (value.id.key.type.id.name) {
+        TypeConstants.LIST -> {
+          if (value.list!!.listType.type.id.superTypeName != "Any") {
+            if ((value.id.key.id.parentType.id.superTypeName == "Any" && value.id.key.id.parentType.id.name == value.list!!.listType.type.id.superTypeName)
+                || (value.id.key.id.parentType.id.superTypeName != "Any" && value.id.key.id.parentType.id.superTypeName == value.list!!.listType.type.id.superTypeName)) {
+              value.list!!.variables.forEach {
+                updateLocalVariableNames(variable = it, updatedVariableName = updatedVariableName)
+              }
+            }
+          }
+        }
+        else -> {
+          if ((value.id.key.id.parentType.id.superTypeName == "Any" && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
+              || (value.id.key.id.parentType.id.superTypeName != "Any" && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
+            updateLocalVariableNames(variable = value.referencedVariable!!, updatedVariableName = updatedVariableName)
+          }
+        }
+      }
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateVariable(jsonParams: JsonObject): Variable {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
@@ -314,8 +340,6 @@ class VariableService(
     val variable: Variable = variableRepository.findVariable(organizationName = organizationName, superTypeName = superTypeName, typeName = typeName, superVariableName = variableName)
         ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
     val values: JsonObject = validateUpdatedVariableValues(values = jsonParams.get("values").asJsonObject, type = variable.id.type)
-    if (jsonParams.has("updatedVariableName?"))
-      variable.id.name = jsonParams.get("updatedVariableName?").asString
     // Process non-formula type values
     variable.values.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach { value ->
       if (values.has(value.id.key.id.name)) {
@@ -351,74 +375,41 @@ class VariableService(
                 val referencedVariable: Variable = variableRepository.findByTypeAndName(type = value.list!!.listType.type, superVariableName = it.asString)
                     ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to insert ${it.asString} referenced in list'}")
                 value.list!!.variables.remove(referencedVariable)
+                // TODO: variable should also be deleted if its local and nt being used elsewhere.
               }
             }
           }
           else -> {
-            if (values.get(value.id.key.id.name).isJsonObject) {
-              val variableJson: JsonObject = values.get(value.id.key.id.name).asJsonObject
-              when (variableJson.get("operation").asString) {
-                "ref" -> {
-                  value.referencedVariable = variableRepository.findByTypeAndName(type = value.id.key.type, superVariableName = variableJson.get("variableName").asString)
-                      ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable'}")
-                }
-                "ref-drop" -> {
-                  if (variableJson.get("variableName").asString != value.referencedVariable!!.id.name) {
-                    val prevVariable: Variable = value.referencedVariable!!
-                    value.referencedVariable = variableRepository.findByTypeAndName(type = value.id.key.type, superVariableName = variableJson.get("variableName").asString)
-                        ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable'}")
-                    try {
-                      variableRepository.delete(prevVariable)
-                    } catch (exception: Exception) {
-                      throw CustomJsonException("{${value.id.key.id.name}: 'Unable to drop variable'}")
-                    }
-                    value.referencedVariable
-                  }
-                }
-                "create" -> {
-                  try {
-                    value.referencedVariable = createVariable(JsonObject().apply {
-                      addProperty("organization", organizationName)
-                      addProperty("typeName", value.id.key.type.id.name)
-                      addProperty("variableName", variableJson.get("variableName").asString)
-                      add("values", variableJson.get("values").asJsonObject)
-                    })
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{${value.id.key.id.name}: 'Unable to create variable'}")
-                  }
-                }
-                "create-drop" -> {
-                  val prevVariable: Variable = value.referencedVariable!!
-                  try {
-                    value.referencedVariable = createVariable(JsonObject().apply {
-                      addProperty("organization", organizationName)
-                      addProperty("typeName", value.id.key.type.id.name)
-                      addProperty("variableName", variableJson.get("variableName").asString)
-                      add("values", variableJson.get("values").asJsonObject)
-                    })
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{${value.id.key.id.name}: 'Unable to create variable'}")
-                  }
-                  try {
-                    variableRepository.delete(prevVariable)
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{${value.id.key.id.name}: 'Unable to drop variable'}")
-                  }
-                }
-                "update" -> {
-                  value.referencedVariable = updateVariable(JsonObject().apply {
+            if (value.id.key.type.id.superTypeName == "Any") {
+              // value is reference to some global variable
+              if (values.get(value.id.key.id.name).isJsonObject) {
+                val variableJson: JsonObject = values.get(value.id.key.id.name).asJsonObject
+                try {
+                  value.referencedVariable = createVariable(JsonObject().apply {
                     addProperty("organization", organizationName)
                     addProperty("typeName", value.id.key.type.id.name)
-                    addProperty("variableName", value.referencedVariable!!.id.name)
-                    if (variableJson.has("updatedVariableName"))
-                      add("updatedVariableName?", variableJson.get("updatedVariableName").asJsonObject)
+                    addProperty("variableName", variableJson.get("variableName").asString)
                     add("values", variableJson.get("values").asJsonObject)
                   })
+                } catch (exception: Exception) {
+                  throw CustomJsonException("{${value.id.key.id.name}: 'Unable to create variable'}")
                 }
+              } else {
+                value.referencedVariable = variableRepository.findByTypeAndName(type = value.id.key.type, superVariableName = values.get(value.id.key.id.name).asString)
+                    ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable'}")
               }
             } else {
-              value.referencedVariable = variableRepository.findByTypeAndName(type = value.id.key.type, superVariableName = values.get(value.id.key.id.name).asString)
-                  ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable'}")
+              // value must refer to variable's own local state (internally, not externally to some local state of other global variable)
+              if ((value.id.key.id.parentType.id.superTypeName == "Any" && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
+                  || (value.id.key.id.parentType.id.superTypeName != "Any" && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
+                val variableJson: JsonObject = values.get(value.id.key.id.name).asJsonObject
+                value.referencedVariable = updateVariable(JsonObject().apply {
+                  addProperty("organization", organizationName)
+                  addProperty("typeName", value.id.key.type.id.name)
+                  addProperty("variableName", variable.id.superVariableName)
+                  add("values", variableJson.get("values").asJsonObject)
+                })
+              }
             }
           }
         }
@@ -426,8 +417,7 @@ class VariableService(
     }
     // Process formula type values
     // Recompute formula values
-    // Note: To be optimized in future so that formula is computed only upon change in dependent fields
-    // Process formula type values
+    // TODO: To be optimized in future so that formula is computed only upon change in dependent fields
     variable.values.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach {
       val expression: String = it.id.key.formula!!.expression
       val returnTypeName: String = it.id.key.formula!!.returnType.id.name
@@ -517,6 +507,8 @@ class VariableService(
         }
       }
     }
+    if (jsonParams.has("updatedVariableName?"))
+      updateLocalVariableNames(variable = variable, updatedVariableName = jsonParams.get("updatedVariableName?").asString)
     try {
       variableRepository.save(variable)
     } catch (exception: Exception) {

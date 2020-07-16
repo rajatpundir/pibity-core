@@ -215,51 +215,52 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
         TypeConstants.FORMULA -> {
         }
         else -> {
-          if (values.get(key.id.name).isJsonObject) {
-            expectedValues.add(key.id.name, JsonObject().apply {
-              val operation: String = if (!values.get(key.id.name).asJsonObject.has("operation"))
-                throw CustomJsonException("{${key.id.name}: {operation: 'Field is missing in request body'}}")
-              else {
-                try {
-                  addProperty("operation", values.get(key.id.name).asJsonObject.get("operation").asString)
-                  values.get(key.id.name).asJsonObject.get("operation").asString
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {operation: 'Unexpected value for parameter'}}")
+          if (key.type.id.superTypeName == "Any") {
+            if (values.get(key.id.name).isJsonObject) {
+              expectedValues.add(key.id.name, JsonObject().apply {
+                if (!values.get(key.id.name).asJsonObject.has("variableName"))
+                  throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
+                else {
+                  try {
+                    addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                  }
                 }
-              }
-              if (!variableUpdateOperations.contains(operation))
-                throw CustomJsonException("{${key.id.name}: {operation: 'Unexpected value for parameter'}}")
-              if (!values.get(key.id.name).asJsonObject.has("variableName"))
-                throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
-              else {
-                try {
-                  addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                if (!values.get(key.id.name).asJsonObject.has("values"))
+                  throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
+                else {
+                  try {
+                    add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                  }
                 }
+              })
+            } else {
+              try {
+                expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+              } catch (exception: Exception) {
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
-              if (values.get(key.id.name).asJsonObject.has("updatedVariableName")) {
-                try {
-                  addProperty("updatedVariableName", values.get(key.id.name).asJsonObject.get("updatedVariableName").asString)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {updatedVariableName: 'Unexpected value for parameter'}}")
-                }
-              }
-              if (!values.get(key.id.name).asJsonObject.has("values"))
-                throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
-              else {
-                try {
-                  add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
-                }
-              }
-            })
+            }
           } else {
-            try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
-            } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              if (values.get(key.id.name).isJsonObject) {
+                expectedValues.add(key.id.name, JsonObject().apply {
+                  if (!values.get(key.id.name).asJsonObject.has("values"))
+                    throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
+                  else {
+                    try {
+                      add(key.id.name, validateUpdatedVariableValues(values.get(key.id.name).asJsonObject, key.type))
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                })
+              } else
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
           }
         }
