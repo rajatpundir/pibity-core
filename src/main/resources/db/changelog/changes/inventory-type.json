@@ -39,8 +39,17 @@
                 },
                 {
                   "column": {
-                    "name": "autoincrement_id",
+                    "name": "auto_increment_id",
                     "type": "INTEGER",
+                    "constraints": {
+                      "nullable": "false"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "auto_assign_id",
+                    "type": "BOOLEAN",
                     "constraints": {
                       "nullable": "false"
                     }
