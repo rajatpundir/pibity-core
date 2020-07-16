@@ -1,8 +1,0 @@
-{
-  "realm": "inventory",
-  "auth-server-url": "http://localhost:8081/auth",
-  "ssl-required": "external",
-  "resource": "pibity-erp",
-  "principal-attribute": "preferred_username",
-  "public-client": "true"
-}
