@@ -102,6 +102,9 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
             val expectedArray = JsonArray()
             for (ref in jsonArray) {
               if (ref.isJsonObject) {
+                if(key.list!!.type.id.superTypeName == "Any") {
+                  throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                }
                 if (!ref.asJsonObject.has("variableName"))
                   throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
                 if (!ref.asJsonObject.has("values"))
@@ -175,6 +178,8 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
             values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
               try {
                 if (it.isJsonObject) {
+                  if(key.type.id.superTypeName == "Any")
+                    throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                   if (!it.asJsonObject.has("variableName"))
                     throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
                   else {
@@ -253,7 +258,7 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                     throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
                   else {
                     try {
-                      add(key.id.name, validateUpdatedVariableValues(values.get(key.id.name).asJsonObject, key.type))
+                      add("values", validateUpdatedVariableValues(values.get(key.id.name).asJsonObject.get("values").asJsonObject, key.type))
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
                     }

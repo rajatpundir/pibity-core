@@ -22,7 +22,7 @@
                 {
                   "column": {
                     "name": "organization_id",
-                    "type": "BIGINT",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": "false"
                     }

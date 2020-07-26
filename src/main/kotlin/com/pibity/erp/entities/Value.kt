@@ -19,7 +19,7 @@ import kotlin.collections.HashSet
 data class Value(
 
     @EmbeddedId
-    var id: ValueId,
+    val id: ValueId,
 
     @Column(name = "string_value")
     var stringValue: String? = null,

@@ -23,7 +23,7 @@ interface VariableRepository : CrudRepository<Variable, Long> {
   fun findByTypeAndName(type: Type, superVariableName: String, name: String = ""): Variable?
 
   @Transactional(readOnly = true)
-  @Query("SELECT v from Variable v where v.id.type.id.organization.name = :organizationName and v.id.type.id.superTypeName = :superTypeName and v.id.type.id.name = :typeName and v.id.superVariableName = :superVariableName and v.id.name = :name")
+  @Query("SELECT v from Variable v where v.id.type.id.organization.id = :organizationName and v.id.type.id.superTypeName = :superTypeName and v.id.type.id.name = :typeName and v.id.superVariableName = :superVariableName and v.id.name = :name")
   fun findVariable(organizationName: String, superTypeName: String, typeName: String, superVariableName: String, name: String = ""): Variable?
 
   @Query("SELECT v from Variable v where v.id.type = :type AND v.id.superVariableName LIKE %:superVariableName%")

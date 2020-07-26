@@ -2,7 +2,10 @@
   {
     "typeName": "Location",
     "displayName": "Location",
-    "keys": {}
+    "keys": {},
+    "variables": {
+     "Main Warehouse": {}
+    }
   },
   {
     "typeName": "PriceTierName",

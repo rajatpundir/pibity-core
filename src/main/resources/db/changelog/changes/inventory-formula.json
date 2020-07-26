@@ -26,6 +26,7 @@
                   "column": {
                     "name": "expression",
                     "type": "VARCHAR(255)",
+                    "defaultValue": "",
                     "constraints": {
                       "nullable": false
                     }
@@ -34,7 +35,7 @@
                 {
                   "column": {
                     "name": "organization_id",
-                    "type": "BIGINT"
+                    "type": "NVARCHAR(255)"
                   }
                 },
                 {

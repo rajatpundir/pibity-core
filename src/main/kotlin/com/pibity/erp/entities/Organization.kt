@@ -18,12 +18,9 @@ import javax.persistence.*
 data class Organization(
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
-
     @Expose
-    @Column(name = "name", unique = true, nullable = false)
-    var name: String
+    @Column(name = "id", unique = true, nullable = false)
+    var id: String
 
 ) : Serializable {
 
@@ -34,5 +31,5 @@ data class Organization(
     return this.id == other.id
   }
 
-  override fun hashCode(): Int = Objects.hash(name)
+  override fun hashCode(): Int = Objects.hash(id)
 }
