@@ -61,6 +61,13 @@ data class Key(
     @JoinColumn(name = "list_id")
     var list: TypeList? = null
 
+//    @ManyToMany
+//    @JoinTable(name = "mapping_key_permission", schema = "inventory",
+//        joinColumns = [
+//          JoinColumn(name = "key_name", referencedColumnName = "key_name")],
+//        inverseJoinColumns = [JoinColumn(name = "permission_name")])
+//    val permission: MutableSet<KeyPermission> = HashSet()
+
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {

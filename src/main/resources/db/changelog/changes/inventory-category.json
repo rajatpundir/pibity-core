@@ -25,7 +25,7 @@
                 {
                   "column": {
                     "name": "organization_id",
-                    "type": "BIGINT",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": false
                     }
@@ -41,6 +41,7 @@
                   "column": {
                     "name": "name",
                     "type": "NVARCHAR(255)",
+                    "defaultValue": "",
                     "constraints": {
                       "nullable": false
                     }
@@ -49,6 +50,7 @@
                 {
                   "column": {
                     "name": "next_label",
+                    "defaultValue": "",
                     "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": false
@@ -58,6 +60,7 @@
                 {
                   "column": {
                     "name": "code",
+                    "defaultValue": "",
                     "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": false

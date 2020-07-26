@@ -42,7 +42,7 @@ class VariableService(
     val superTypeName: String = if (jsonParams.has("superTypeName")) jsonParams.get("superTypeName").asString else "Any"
     val variableName: String = if (superTypeName == "Any") "" else jsonParams.get("variableName").asString
     val superVariableName: String = if (jsonParams.has("superVariableName")) jsonParams.get("superVariableName").asString else jsonParams.get("variableName").asString
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = superTypeName, name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
@@ -75,6 +75,7 @@ class VariableService(
                     addProperty("organization", organizationName)
                     addProperty("superTypeName", it.list!!.type.id.superTypeName)
                     addProperty("typeName", it.list!!.type.id.name)
+                    addProperty("superVariableName", superVariableName)
                     addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                     add("values", ref.asJsonObject.get("values").asJsonObject)
                   })
@@ -98,7 +99,7 @@ class VariableService(
                       addProperty("organization", organizationName)
                       addProperty("superTypeName", it.list!!.type.id.superTypeName)
                       addProperty("typeName", it.list!!.type.id.name)
-                      addProperty("superVariableName", variableName)
+                      addProperty("superVariableName", superVariableName)
                       addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                       add("values", ref.asJsonObject.get("values").asJsonObject)
                     })
@@ -164,7 +165,7 @@ class VariableService(
                     addProperty("organization", organizationName)
                     addProperty("superTypeName", it.type.id.superTypeName)
                     addProperty("typeName", it.type.id.name)
-                    addProperty("superVariableName", values.get(it.id.name).asJsonObject.get("variableName").asString)
+                    addProperty("superVariableName", superVariableName)
                     addProperty("variableName", "")
                     add("values", values.get(it.id.name).asJsonObject.get("values").asJsonObject)
                   })
@@ -405,6 +406,7 @@ class VariableService(
                 val variableJson: JsonObject = values.get(value.id.key.id.name).asJsonObject
                 value.referencedVariable = updateVariable(JsonObject().apply {
                   addProperty("organization", organizationName)
+                  addProperty("superTypeName", value.id.key.type.id.superTypeName)
                   addProperty("typeName", value.id.key.type.id.name)
                   addProperty("variableName", variable.id.superVariableName)
                   add("values", variableJson.get("values").asJsonObject)
@@ -522,7 +524,7 @@ class VariableService(
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val variableName: String = jsonParams.get("variableName").asString
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")

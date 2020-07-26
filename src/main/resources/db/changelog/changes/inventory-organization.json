@@ -13,21 +13,11 @@
                 {
                   "column": {
                     "name": "id",
-                    "autoIncrement": "true",
-                    "type": "BIGINT",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
                       "primaryKey": "true",
                       "nullable": "false",
                       "primaryKeyName": "inventory_organization_pk"
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": "false"
                     }
                   }
                 }
@@ -45,7 +35,7 @@
           "constraintName": "inventory_organization_uk",
           "schemaName": "inventory",
           "tableName": "organization",
-          "columnNames": "name",
+          "columnNames": "id",
           "deferrable": "false",
           "initiallyDeferred": "false",
           "validate": "true"

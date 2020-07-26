@@ -31,7 +31,7 @@ class CategoryService(
     val name: String = jsonParams.get("name").asString
     val nextLabel: String = jsonParams.get("nextLabel").asString
     val code: String = jsonParams.get("code").asString
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     val parent: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = parentId)
         ?: try {
@@ -54,7 +54,7 @@ class CategoryService(
   fun updateCategory(jsonParams: JsonObject): Category {
     val organizationName: String = jsonParams.get("organization").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     val category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{'name': 'Category could not be found'}")
@@ -86,7 +86,7 @@ class CategoryService(
   fun removeCategory(jsonParams: JsonObject): Category {
     val organizationName: String = jsonParams.get("organization").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     val category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{'name': 'Category could not be found'}")
@@ -104,7 +104,7 @@ class CategoryService(
   fun listTypes(jsonParams: JsonObject): Set<Type> {
     val organizationName: String = jsonParams.get("organization").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     val category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{'name': 'Category could not be found'}")

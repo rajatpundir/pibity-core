@@ -81,6 +81,14 @@
     }
   },
   {
+    "typeName": "Brand",
+    "displayName": "Brand",
+    "keys": {},
+    "variables": {
+      "Nike": {}
+    }
+  },
+  {
     "typeName": "DropShip",
     "displayName": "Drop Ship",
     "keys": {},
@@ -132,11 +140,7 @@
               "order": "0"
             },
             "brand": {
-              "type": {
-                "typeName": "Brand",
-                "displayName": "Brand",
-                "keys": {}
-              },
+              "type": "Brand",
               "displayName": "Brand",
               "order": "1"
             },

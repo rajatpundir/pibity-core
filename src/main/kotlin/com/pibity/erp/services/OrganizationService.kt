@@ -38,7 +38,7 @@ class OrganizationService(
   fun createOrganization(jsonParams: JsonObject): Organization {
     val organizationName: String = jsonParams.get("organization").asString
     val organization: Organization = try {
-      organizationRepository.save(Organization(name = organizationName))
+      organizationRepository.save(Organization(id = organizationName))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
@@ -58,7 +58,7 @@ class OrganizationService(
       for (primitiveType in primitiveTypes)
         typeRepository.save(Type(id = TypeId(organization = organization, superTypeName = "Any", name = primitiveType), displayName = primitiveType, primitiveType = true))
     } catch (exception: Exception) {
-      throw CustomJsonException("{'organization': 'Organization ${organization.name} could not be created'}")
+      throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
     }
   }
 
@@ -68,7 +68,7 @@ class OrganizationService(
     for (filename in customTypesList) {
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/$filename.json"), JsonArray::class.java)
       for (json in types) {
-        val typeRequest = json.asJsonObject.apply { addProperty("organization", organization.name) }
+        val typeRequest = json.asJsonObject.apply { addProperty("organization", organization.id) }
         typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
       }
     }
@@ -76,7 +76,7 @@ class OrganizationService(
 
   fun listAllCategories(jsonParams: JsonObject): Set<Category> {
     val organizationName: String = jsonParams.get("organization").asString
-    val organization: Organization = organizationRepository.findByName(organizationName)
+    val organization: Organization = organizationRepository.findById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     return categoryRepository.findByOrganization(organization)
   }

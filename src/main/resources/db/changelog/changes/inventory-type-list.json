@@ -25,7 +25,7 @@
                 {
                   "column": {
                     "name": "organization_id",
-                    "type": "BIGINT"
+                    "type": "NVARCHAR(255)"
                   }
                 },
                 {

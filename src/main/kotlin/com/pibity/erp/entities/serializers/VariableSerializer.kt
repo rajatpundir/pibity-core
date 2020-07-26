@@ -18,11 +18,11 @@ class VariableSerializer : JsonSerializer<Variable> {
   override fun serialize(src: Variable?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
-      json.addProperty("organizationId", src.id.type.id.organization.id)
-      json.addProperty("variableName", src.id.superVariableName)
-      if (src.id.name != "")
-        json.addProperty("listIndex", src.id.name)
-      json.addProperty("typeName", src.id.type.id.name)
+      if(src.id.type.id.superTypeName == "Any") {
+        json.addProperty("organization", src.id.type.id.organization.id)
+        json.addProperty("variableName", src.id.superVariableName)
+        json.addProperty("typeName", src.id.type.id.name)
+      }
       val jsonValues = JsonObject()
       for (value in src.values) {
         when (value.id.key.type.id.name) {
@@ -39,7 +39,12 @@ class VariableSerializer : JsonSerializer<Variable> {
             }
           }
           TypeConstants.LIST -> jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.list!!.variables), JsonArray::class.java))
-          else -> jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
+          else -> {
+            if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
+              jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.superVariableName)
+            else
+              jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
+          }
         }
       }
       json.add("values", jsonValues)

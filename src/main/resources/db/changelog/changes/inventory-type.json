@@ -13,7 +13,7 @@
                 {
                   "column": {
                     "name": "organization_id",
-                    "type": "BIGINT",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": "false"
                     }
@@ -43,7 +43,8 @@
                     "type": "INTEGER",
                     "constraints": {
                       "nullable": "false"
-                    }
+                    },
+                    "defaultValue": 0
                   }
                 },
                 {
@@ -52,7 +53,8 @@
                     "type": "BOOLEAN",
                     "constraints": {
                       "nullable": "false"
-                    }
+                    },
+                    "defaultValue": false
                   }
                 },
                 {
@@ -61,7 +63,8 @@
                     "type": "NVARCHAR(511)",
                     "constraints": {
                       "nullable": "false"
-                    }
+                    },
+                    "defaultValue": ""
                   }
                 },
                 {
@@ -70,7 +73,8 @@
                     "type": "INTEGER",
                     "constraints": {
                       "nullable": "false"
-                    }
+                    },
+                    "defaultValue": 0
                   }
                 },
                 {
@@ -79,7 +83,8 @@
                     "type": "BOOLEAN",
                     "constraints": {
                       "nullable": "false"
-                    }
+                    },
+                    "defaultValue": false
                   }
                 }
               ]

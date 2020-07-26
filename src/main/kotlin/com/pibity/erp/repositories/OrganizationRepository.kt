@@ -15,5 +15,5 @@ import org.springframework.transaction.annotation.Transactional
 interface OrganizationRepository : CrudRepository<Organization, Long> {
 
   @Transactional(readOnly = true)
-  fun findByName(name: String): Organization?
+  fun findById(id: String): Organization?
 }
