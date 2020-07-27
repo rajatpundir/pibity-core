@@ -35,6 +35,7 @@ data class Value(
 
     @OneToOne
     @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
       JoinColumn(name = "referenced_super_variable_name", referencedColumnName = "super_variable_name"),
@@ -48,6 +49,7 @@ data class Value(
     @ManyToMany
     @JoinTable(name = "mapping_value_formula", schema = "inventory"
         , joinColumns = [JoinColumn(name = "value_variable_organization_id", referencedColumnName = "variable_organization_id"),
+      JoinColumn(name = "value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
       JoinColumn(name = "value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
       JoinColumn(name = "value_variable_type_name", referencedColumnName = "variable_type_name"),
       JoinColumn(name = "value_super_variable_name", referencedColumnName = "super_variable_name"),
@@ -57,6 +59,7 @@ data class Value(
       JoinColumn(name = "value_key_type_name", referencedColumnName = "key_type_name"),
       JoinColumn(name = "value_key_name", referencedColumnName = "key_name")]
         , inverseJoinColumns = [JoinColumn(name = "dependent_value_variable_organization_id", referencedColumnName = "variable_organization_id"),
+      JoinColumn(name = "dependent_value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
       JoinColumn(name = "dependent_value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
       JoinColumn(name = "dependent_value_variable_type_name", referencedColumnName = "variable_type_name"),
       JoinColumn(name = "dependent_value_super_variable_name", referencedColumnName = "super_variable_name"),

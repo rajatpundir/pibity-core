@@ -19,6 +19,7 @@ data class ValueId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "variable_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "variable_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "variable_type_name", referencedColumnName = "type_name"),
       JoinColumn(name = "super_variable_name", referencedColumnName = "super_variable_name"),

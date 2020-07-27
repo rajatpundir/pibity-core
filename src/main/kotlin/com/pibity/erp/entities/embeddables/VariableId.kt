@@ -9,12 +9,16 @@
 package com.pibity.erp.entities.embeddables
 
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.VariableList
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 
 @Embeddable
 data class VariableId(
+
+    @OneToOne
+    val superList: VariableList,
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),

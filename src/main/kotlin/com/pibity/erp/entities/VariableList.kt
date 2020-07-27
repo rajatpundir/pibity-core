@@ -29,6 +29,7 @@ data class VariableList(
     @JoinTable(name = "mapping_list_variables", schema = "inventory",
         joinColumns = [JoinColumn(name = "list_variable_id")],
         inverseJoinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
+          JoinColumn(name = "variable_super_list_id", referencedColumnName = "super_list_id"),
           JoinColumn(name = "variable_super_type_name", referencedColumnName = "super_type_name"),
           JoinColumn(name = "variable_type_name", referencedColumnName = "type_name"),
           JoinColumn(name = "super_variable_name", referencedColumnName = "super_variable_name"),
