@@ -10,11 +10,12 @@ package com.pibity.erp.repositories
 
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.embeddables.TypeId
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.transaction.annotation.Transactional
 
-interface TypeRepository : CrudRepository<Type, Long> {
+interface TypeRepository : CrudRepository<Type, TypeId> {
 
   @Transactional(readOnly = true)
   @Query("SELECT t from Type t where t.id.organization = :organization")

@@ -19,11 +19,11 @@ data class VariableList(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
 
     @OneToOne
     @JoinColumn(name = "list_type_id")
-    var listType: TypeList,
+    val listType: TypeList,
 
     @ManyToMany
     @JoinTable(name = "mapping_list_variables", schema = "inventory",

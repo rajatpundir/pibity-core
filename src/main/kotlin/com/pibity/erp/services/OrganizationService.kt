@@ -10,18 +10,15 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.Category
-import com.pibity.erp.entities.Organization
-import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.TypeId
-import com.pibity.erp.repositories.CategoryRepository
-import com.pibity.erp.repositories.OrganizationRepository
-import com.pibity.erp.repositories.TypeRepository
+import com.pibity.erp.repositories.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.FileReader
@@ -31,6 +28,8 @@ class OrganizationService(
     val organizationRepository: OrganizationRepository,
     val categoryRepository: CategoryRepository,
     val typeRepository: TypeRepository,
+    val typeListRepository: TypeListRepository,
+    val variableListRepository: VariableListRepository,
     val typeService: TypeService
 ) {
 
@@ -48,6 +47,15 @@ class OrganizationService(
       throw CustomJsonException("{'organization': 'Default category for organization $organizationName could not be created'}")
     }
     createPrimitiveTypes(organization = organization)
+    try {
+      val anyType = typeRepository.findType(organization = organization, superTypeName = "Any", name = TypeConstants.TEXT) ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
+      val tl = typeListRepository.save(TypeList(type = anyType))
+      val vl = variableListRepository.save(VariableList(listType = tl))
+      organization.superList = vl
+      organizationRepository.save(organization)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
+    }
     createCustomTypes(organization = organization)
     return organization
   }
@@ -76,7 +84,7 @@ class OrganizationService(
 
   fun listAllCategories(jsonParams: JsonObject): Set<Category> {
     val organizationName: String = jsonParams.get("organization").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
     return categoryRepository.findByOrganization(organization)
   }

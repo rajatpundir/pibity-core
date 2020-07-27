@@ -46,7 +46,7 @@ class TypeService(
     val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else "Any"
     val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject)
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type = Type(
         TypeId(organization = organization, superTypeName = superTypeName, name = typeName),
@@ -263,7 +263,7 @@ class TypeService(
   fun getTypeDetails(jsonParams: JsonObject): Type {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     return typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
@@ -274,7 +274,7 @@ class TypeService(
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
@@ -293,7 +293,7 @@ class TypeService(
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
@@ -310,7 +310,7 @@ class TypeService(
   fun listCategories(jsonParams: JsonObject): Set<Category> {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
@@ -320,7 +320,7 @@ class TypeService(
   fun listVariables(jsonParams: JsonObject): Set<Variable> {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")

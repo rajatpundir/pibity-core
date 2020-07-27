@@ -20,7 +20,13 @@ data class Organization(
     @Id
     @Expose
     @Column(name = "id", unique = true, nullable = false)
-    var id: String
+    val id: String,
+
+    @Expose
+    var displayName: String = "",
+
+    @OneToOne
+    var superList: VariableList? = null
 
 ) : Serializable {
 

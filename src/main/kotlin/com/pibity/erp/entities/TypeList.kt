@@ -18,7 +18,7 @@ data class TypeList(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
 
     @OneToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),

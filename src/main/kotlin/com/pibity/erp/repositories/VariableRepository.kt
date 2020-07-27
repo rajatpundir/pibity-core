@@ -8,15 +8,15 @@
 
 package com.pibity.erp.repositories
 
-import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
+import com.pibity.erp.entities.embeddables.VariableId
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 
-interface VariableRepository : CrudRepository<Variable, Long> {
+interface VariableRepository : CrudRepository<Variable, VariableId> {
 
   @Transactional(readOnly = true)
   @Query("SELECT v from Variable v where v.id.type = :type and v.id.superVariableName = :superVariableName and v.id.name = :name")

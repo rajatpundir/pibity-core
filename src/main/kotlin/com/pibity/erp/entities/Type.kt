@@ -20,7 +20,7 @@ import kotlin.collections.HashSet
 data class Type(
 
     @EmbeddedId
-    var id: TypeId,
+    val id: TypeId,
 
     @Column(name = "auto_increment_id", nullable = false)
     var autoIncrementId: Int = 0,
@@ -50,15 +50,6 @@ data class Type(
           JoinColumn(name = "type_name", referencedColumnName = "type_name")],
         inverseJoinColumns = [JoinColumn(name = "category_id")])
     val categories: MutableSet<Category> = HashSet()
-
-//    @ManyToMany
-//    @JoinTable(name = "mapping_type_role", schema = "inventory",
-//        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-//          JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-//          JoinColumn(name = "type_name", referencedColumnName = "type_name")],
-//        inverseJoinColumns = [JoinColumn(name = "role_id")])
-//    val roles: MutableSet<Role> = HashSet()
-
 
 ) : Serializable {
 

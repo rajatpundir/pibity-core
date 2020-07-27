@@ -19,7 +19,7 @@ data class Category(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
 
     @OneToOne
     @JoinColumn(name = "organization_id")
