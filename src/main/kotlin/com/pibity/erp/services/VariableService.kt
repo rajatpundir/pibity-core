@@ -36,7 +36,7 @@ class VariableService(
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createVariable(jsonParams: JsonObject): Variable {
+  fun createVariable(jsonParams: JsonObject, superList: VariableList? = null): Variable {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val superTypeName: String = if (jsonParams.has("superTypeName")) jsonParams.get("superTypeName").asString else "Any"
@@ -49,7 +49,7 @@ class VariableService(
     val values: JsonObject = validateVariableValues(values = jsonParams.get("values").asJsonObject, type = type)
     val variable = Variable(
         id = VariableId(
-            superList = organization.superList!!,
+            superList = if (superTypeName == "Any") organization.superList!! else superList!!,
             type = type,
             superVariableName = superVariableName,
             name = if (type.id.superTypeName == "Any" && type.autoAssignId) (type.autoIncrementId + 1).toString() else variableName),
@@ -80,7 +80,7 @@ class VariableService(
                     addProperty("superVariableName", superVariableName)
                     addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                     add("values", ref.asJsonObject.get("values").asJsonObject)
-                  })
+                  }, superList = list)
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{${it.id.name}: ${exception.message}}")
                 }

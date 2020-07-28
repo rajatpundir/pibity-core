@@ -15,8 +15,6 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 
-val variableUpdateOperations = listOf("ref", "ref-drop", "create", "create-drop", "update")
-
 fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
   val expectedValues = JsonObject()
   for (key in type.keys) {
@@ -34,9 +32,25 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
         TypeConstants.LIST -> expectedValues.add(key.id.name, JsonArray())
         TypeConstants.FORMULA -> {
         }
-        else -> expectedValues.addProperty(key.id.name, (key.referencedVariable
-            ?: throw CustomJsonException("{${key.id.name}: 'Field is missing in request body'}")).id.superVariableName
-        )
+        else -> {
+          if(key.referencedVariable == null)
+            throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}")
+          else {
+            if (key.type.id.superTypeName == "Any") {
+              expectedValues.addProperty(key.id.name, key.referencedVariable!!.id.superVariableName)
+            } else {
+              if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+                throw CustomJsonException("{${key.id.name}: 'Internal local values cannot have a default'}")
+              } else {
+                expectedValues.add(key.id.name, JsonObject().apply {
+                  addProperty("listContext", key.referencedVariable!!.id.superList.id)
+                  addProperty("variableName", key.referencedVariable!!.id.superVariableName)
+                })
+              }
+            }
+          }
+        }
       }
     } else {
       if (values.get(key.id.name).isJsonObject) {
@@ -49,30 +63,46 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
           TypeConstants.FORMULA -> {
           }
           else -> {
-            if (!values.get(key.id.name).asJsonObject.has("variableName"))
-              throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
-            if (!values.get(key.id.name).asJsonObject.has("values"))
-              throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
-            val valueJson = JsonObject()
-            try {
-              valueJson.addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
-            } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
-            }
-            try {
-              valueJson.add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
-            } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
-            }
-            // localVariableName is an optional field that can be used to reference variables inside local list variable fields of some global variable
-            if (values.get(key.id.name).asJsonObject.has("localVariableName")) {
-              try {
-                valueJson.addProperty("localVariableName", values.get(key.id.name).asJsonObject.get("localVariableName").asString)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+            if (key.type.id.superTypeName == "Any")
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+            else {
+              if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+                val valueJson = JsonObject()
+                if (values.get(key.id.name).asJsonObject.has("variableName")) {
+                  try {
+                    valueJson.addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                  }
+                } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
+                if (values.get(key.id.name).asJsonObject.has("values")) {
+                  try {
+                    valueJson.add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                  }
+                } else throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
+                expectedValues.add(key.id.name, valueJson)
+              } else {
+                val valueJson = JsonObject()
+                if (values.get(key.id.name).asJsonObject.has("listContext")) {
+                  try {
+                    valueJson.addProperty("listContext?", values.get(key.id.name).asJsonObject.get("listContext").asLong)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {listContext: 'Unexpected value for parameter'}}")
+                  }
+                }
+                if (values.get(key.id.name).asJsonObject.has("variableName")) {
+                  try {
+                    valueJson.addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                  }
+                } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
+                expectedValues.add(key.id.name, valueJson)
               }
             }
-            expectedValues.add(key.id.name, valueJson)
           }
         }
       } else {
@@ -98,37 +128,73 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           }
           TypeConstants.LIST -> {
-            val jsonArray: JsonArray = values.get(key.id.name).asJsonArray
+            val jsonArray: JsonArray = try {
+              values.get(key.id.name).asJsonArray
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+            }
             val expectedArray = JsonArray()
             for (ref in jsonArray) {
-              if (ref.isJsonObject) {
-                if(key.list!!.type.id.superTypeName == "Any") {
+              if (key.list!!.type.id.superTypeName == "Any") {
+                try {
+                  expectedArray.add(ref.asString)
+                } catch (exception: Exception) {
                   throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                 }
-                if (!ref.asJsonObject.has("variableName"))
-                  throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
-                if (!ref.asJsonObject.has("values"))
-                  throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body of one of the variables'}}")
-                val valueJson = JsonObject()
-                try {
-                  valueJson.addProperty("variableName", ref.asJsonObject.get("variableName").asString)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
-                }
-                try {
-                  valueJson.add("values", ref.asJsonObject.get("values").asJsonObject)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
-                }
-                expectedArray.add(valueJson)
-              } else
-                expectedArray.add(ref.asString)
+              } else {
+                if (ref.isJsonObject) {
+                  if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                      || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+                    val valueJson = JsonObject()
+                    if (ref.asJsonObject.has("variableName")) {
+                      try {
+                        valueJson.addProperty("variableName", ref.asJsonObject.get("variableName").asString)
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                      }
+                    } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
+                    if (ref.asJsonObject.has("values")) {
+                      try {
+                        valueJson.add("values", ref.asJsonObject.get("values").asJsonObject)
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                      }
+                    } else throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body of one of the variables'}}")
+                    expectedArray.add(valueJson)
+                  } else {
+                    val valueJson = JsonObject()
+                    if (ref.asJsonObject.has("listContext")) {
+                      try {
+                        valueJson.addProperty("listContext?", ref.asJsonObject.get("listContext").asLong)
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{${key.id.name}: {listContext: 'Unexpected value for parameter'}}")
+                      }
+                    }
+                    if (ref.asJsonObject.has("variableName")) {
+                      try {
+                        valueJson.addProperty("variableName", ref.asJsonObject.get("variableName").asString)
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                      }
+                    } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
+                    expectedArray.add(valueJson)
+                  }
+                } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              }
             }
             expectedValues.add(key.id.name, expectedArray)
           }
           TypeConstants.FORMULA -> {
           }
-          else -> expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+          else -> {
+            if (key.type.id.superTypeName == "Any") {
+              try {
+                expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+              } catch (exception: Exception) {
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              }
+            } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+          }
         }
       }
     }
@@ -178,7 +244,7 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
             values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
               try {
                 if (it.isJsonObject) {
-                  if(key.type.id.superTypeName == "Any")
+                  if (key.type.id.superTypeName == "Any")
                     throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                   if (!it.asJsonObject.has("variableName"))
                     throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
