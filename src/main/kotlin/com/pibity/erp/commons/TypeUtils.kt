@@ -113,7 +113,8 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
               TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
               TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
               TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-              TypeConstants.LIST, TypeConstants.FORMULA -> {}
+              TypeConstants.LIST, TypeConstants.FORMULA -> {
+              }
               else -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
             }
           } catch (exception: Exception) {
@@ -169,6 +170,30 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 if (!keyTypeIdentifierPattern.matcher(key.get(KeyConstants.LIST_TYPE).asString).matches())
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'Type name for key is not valid'}}}")
               }
+            }
+            if (!key.has(KeyConstants.LIST_MAX_SIZE))
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not provided'}}}")
+            else {
+              val listMaxSize: Int = try {
+                key.get(KeyConstants.LIST_MAX_SIZE).asInt
+              } catch (exception: CustomJsonException) {
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+              }
+              expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
+              if (listMaxSize != -1 && listMaxSize < 0)
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+            }
+            if (!key.has(KeyConstants.LIST_MIN_SIZE))
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not provided'}}}")
+            else {
+              val listMinSize: Int = try {
+                key.get(KeyConstants.LIST_MIN_SIZE).asInt
+              } catch (exception: CustomJsonException) {
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
+              }
+              expectedKey.addProperty(KeyConstants.LIST_MIN_SIZE, listMinSize)
+              if (listMinSize < 0)
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
             }
           }
           TypeConstants.FORMULA -> {
