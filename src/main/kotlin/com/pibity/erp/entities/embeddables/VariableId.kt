@@ -26,9 +26,6 @@ data class VariableId(
         JoinColumn(name = "type_name", referencedColumnName = "type_name")])
     val type: Type,
 
-    @Column(name = "super_variable_name", nullable = false)
-    var superVariableName: String,
-
     @Column(name = "variable_name", nullable = false)
     var name: String
 
@@ -38,8 +35,8 @@ data class VariableId(
     other ?: return false
     if (this === other) return true
     other as VariableId
-    return this.type == other.type && this.superVariableName == other.superVariableName && this.name == other.name
+    return this.type == other.type && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(type, superVariableName, name)
+  override fun hashCode(): Int = Objects.hash(type, name)
 }

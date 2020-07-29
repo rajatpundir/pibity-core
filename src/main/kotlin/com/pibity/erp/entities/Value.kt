@@ -38,7 +38,6 @@ data class Value(
       JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_super_variable_name", referencedColumnName = "super_variable_name"),
       JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
     var referencedVariable: Variable? = null,
 
@@ -52,7 +51,6 @@ data class Value(
       JoinColumn(name = "value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
       JoinColumn(name = "value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
       JoinColumn(name = "value_variable_type_name", referencedColumnName = "variable_type_name"),
-      JoinColumn(name = "value_super_variable_name", referencedColumnName = "super_variable_name"),
       JoinColumn(name = "value_variable_name", referencedColumnName = "variable_name"),
       JoinColumn(name = "value_key_organization_id", referencedColumnName = "key_organization_id"),
       JoinColumn(name = "value_key_super_type_name", referencedColumnName = "key_super_type_name"),
@@ -62,7 +60,6 @@ data class Value(
       JoinColumn(name = "dependent_value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
       JoinColumn(name = "dependent_value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
       JoinColumn(name = "dependent_value_variable_type_name", referencedColumnName = "variable_type_name"),
-      JoinColumn(name = "dependent_value_super_variable_name", referencedColumnName = "super_variable_name"),
       JoinColumn(name = "dependent_value_variable_name", referencedColumnName = "variable_name"),
       JoinColumn(name = "dependent_value_key_organization_id", referencedColumnName = "key_organization_id"),
       JoinColumn(name = "dependent_value_key_super_type_name", referencedColumnName = "key_super_type_name"),

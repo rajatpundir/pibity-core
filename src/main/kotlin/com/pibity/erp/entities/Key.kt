@@ -50,7 +50,6 @@ data class Key(
       JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_super_variable_name", referencedColumnName = "super_variable_name"),
       JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
     var referencedVariable: Variable? = null,
 
