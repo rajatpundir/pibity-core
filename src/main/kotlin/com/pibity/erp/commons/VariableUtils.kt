@@ -133,6 +133,10 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
+            if (jsonArray.size() > key.list!!.max)
+              throw CustomJsonException("{${key.id.name}: 'List cannot contain more than ${key.list!!.max} elements'}")
+            if (jsonArray.size() < key.list!!.min)
+              throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${key.list!!.min} elements'}")
             val expectedArray = JsonArray()
             for (ref in jsonArray) {
               if (key.list!!.type.id.superTypeName == "Any") {

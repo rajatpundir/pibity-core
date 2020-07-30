@@ -153,7 +153,7 @@ class TypeService(
                 }
               }
           if (!primitiveTypes.contains(listType.id.name))
-            key.list = TypeList(type = listType)
+            key.list = TypeList(type = listType, min = keyJson.get(KeyConstants.LIST_MIN_SIZE).asInt, max = keyJson.get(KeyConstants.LIST_MAX_SIZE).asInt)
           else
             throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type cannot be a primitive type'}}}")
         }
