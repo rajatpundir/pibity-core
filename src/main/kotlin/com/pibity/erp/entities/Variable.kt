@@ -28,6 +28,9 @@ data class Variable(
     @Column(name = "reference_count", nullable = false)
     var referenceCount: Long = 0,
 
+    @Column(name = "active", nullable = false)
+    var active: Boolean = true,
+
     @OneToMany(mappedBy = "id.variable", cascade = [CascadeType.ALL])
     val values: MutableSet<Value> = HashSet(),
 

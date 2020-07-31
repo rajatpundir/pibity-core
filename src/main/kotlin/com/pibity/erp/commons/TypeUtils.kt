@@ -72,7 +72,7 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
         if (nestedType.has("multiplicity")) {
           try {
             nestedType.get("multiplicity").asLong
-          } catch (exception: CustomJsonException) {
+          } catch (exception: Exception) {
             throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {multiplicity: 'Unexpected value for parameter'}}}}")
           }
         }
@@ -84,7 +84,7 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             addProperty("displayName", nestedType.get("displayName").asString)
             add("keys", nestedTypeKeys)
             if (nestedType.has("multiplicity"))
-              addProperty("multiplicity", nestedType.get("multiplicity").asLong)
+              addProperty("multiplicity?", nestedType.get("multiplicity").asLong)
           })
         } catch (exception: CustomJsonException) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: ${exception.message}}}}")
