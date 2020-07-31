@@ -23,6 +23,7 @@ import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
+import com.pibity.erp.repositories.VariableListRepository
 import com.pibity.erp.repositories.VariableRepository
 import org.codehaus.janino.ExpressionEvaluator
 import org.springframework.stereotype.Service
@@ -32,7 +33,8 @@ import org.springframework.transaction.annotation.Transactional
 class VariableService(
     val organizationRepository: OrganizationRepository,
     val typeRepository: TypeRepository,
-    val variableRepository: VariableRepository
+    val variableRepository: VariableRepository,
+    val variableListRepository: VariableListRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -61,8 +63,9 @@ class VariableService(
         }
         TypeConstants.LIST -> {
           val jsonArray: JsonArray = values.get(it.id.name).asJsonArray
-          val list = VariableList(listType = it.list!!)
+          val list: VariableList = variableListRepository.save(VariableList(listType = it.list!!)) ?: throw CustomJsonException("{${it.id.name}: 'Unable to create List'}")
           for (ref in jsonArray.iterator()) {
+
             if (it.list!!.type.id.superTypeName == "Any") {
               val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = organization.superList!!, type = it.type, name = ref.asString)
                   ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced global variable'}")
@@ -107,6 +110,7 @@ class VariableService(
           variable.values.add(Value(id = ValueId(variable = variable, key = it), list = list))
         }
         else -> {
+
           if (it.type.id.superTypeName == "Any") {
             val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = organization.superList!!, type = it.type, name = values.get(it.id.name).asString)
                 ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced global variable'}")
@@ -123,7 +127,7 @@ class VariableService(
                 createVariable(JsonObject().apply {
                   addProperty("variableName", values.get(it.id.name).asJsonObject.get("variableName").asString)
                   add("values", values.get(it.id.name).asJsonObject.get("values").asJsonObject)
-                }, variableOrganization = organization, variableType = it.list!!.type, variableSuperList = superList)
+                }, variableOrganization = organization, variableType = it.type, variableSuperList = superList)
               } catch (exception: CustomJsonException) {
                 throw CustomJsonException("{${it.id.name}: ${exception.message}}")
               }

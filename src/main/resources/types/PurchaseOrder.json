@@ -105,6 +105,8 @@
       },
       "invoiceDetails": {
         "type": "List",
+        "min": "0",
+        "max": "1",
         "listType": {
           "typeName": "Invoice",
           "displayName": "Invoice",
@@ -131,6 +133,8 @@
             },
             "productInvoiceDetails": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "ProductInvoice",
                 "displayName": "Product Invoice",
@@ -187,6 +191,8 @@
             },
             "additionalCost": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "AdditionalCost",
                 "displayName": "Additional Cost",
@@ -233,6 +239,8 @@
             },
             "supplierDeposit": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "SupplierDeposit",
                 "displayName": "SupplierDeposit",
@@ -274,12 +282,16 @@
       },
       "orderDetails": {
         "type": "List",
+        "min": "0",
+        "max": "1",
         "listType": {
           "typeName": "Order",
           "displayName": "Order",
           "keys": {
             "productInvoiceDetails": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "ProductInvoice",
                 "displayName": "Product Invoice",
@@ -336,6 +348,8 @@
             },
             "additionalCost": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "AdditionalCost",
                 "displayName": "Additional Cost",
@@ -382,6 +396,8 @@
             },
             "supplierDeposit": {
               "type": "List",
+              "min": "0",
+              "max": "-1",
               "listType": {
                 "typeName": "SupplierDeposit",
                 "displayName": "SupplierDeposit",
@@ -423,6 +439,8 @@
       },
       "stockReceived": {
         "type": "List",
+        "min": "0",
+        "max": "-1",
         "listType": {
           "typeName": "StockReceived",
           "displayName": "Stock Received",
