@@ -314,7 +314,7 @@ class VariableService(
                   if (!value.list!!.variables.contains(referencedVariable)) {
                     referencedVariable.referenceCount += 1
                     if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                      throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable ${it.asString} due to variable's reference limit'}")
+                      throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
                     if (!referencedVariable.active)
                       throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
                     value.list!!.variables.add(referencedVariable)
@@ -347,7 +347,7 @@ class VariableService(
                     if (!value.list!!.variables.contains(referencedVariable)) {
                       referencedVariable.referenceCount += 1
                       if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                        throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable ${it.asJsonObject.get("variableName").asString} due to variable's reference limit'}")
+                        throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
                       value.list!!.variables.add(referencedVariable)
                       value.list!!.size += 1
                     } else throw CustomJsonException("{${value.id.key.id.name}: {add: '${it.asJsonObject.get("variableName").asString} is already present in list'}}")
@@ -361,8 +361,10 @@ class VariableService(
                       referencedVariable.referenceCount -= 1
                       value.list!!.variables.remove(referencedVariable)
                       value.list!!.size -= 1
-                      if (referencedVariable.referenceCount == 0L)
+                      if (referencedVariable.referenceCount == 0L) {
+                        referencedVariable.id.type.variableCount -= 1
                         variableRepository.delete(referencedVariable)
+                      }
                       else
                         variableRepository.save(referencedVariable)
                     } else throw CustomJsonException("{${value.id.key.id.name}: {remove: '${it.asString} is not present in list'}}")
@@ -389,7 +391,7 @@ class VariableService(
                     if (!value.list!!.variables.contains(referencedVariable)) {
                       referencedVariable.referenceCount += 1
                       if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                        throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable ${it.asJsonObject.get("variableName").asString} due to variable's reference limit'}")
+                        throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
                       if (!referencedVariable.active)
                         throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
                       value.list!!.variables.add(referencedVariable)
@@ -424,7 +426,7 @@ class VariableService(
                   ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable ${values.get(value.id.key.id.name).asString}'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable ${values.get(value.id.key.id.name).asString} due to variable's reference limit'}")
+                throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
               if (!referencedVariable.active)
                 throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
               value.referencedVariable = referencedVariable
@@ -443,7 +445,7 @@ class VariableService(
                     ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable ${values.get(value.id.key.id.name).asJsonObject.get("variableName").asString}'}")
                 referencedVariable.referenceCount += 1
                 if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                  throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable ${values.get(value.id.key.id.name).asJsonObject.get("variableName").asString} due to variable's reference limit'}")
+                  throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
                 if (!referencedVariable.active)
                   throw CustomJsonException("{${value.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
                 value.referencedVariable = referencedVariable
