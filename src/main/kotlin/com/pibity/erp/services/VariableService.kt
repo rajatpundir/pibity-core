@@ -102,7 +102,7 @@ class VariableService(
           }
           if (list.size < list.listType.min)
             throw CustomJsonException("{${it.id.name}: 'List cannot contain less than ${list.listType.min} variables'}")
-          if (list.size > list.listType.max)
+          if (list.listType.max != -1 && list.size > list.listType.max)
             throw CustomJsonException("{${it.id.name}: 'List cannot contain more than ${list.listType.max} variables'}")
           variable.values.add(Value(id = ValueId(variable = variable, key = it), list = list))
         }
@@ -415,7 +415,7 @@ class VariableService(
             }
             if (value.list!!.size < value.list!!.listType.min)
               throw CustomJsonException("{${value.id.key.id.name}: 'List cannot contain less than ${value.list!!.listType.min} variables'}")
-            if (value.list!!.size > value.list!!.listType.max)
+            if (value.list!!.listType.max != -1 && value.list!!.size > value.list!!.listType.max)
               throw CustomJsonException("{${value.id.key.id.name}: 'List cannot contain more than ${value.list!!.listType.max} variables'}")
           }
           else -> {
