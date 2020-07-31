@@ -69,6 +69,13 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
         } catch (exception: Exception) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {keys: 'Unexpected value for parameter'}}}}")
         }
+        if (nestedType.has("multiplicity")) {
+          try {
+            nestedType.get("multiplicity").asLong
+          } catch (exception: CustomJsonException) {
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {multiplicity: 'Unexpected value for parameter'}}}}")
+          }
+        }
         try {
           validateTypeName(nestedTypeName)
           validateTypeKeys(nestedTypeKeys)
@@ -76,6 +83,8 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             addProperty("typeName", nestedTypeName)
             addProperty("displayName", nestedType.get("displayName").asString)
             add("keys", nestedTypeKeys)
+            if (nestedType.has("multiplicity"))
+              addProperty("multiplicity", nestedType.get("multiplicity").asLong)
           })
         } catch (exception: CustomJsonException) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: ${exception.message}}}}")
@@ -90,7 +99,9 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
               TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
               TypeConstants.LIST, TypeConstants.FORMULA -> {
               }
-              else -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+              else -> {
+                /* Referential keys with local types does not make sense to have defaults */
+              }
             }
           } catch (exception: Exception) {
             throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
@@ -115,7 +126,11 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
               TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
               TypeConstants.LIST, TypeConstants.FORMULA -> {
               }
-              else -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+              else -> {
+                // Keys with reference to local types of some global variable does not make sense to have default value, at the time of writing this line.
+                if (!key.get(KeyConstants.KEY_TYPE).asString.contains("::"))
+                  expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+              }
             }
           } catch (exception: Exception) {
             throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")

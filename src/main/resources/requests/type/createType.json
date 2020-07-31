@@ -11,6 +11,9 @@
   "displayName": {
     "type": "String"
   },
+  "multiplicity?": {
+    "type": "Long"
+  },
   "autoId?": {
     "type": "Boolean"
   },

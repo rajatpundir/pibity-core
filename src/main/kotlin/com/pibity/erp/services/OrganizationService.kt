@@ -49,7 +49,7 @@ class OrganizationService(
     createPrimitiveTypes(organization = organization)
     try {
       val anyType = typeRepository.findType(organization = organization, superTypeName = "Any", name = TypeConstants.TEXT) ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
-      val tl = typeListRepository.save(TypeList(type = anyType))
+      val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = -1))
       val vl = variableListRepository.save(VariableList(listType = tl))
       organization.superList = vl
       organizationRepository.save(organization)
@@ -64,7 +64,7 @@ class OrganizationService(
   fun createPrimitiveTypes(organization: Organization) {
     try {
       for (primitiveType in primitiveTypes)
-        typeRepository.save(Type(id = TypeId(organization = organization, superTypeName = "Any", name = primitiveType), displayName = primitiveType, primitiveType = true))
+        typeRepository.save(Type(id = TypeId(organization = organization, superTypeName = "Any", name = primitiveType), displayName = primitiveType, primitiveType = true, multiplicity = 0))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
     }

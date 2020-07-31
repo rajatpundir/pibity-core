@@ -19,5 +19,4 @@ object KeyConstants {
   const val VALUE = "value"
   const val LIST_MAX_SIZE = "max"
   const val LIST_MIN_SIZE = "min"
-  const val LIST_SIZE = "size"
 }

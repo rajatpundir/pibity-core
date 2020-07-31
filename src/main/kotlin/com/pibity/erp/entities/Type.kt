@@ -31,6 +31,12 @@ data class Type(
     @Column(name = "display_name", nullable = false)
     var displayName: String = "",
 
+    @Column(name = "multiplicity", nullable = false)
+    val multiplicity: Long,
+
+    @Column(name = "variable_count", nullable = false)
+    var variableCount: Long = 0,
+
     @Column(name = "depth", nullable = false)
     var depth: Int = 0,
 
