@@ -83,7 +83,7 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             addProperty("typeName", nestedTypeName)
             addProperty("displayName", nestedType.get("displayName").asString)
             add("keys", nestedTypeKeys)
-            if (nestedType.has("multiplicity"))
+            if (nestedType.has("multiplicity") && nestedType.get("multiplicity").asLong >= 0)
               addProperty("multiplicity?", nestedType.get("multiplicity").asLong)
           })
         } catch (exception: CustomJsonException) {

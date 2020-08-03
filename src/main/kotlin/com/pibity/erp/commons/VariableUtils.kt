@@ -519,3 +519,65 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
   }
   return keys
 }
+
+fun generateQuery(query: JsonObject, type: Type): String {
+  if (!query.has("operation"))
+    throw CustomJsonException("{operation: 'Field is missing in request body'}")
+  else {
+    val operation: String = try {
+      query.get("operation").asString
+    } catch (exception: Exception) {
+      throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+    }
+    when (operation) {
+      "and" -> {
+        if (!query.has("left"))
+          throw CustomJsonException("{left: 'Field is missing in request body'}")
+        if (!query.get("left").isJsonObject)
+          throw CustomJsonException("{left: 'Unexpected value for parameter'}")
+        if (!query.has("right"))
+          throw CustomJsonException("{right: 'Field is missing in request body'}")
+        if (!query.get("right").isJsonObject)
+          throw CustomJsonException("{right: 'Unexpected value for parameter'}")
+        val leftQuery: String = try {
+          generateQuery(query = query.get("left").asJsonObject, type = type)
+        } catch (exception: CustomJsonException) {
+          throw CustomJsonException("{left: ${exception.message}}")
+        }
+        val rightQuery: String = try {
+          generateQuery(query = query.get("right").asJsonObject, type = type)
+        } catch (exception: CustomJsonException) {
+          throw CustomJsonException("{left: ${exception.message}}")
+        }
+        return("$leftQuery AND $rightQuery")
+      }
+      "or" -> {
+        if (!query.has("left"))
+          throw CustomJsonException("{left: 'Field is missing in request body'}")
+        if (!query.get("left").isJsonObject)
+          throw CustomJsonException("{left: 'Unexpected value for parameter'}")
+        if (!query.has("right"))
+          throw CustomJsonException("{right: 'Field is missing in request body'}")
+        if (!query.get("right").isJsonObject)
+          throw CustomJsonException("{right: 'Unexpected value for parameter'}")
+        val leftQuery: String = try {
+          generateQuery(query = query.get("left").asJsonObject, type = type)
+        } catch (exception: CustomJsonException) {
+          throw CustomJsonException("{left: ${exception.message}}")
+        }
+        val rightQuery: String = try {
+          generateQuery(query = query.get("right").asJsonObject, type = type)
+        } catch (exception: CustomJsonException) {
+          throw CustomJsonException("{left: ${exception.message}}")
+        }
+        return("$leftQuery OR $rightQuery")
+      }
+      "not" -> {return ""}
+      "query" -> {
+
+      }
+      else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+    }
+  }
+  return ""
+}
