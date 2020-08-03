@@ -69,8 +69,13 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
         } catch (exception: Exception) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {keys: 'Unexpected value for parameter'}}}}")
         }
-        if (nestedType.has("variables") && !nestedType.get("variables").isJsonObject)
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {variables: 'Unexpected value for parameter'}}}}")
+        if (nestedType.has("multiplicity")) {
+          try {
+            nestedType.get("multiplicity").asLong
+          } catch (exception: Exception) {
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {multiplicity: 'Unexpected value for parameter'}}}}")
+          }
+        }
         try {
           validateTypeName(nestedTypeName)
           validateTypeKeys(nestedTypeKeys)
@@ -78,49 +83,28 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             addProperty("typeName", nestedTypeName)
             addProperty("displayName", nestedType.get("displayName").asString)
             add("keys", nestedTypeKeys)
-            if (nestedType.has("variables"))
-              add("variables?", nestedType.get("variables").asJsonObject)
+            if (nestedType.has("multiplicity") && nestedType.get("multiplicity").asLong >= 0)
+              addProperty("multiplicity?", nestedType.get("multiplicity").asLong)
           })
         } catch (exception: CustomJsonException) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: ${exception.message}}}}")
         }
         // validate default value for key
         if (key.has(KeyConstants.DEFAULT)) {
-          if (key.get(KeyConstants.DEFAULT).isJsonObject) {
-            val defaultVariableJson = JsonObject()
-            if (!key.get(KeyConstants.DEFAULT).asJsonObject.has("variableName"))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {variableName: 'Field is missing in request body'}}}}")
-            else {
-              try {
-                defaultVariableJson.addProperty("variableName", key.get(KeyConstants.DEFAULT).asJsonObject.get("variableName").asString)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {variableName: 'Unexpected value for parameter'}}}}")
+          try {
+            when (key.get(KeyConstants.KEY_TYPE).asJsonObject.get("typeName").asString) {
+              TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+              TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
+              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
+              TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
+              TypeConstants.LIST, TypeConstants.FORMULA -> {
+              }
+              else -> {
+                /* Referential keys with local types does not make sense to have defaults */
               }
             }
-            if (!key.get(KeyConstants.DEFAULT).asJsonObject.has("values"))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {values: 'Field is missing in request body'}}}}")
-            else {
-              try {
-                defaultVariableJson.add("values", key.get(KeyConstants.DEFAULT).asJsonObject.get("values").asJsonObject)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {values: 'Unexpected value for parameter'}}}}")
-              }
-            }
-            expectedKey.add(KeyConstants.DEFAULT, defaultVariableJson)
-          } else {
-            try {
-              when (key.get(KeyConstants.KEY_TYPE).asJsonObject.get("typeName").asString) {
-                TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-                TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-                TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
-                TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-                TypeConstants.LIST, TypeConstants.FORMULA -> {
-                }
-                else -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-              }
-            } catch (exception: Exception) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
-            }
+          } catch (exception: Exception) {
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
           }
         }
       } else {
@@ -134,41 +118,22 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Type name for key is not valid'}}}")
         // validate default value for key
         if (key.has(KeyConstants.DEFAULT)) {
-          if (key.get(KeyConstants.DEFAULT).isJsonObject) {
-            val defaultVariableJson = JsonObject()
-            if (!key.get(KeyConstants.DEFAULT).asJsonObject.has("variableName"))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {variableName: 'Field is missing in request body'}}}}")
-            else {
-              try {
-                defaultVariableJson.addProperty("variableName", key.get(KeyConstants.DEFAULT).asJsonObject.get("variableName").asString)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {variableName: 'Unexpected value for parameter'}}}}")
+          try {
+            when (key.get(KeyConstants.KEY_TYPE).asString) {
+              TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+              TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
+              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
+              TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
+              TypeConstants.LIST, TypeConstants.FORMULA -> {
+              }
+              else -> {
+                // Keys with reference to local types of some global variable does not make sense to have default value, at the time of writing this line.
+                if (!key.get(KeyConstants.KEY_TYPE).asString.contains("::"))
+                  expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
               }
             }
-            if (!key.get(KeyConstants.DEFAULT).asJsonObject.has("values"))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {values: Field is missing in request body}}}}")
-            else {
-              try {
-                defaultVariableJson.add("values", key.get(KeyConstants.DEFAULT).asJsonObject.get("values").asJsonObject)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: {values: 'Unexpected value for parameter'}}}}")
-              }
-            }
-            expectedKey.add(KeyConstants.DEFAULT, defaultVariableJson)
-          } else {
-            try {
-              when (key.get(KeyConstants.KEY_TYPE).asString) {
-                TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-                TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-                TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
-                TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-                TypeConstants.LIST, TypeConstants.FORMULA -> {
-                }
-                else -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-              }
-            } catch (exception: Exception) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
-            }
+          } catch (exception: Exception) {
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
           }
         }
         when (key.get(KeyConstants.KEY_TYPE).asString) {
@@ -199,8 +164,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 } catch (exception: Exception) {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {keys: 'Unexpected value for parameter'}}}}")
                 }
-                if (nestedType.has("variables") && !nestedType.get("variables").isJsonObject)
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {variables: 'Unexpected value for parameter'}}}}")
                 try {
                   validateTypeName(nestedTypeName)
                   validateTypeKeys(nestedTypeKeys)
@@ -208,8 +171,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                     addProperty("typeName", nestedTypeName)
                     addProperty("displayName", nestedType.get("displayName").asString)
                     add("keys", nestedTypeKeys)
-                    if (nestedType.has("variables"))
-                      add("variables?", nestedType.get("variables").asJsonObject)
                   })
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: ${exception.message}}}}")
@@ -224,6 +185,30 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 if (!keyTypeIdentifierPattern.matcher(key.get(KeyConstants.LIST_TYPE).asString).matches())
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'Type name for key is not valid'}}}")
               }
+            }
+            if (!key.has(KeyConstants.LIST_MAX_SIZE))
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not provided'}}}")
+            else {
+              val listMaxSize: Int = try {
+                key.get(KeyConstants.LIST_MAX_SIZE).asInt
+              } catch (exception: CustomJsonException) {
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+              }
+              expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
+              if (listMaxSize != -1 && listMaxSize < 1)
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+            }
+            if (!key.has(KeyConstants.LIST_MIN_SIZE))
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not provided'}}}")
+            else {
+              val listMinSize: Int = try {
+                key.get(KeyConstants.LIST_MIN_SIZE).asInt
+              } catch (exception: CustomJsonException) {
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
+              }
+              expectedKey.addProperty(KeyConstants.LIST_MIN_SIZE, listMinSize)
+              if (listMinSize < 0)
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
             }
           }
           TypeConstants.FORMULA -> {

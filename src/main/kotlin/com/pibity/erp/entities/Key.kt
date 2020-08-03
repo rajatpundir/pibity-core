@@ -47,9 +47,9 @@ data class Key(
 
     @OneToOne
     @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_super_variable_name", referencedColumnName = "super_variable_name"),
       JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
     var referencedVariable: Variable? = null,
 
@@ -60,13 +60,6 @@ data class Key(
     @OneToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "list_id")
     var list: TypeList? = null
-
-//    @ManyToMany
-//    @JoinTable(name = "mapping_key_permission", schema = "inventory",
-//        joinColumns = [
-//          JoinColumn(name = "key_name", referencedColumnName = "key_name")],
-//        inverseJoinColumns = [JoinColumn(name = "permission_name")])
-//    val permission: MutableSet<KeyPermission> = HashSet()
 
 ) : Serializable {
 

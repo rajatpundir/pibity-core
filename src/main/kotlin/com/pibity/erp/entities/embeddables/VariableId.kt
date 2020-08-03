@@ -9,6 +9,7 @@
 package com.pibity.erp.entities.embeddables
 
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.VariableList
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -16,14 +17,14 @@ import javax.persistence.*
 @Embeddable
 data class VariableId(
 
+    @OneToOne
+    val superList: VariableList,
+
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
         JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
         JoinColumn(name = "type_name", referencedColumnName = "type_name")])
     val type: Type,
-
-    @Column(name = "super_variable_name", nullable = false)
-    var superVariableName: String,
 
     @Column(name = "variable_name", nullable = false)
     var name: String
@@ -34,8 +35,8 @@ data class VariableId(
     other ?: return false
     if (this === other) return true
     other as VariableId
-    return this.type == other.type && this.superVariableName == other.superVariableName && this.name == other.name
+    return this.type == other.type && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(type, superVariableName, name)
+  override fun hashCode(): Int = Objects.hash(type, name)
 }

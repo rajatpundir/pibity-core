@@ -17,4 +17,6 @@ object KeyConstants {
   const val FORMULA_RETURN_TYPE = "returnType"
   const val LIST_TYPE = "listType"
   const val VALUE = "value"
+  const val LIST_MAX_SIZE = "max"
+  const val LIST_MIN_SIZE = "min"
 }

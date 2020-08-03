@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -18,7 +19,11 @@ data class TypeList(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
+
+    val min: Int,
+
+    val max: Int,
 
     @OneToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),

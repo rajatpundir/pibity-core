@@ -18,7 +18,7 @@ data class Formula(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
 
     @Column(name = "expression", nullable = false)
     var expression: String = "",

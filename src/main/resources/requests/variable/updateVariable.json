@@ -11,6 +11,9 @@
   "updatedVariableName?": {
     "type": "String"
   },
+  "active?": {
+    "type": "Boolean"
+  },
   "values": {
     "type": "Object"
   }

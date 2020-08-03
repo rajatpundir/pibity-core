@@ -45,13 +45,11 @@ class TypeService(
     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
     val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else "Any"
     val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
+    val multiplicity: Long = if (jsonParams.has("multiplicity?")) jsonParams.get("multiplicity?").asLong else 0
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject)
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type = Type(
-        TypeId(organization = organization, superTypeName = superTypeName, name = typeName),
-        autoAssignId = autoAssignId,
-        displayName = displayName)
+    val type = Type(TypeId(organization = organization, superTypeName = superTypeName, name = typeName), autoAssignId = autoAssignId, displayName = displayName, multiplicity = multiplicity)
     if (jsonParams.has("categoryId?")) {
       val categoryId: Long = jsonParams.get("categoryId?").asLong
       val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
@@ -153,7 +151,7 @@ class TypeService(
                 }
               }
           if (!primitiveTypes.contains(listType.id.name))
-            key.list = TypeList(type = listType)
+            key.list = TypeList(type = listType, min = keyJson.get(KeyConstants.LIST_MIN_SIZE).asInt, max = keyJson.get(KeyConstants.LIST_MAX_SIZE).asInt)
           else
             throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type cannot be a primitive type'}}}")
         }
@@ -200,39 +198,10 @@ class TypeService(
       TypeConstants.LIST, TypeConstants.FORMULA -> {
       }
       else -> {
-        // Key type is reference to non-primitive type
-        if (key.type.id.superTypeName == "Any") {
-          // key is reference to global type
-          if (defaultValue?.isJsonObject == true) {
-            val variable: Variable = variableService.createVariable(defaultValue.asJsonObject.apply {
-              addProperty("organization", key.id.parentType.id.organization.id)
-              addProperty("typeName", key.type.id.name)
-            })
-            key.referencedVariable = variable
-          } else if (defaultValue != null) {
-            val variable: Variable = variableRepository.findByTypeAndName(type = key.type, superVariableName = defaultValue.asString)
-                ?: throw CustomJsonException("{keys: {${key.id.name}: {default: 'Variable reference is not correct'}}}")
-            key.referencedVariable = variable
-          }
-        } else {
-          if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-              || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-            // key is internally reference to local type
-            // For defaults, creating or referencing internal local types as defaults does not make sense at the time of writing.
-          } else {
-            // key is externally reference to some local type
-            // Only referencing makes sense for this case (for non-list types)
-            // Referencing external local types that are used inside lists does not make sense for defaults,
-            // so the case is not handled to keep things simple. (i.e; name for variable is blank)
-            if (defaultValue?.isJsonObject == true)
-              throw CustomJsonException("{keys: {${key.id.name}: {default: 'Unexpected value for parameter'}}}")
-            else if (defaultValue != null) {
-              val variable: Variable = variableRepository.findByTypeAndName(type = key.type,
-                  superVariableName = defaultValue.asString)
-                  ?: throw CustomJsonException("{keys: {${key.id.name}: {default: 'Variable reference is not correct'}}}")
-              key.referencedVariable = variable
-            }
-          }
+        // Default values for variable references only makes sense when they refer a Global variable
+        if (key.type.id.superTypeName == "Any" && defaultValue != null) {
+          key.referencedVariable = variableRepository.findByTypeAndName(superList = key.id.parentType.id.organization.superList!!, type = key.type, name = defaultValue.asString)
+              ?: throw CustomJsonException("{keys: {${key.id.name}: {default: 'Variable reference is not correct'}}}")
         }
       }
     }
@@ -249,7 +218,7 @@ class TypeService(
         try {
           add("values", values.asJsonObject)
         } catch (exception: Exception) {
-          throw CustomJsonException("{variables: {$variableName: 'Unexpected value for parameter'}}")
+          throw CustomJsonException("{variables: {$variableName: {values: 'Unexpected value for parameter'}}}")
         }
       }
       try {
@@ -263,7 +232,7 @@ class TypeService(
   fun getTypeDetails(jsonParams: JsonObject): Type {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     return typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
@@ -274,7 +243,7 @@ class TypeService(
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
@@ -293,7 +262,7 @@ class TypeService(
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
         ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
@@ -307,20 +276,22 @@ class TypeService(
     }
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun listCategories(jsonParams: JsonObject): Set<Category> {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     return type.categories
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun listVariables(jsonParams: JsonObject): Set<Variable> {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.findById(organizationName)
+    val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")

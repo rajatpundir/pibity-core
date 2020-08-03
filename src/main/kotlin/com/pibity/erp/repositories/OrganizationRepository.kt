@@ -12,8 +12,8 @@ import com.pibity.erp.entities.Organization
 import org.springframework.data.repository.CrudRepository
 import org.springframework.transaction.annotation.Transactional
 
-interface OrganizationRepository : CrudRepository<Organization, Long> {
+interface OrganizationRepository : CrudRepository<Organization, String> {
 
   @Transactional(readOnly = true)
-  fun findById(id: String): Organization?
+  fun getById(id: String): Organization?
 }

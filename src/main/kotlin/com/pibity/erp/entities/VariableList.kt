@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -19,19 +20,21 @@ data class VariableList(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = -1,
+    val id: Long = -1,
+
+    var size: Int = 0,
 
     @OneToOne
     @JoinColumn(name = "list_type_id")
-    var listType: TypeList,
+    val listType: TypeList,
 
     @ManyToMany
     @JoinTable(name = "mapping_list_variables", schema = "inventory",
         joinColumns = [JoinColumn(name = "list_variable_id")],
         inverseJoinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
+          JoinColumn(name = "variable_super_list_id", referencedColumnName = "super_list_id"),
           JoinColumn(name = "variable_super_type_name", referencedColumnName = "super_type_name"),
           JoinColumn(name = "variable_type_name", referencedColumnName = "type_name"),
-          JoinColumn(name = "super_variable_name", referencedColumnName = "super_variable_name"),
           JoinColumn(name = "variable_name", referencedColumnName = "variable_name")])
     val variables: MutableSet<Variable> = HashSet()
 
@@ -45,4 +48,9 @@ data class VariableList(
   }
 
   override fun hashCode(): Int = Objects.hash(id)
+
+  init {
+    if (size < 0)
+      throw CustomJsonException("{size: 'List size cannot be less than zero'}")
+  }
 }
