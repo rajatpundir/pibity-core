@@ -18,13 +18,10 @@ class VariableSerializer : JsonSerializer<Variable> {
   override fun serialize(src: Variable?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
-      if (src.id.type.id.superTypeName == "Any") {
-        json.addProperty("organization", src.id.type.id.organization.id)
-        json.addProperty("variableName", src.id.name)
-        json.addProperty("typeName", src.id.type.id.name)
-      } else {
-        json.addProperty("context", src.id.superList.id)
-      }
+      json.addProperty("organization", src.id.type.id.organization.id)
+      json.addProperty("context", src.id.superList.id)
+      json.addProperty("variableName", src.id.name)
+      json.addProperty("typeName", src.id.type.id.name)
       val jsonValues = JsonObject()
       for (value in src.values) {
         when (value.id.key.type.id.name) {
