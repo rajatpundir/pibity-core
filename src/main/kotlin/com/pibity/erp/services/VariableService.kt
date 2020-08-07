@@ -10,14 +10,11 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.FormulaUtils
+import com.pibity.erp.commons.*
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.getLeafNameTypeValues
-import com.pibity.erp.commons.validateUpdatedVariableValues
-import com.pibity.erp.commons.validateVariableValues
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
@@ -63,8 +60,11 @@ class VariableService(
                 }
                 TypeConstants.LIST -> {
                     val jsonArray: JsonArray = values.get(it.id.name).asJsonArray
-                    val list: VariableList = variableListRepository.save(VariableList(listType = it.list!!))
-                            ?: throw CustomJsonException("{${it.id.name}: 'Unable to create List'}")
+                    val list: VariableList = try {
+                        variableListRepository.save(VariableList(listType = it.list!!))
+                    } catch (exception: Exception) {
+                        throw CustomJsonException("{${it.id.name}: 'Unable to create List'}")
+                    }
                     for (ref in jsonArray.iterator()) {
 
                         if (it.list!!.type.id.superTypeName == "Any") {
@@ -563,7 +563,7 @@ class VariableService(
     }
 
     @Transactional(rollbackFor = [CustomJsonException::class])
-    fun searchVariables(jsonParams: JsonObject): Set<Variable> {
+    fun queryVariables(jsonParams: JsonObject): String {
         val organizationName: String = jsonParams.get("organization").asString
         val typeName: String = jsonParams.get("typeName").asString
         val variableName: String = jsonParams.get("variableName").asString
@@ -571,6 +571,7 @@ class VariableService(
                 ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
         val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
                 ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-        return variableRepository.findBySimilarNames(superList = organization.superList!!, type = type, name = variableName)
+        return generateQuery(jsonParams.get("query").asJsonObject, type)
+//        return variableRepository.findBySimilarNames(superList = organization.superList!!, type = type, name = variableName)
     }
 }

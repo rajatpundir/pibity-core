@@ -30,7 +30,7 @@ class VariableController(val variableService: VariableService) {
       "createVariable" to getExpectedParams("variable", "createVariable"),
       "getVariableDetails" to getExpectedParams("variable", "getVariableDetails"),
       "updateVariable" to getExpectedParams("variable", "updateVariable"),
-      "searchVariables" to getExpectedParams("variable", "searchVariables")
+      "queryVariables" to getExpectedParams("variable", "queryVariables")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -69,10 +69,10 @@ class VariableController(val variableService: VariableService) {
     }
   }
 
-  @PostMapping(path = ["/search"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun searchVariables(@RequestBody request: String): ResponseEntity<String> {
+  @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(variableService.searchVariables(jsonParams = getJsonParams(request, expectedParams["searchVariables"]
+      ResponseEntity(gson.toJson(variableService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
           ?: JsonObject()))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

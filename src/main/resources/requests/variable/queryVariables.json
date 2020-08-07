@@ -8,7 +8,7 @@
   "variableName": {
     "type": "String"
   },
-  "values": {
+  "query": {
     "type": "Object"
   }
 }

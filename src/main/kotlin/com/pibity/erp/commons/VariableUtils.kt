@@ -520,7 +520,8 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
     return keys
 }
 
-fun generateQuery(query: JsonObject, type: Type): String {
+
+fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0): String {
     if (!query.has("operation"))
         throw CustomJsonException("{operation: 'Field is missing in request body'}")
     else {
@@ -531,55 +532,73 @@ fun generateQuery(query: JsonObject, type: Type): String {
         }
         when (operation) {
             "and" -> {
-                if (!query.has("left"))
-                    throw CustomJsonException("{left: 'Field is missing in request body'}")
-                if (!query.get("left").isJsonObject)
-                    throw CustomJsonException("{left: 'Unexpected value for parameter'}")
-                if (!query.has("right"))
-                    throw CustomJsonException("{right: 'Field is missing in request body'}")
-                if (!query.get("right").isJsonObject)
-                    throw CustomJsonException("{right: 'Unexpected value for parameter'}")
-                val leftQuery: String = try {
-                    generateQuery(query = query.get("left").asJsonObject, type = type)
+                if (!query.has("and"))
+                    throw CustomJsonException("{and: 'Field is missing in request body'}")
+                if (!query.get("and").isJsonArray)
+                    throw CustomJsonException("{and: 'Unexpected value for parameter'}")
+                if (query.get("and").asJsonArray.size() < 2)
+                    throw CustomJsonException("{and: 'Fields are missing for the parameter'}")
+                return try {
+                    "(" + query.get("and").asJsonArray.joinToString(separator = " AND ") {
+                        if (!it.isJsonObject)
+                            throw CustomJsonException("{and: 'Unexpected value for parameter'}")
+                        generateQuery(it.asJsonObject, type, injectedVariableCount)
+                    } + ")"
                 } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{left: ${exception.message}}")
+                    throw CustomJsonException("{and: ${exception.message}}")
                 }
-                val rightQuery: String = try {
-                    generateQuery(query = query.get("right").asJsonObject, type = type)
-                } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{left: ${exception.message}}")
-                }
-                return ("$leftQuery AND $rightQuery")
             }
             "or" -> {
-                if (!query.has("left"))
-                    throw CustomJsonException("{left: 'Field is missing in request body'}")
-                if (!query.get("left").isJsonObject)
-                    throw CustomJsonException("{left: 'Unexpected value for parameter'}")
-                if (!query.has("right"))
-                    throw CustomJsonException("{right: 'Field is missing in request body'}")
-                if (!query.get("right").isJsonObject)
-                    throw CustomJsonException("{right: 'Unexpected value for parameter'}")
-                val leftQuery: String = try {
-                    generateQuery(query = query.get("left").asJsonObject, type = type)
+                if (!query.has("or"))
+                    throw CustomJsonException("{or: 'Field is missing in request body'}")
+                if (!query.get("or").isJsonArray)
+                    throw CustomJsonException("{or: 'Unexpected value for parameter'}")
+                if (query.get("or").asJsonArray.size() < 2)
+                    throw CustomJsonException("{or: 'Fields are missing for the parameter'}")
+                return try {
+                    "(" + query.get("or").asJsonArray.joinToString(separator = " OR ") {
+                        if (!it.isJsonObject)
+                            throw CustomJsonException("{or: 'Unexpected value for parameter'}")
+                        generateQuery(it.asJsonObject, type, injectedVariableCount)
+                    } + ")"
                 } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{left: ${exception.message}}")
+                    throw CustomJsonException("{or: ${exception.message}}")
                 }
-                val rightQuery: String = try {
-                    generateQuery(query = query.get("right").asJsonObject, type = type)
-                } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{left: ${exception.message}}")
-                }
-                return ("$leftQuery OR $rightQuery")
             }
             "not" -> {
-                return ""
+                if (!query.has("not"))
+                    throw CustomJsonException("{not: 'Field is missing in request body'}")
+                if (!query.get("not").isJsonObject)
+                    throw CustomJsonException("{not: 'Unexpected value for parameter'}")
+                return query.get("not").asJsonObject.toString()
             }
             "query" -> {
-
+                var hql = ""
+                if (!query.has("query"))
+                    throw CustomJsonException("{query: 'Field is missing in request body'}")
+                if (!query.get("query").isJsonObject)
+                    throw CustomJsonException("{query: 'Unexpected value for parameter'}")
+                for (key in type.keys) {
+                    if(query.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
+                        if (!query.get("query").asJsonObject.get(key.id.name).isJsonObject)
+                            throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}")
+                        when(key.type.id.name) {
+                            TypeConstants.TEXT -> {
+                                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                                    println("${key.id.name} := v$injectedVariableCount")
+                                }
+                            }
+                            TypeConstants.NUMBER -> {}
+                            TypeConstants.BOOLEAN -> {}
+                            TypeConstants.DECIMAL -> {}
+                            TypeConstants.LIST -> {}
+                            else -> {}
+                        }
+                    }
+                }
+                return query.get("query").asJsonObject.toString()
             }
             else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
         }
     }
-    return ""
 }
