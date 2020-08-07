@@ -195,7 +195,7 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
               }
               expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
-              if (listMaxSize != -1 && listMaxSize < 1)
+              if (listMaxSize < 0)
                 throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
             }
             if (!key.has(KeyConstants.LIST_MIN_SIZE))

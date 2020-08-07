@@ -133,7 +133,7 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
                         } catch (exception: Exception) {
                             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                         }
-                        if (key.list!!.max < 1 && jsonArray.size() > key.list!!.max)
+                        if (key.list!!.max != 0 && jsonArray.size() > key.list!!.max)
                             throw CustomJsonException("{${key.id.name}: 'List cannot contain more than ${key.list!!.max} variables'}")
                         if (jsonArray.size() < key.list!!.min)
                             throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${key.list!!.min} variables'}")

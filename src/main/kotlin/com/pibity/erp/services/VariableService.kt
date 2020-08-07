@@ -68,7 +68,7 @@ class VariableService(
                     for (ref in jsonArray.iterator()) {
 
                         if (it.list!!.type.id.superTypeName == "Any") {
-                            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = organization.superList!!, type = it.type, name = ref.asString)
+                            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = organization.superList!!, type = it.list!!.type, name = ref.asString)
                                     ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced global variable'}")
                             referencedVariable.referenceCount += 1
                             if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
@@ -92,7 +92,7 @@ class VariableService(
                                 list.variables.add(referencedVariable)
                                 list.size += 1
                             } else {
-                                val referencedVariable: Variable = variableRepository.findVariable(organization = organization, superTypeName = type.id.superTypeName, typeName = type.id.name, superList = ref.asJsonObject.get("context").asLong, name = ref.asJsonObject.get("variableName").asString)
+                                val referencedVariable: Variable = variableRepository.findVariable(organization = organization, superTypeName = it.list!!.type.id.superTypeName, typeName = it.list!!.type.id.name, superList = ref.asJsonObject.get("context").asLong, name = ref.asJsonObject.get("variableName").asString)
                                         ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced local field of global variable'}")
                                 referencedVariable.referenceCount += 1
                                 if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
@@ -106,7 +106,7 @@ class VariableService(
                     }
                     if (list.size < list.listType.min)
                         throw CustomJsonException("{${it.id.name}: 'List cannot contain less than ${list.listType.min} variables'}")
-                    if (list.listType.max != -1 && list.size > list.listType.max)
+                    if (list.listType.max != 0 && list.size > list.listType.max)
                         throw CustomJsonException("{${it.id.name}: 'List cannot contain more than ${list.listType.max} variables'}")
                     variable.values.add(Value(id = ValueId(variable = variable, key = it), list = list))
                 }
@@ -135,7 +135,7 @@ class VariableService(
                             referencedVariable.referenceCount += 1
                             variable.values.add(Value(id = ValueId(variable = variable, key = it), referencedVariable = referencedVariable))
                         } else {
-                            val referencedVariable: Variable = variableRepository.findVariable(organization = organization, superTypeName = type.id.superTypeName, typeName = type.id.name, superList = values.get(it.id.name).asJsonObject.get("context").asLong, name = values.get(it.id.name).asJsonObject.get("variableName").asString)
+                            val referencedVariable: Variable = variableRepository.findVariable(organization = organization, superTypeName = it.type.id.superTypeName, typeName = it.type.id.name, superList = values.get(it.id.name).asJsonObject.get("context").asLong, name = values.get(it.id.name).asJsonObject.get("variableName").asString)
                                     ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced local field of global variable'}")
                             referencedVariable.referenceCount += 1
                             if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
@@ -420,7 +420,7 @@ class VariableService(
                         }
                         if (value.list!!.size < value.list!!.listType.min)
                             throw CustomJsonException("{${value.id.key.id.name}: 'List cannot contain less than ${value.list!!.listType.min} variables'}")
-                        if (value.list!!.listType.max != -1 && value.list!!.size > value.list!!.listType.max)
+                        if (value.list!!.listType.max != 0 && value.list!!.size > value.list!!.listType.max)
                             throw CustomJsonException("{${value.id.key.id.name}: 'List cannot contain more than ${value.list!!.listType.max} variables'}")
                     }
                     else -> {

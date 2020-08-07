@@ -62,9 +62,9 @@
       "addresses": {
         "type": "List",
         "min": "1",
-        "max": "-1",
+        "max": "0",
         "listType": {
-          "typeName": "SupplierAddress",
+          "typeName": "Address",
           "displayName": "Address",
           "keys": {
             "name": {
@@ -116,7 +116,7 @@
       "contacts": {
         "type": "List",
         "min": "1",
-        "max": "-1",
+        "max": "0",
         "listType": {
           "typeName": "Contact",
           "displayName": "Contact",
