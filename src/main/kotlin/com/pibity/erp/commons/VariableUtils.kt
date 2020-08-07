@@ -244,7 +244,7 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                         throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                     else {
                         val listParams = JsonObject()
-                        if (key.list!!.type.id.name == "Any") {
+                        if (key.list!!.type.id.superTypeName == "Any") {
                             if (values.get(key.id.name).asJsonObject.has("add")) {
                                 if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                                     throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
@@ -382,11 +382,12 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                                                 throw CustomJsonException("{${key.id.name}: {add: {context: 'Field is missing in request body'}}}")
                                             else {
                                                 try {
-                                                    jsonObject.addProperty("context", it.asJsonObject.get("variableName").asLong)
+                                                    jsonObject.addProperty("context", it.asJsonObject.get("context").asLong)
                                                 } catch (exception: Exception) {
                                                     throw CustomJsonException("{${key.id.name}: {add: {context: 'Unexpected value for parameter'}}}")
                                                 }
                                             }
+                                            params.add(jsonObject)
                                         }
                                         listParams.add("add", params)
                                     }
@@ -411,11 +412,12 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                                                 throw CustomJsonException("{${key.id.name}: {remove: {context: 'Field is missing in request body'}}}")
                                             else {
                                                 try {
-                                                    jsonObject.addProperty("context", it.asJsonObject.get("variableName").asLong)
+                                                    jsonObject.addProperty("context", it.asJsonObject.get("context").asLong)
                                                 } catch (exception: Exception) {
                                                     throw CustomJsonException("{${key.id.name}: {remove: {context: 'Unexpected value for parameter'}}}")
                                                 }
                                             }
+                                            params.add(jsonObject)
                                         }
                                         listParams.add("remove", params)
                                     }
