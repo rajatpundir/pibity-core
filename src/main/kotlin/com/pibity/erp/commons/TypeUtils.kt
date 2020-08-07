@@ -21,7 +21,7 @@ val typeIdentifierPattern: Pattern = Pattern.compile("^[A-Z][a-zA-Z0-9]*$")
 
 val keyIdentifierPattern: Pattern = Pattern.compile("^[a-z][a-zA-Z0-9]*$")
 
-val keyTypeIdentifierPattern: Pattern = Pattern.compile("^([A-Z][a-zA-Z0-9]*)?(::[A-Z][a-zA-Z0-9]*)?\$")
+val keyTypeIdentifierPattern: Pattern = Pattern.compile("^([A-Z][a-zA-Z0-9]*)(::[A-Z][a-zA-Z0-9]*)?\$")
 
 fun validateTypeName(typeName: String): String {
   if (!typeIdentifierPattern.matcher(typeName).matches())

@@ -133,7 +133,7 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
                         } catch (exception: Exception) {
                             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
                         }
-                        if (key.list!!.max != -1 && jsonArray.size() > key.list!!.max)
+                        if (key.list!!.max < 1 && jsonArray.size() > key.list!!.max)
                             throw CustomJsonException("{${key.id.name}: 'List cannot contain more than ${key.list!!.max} variables'}")
                         if (jsonArray.size() < key.list!!.min)
                             throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${key.list!!.min} variables'}")
@@ -278,9 +278,7 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                         } else {
                             if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
                                     || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
-
                                 if (values.get(key.id.name).asJsonObject.has("add")) {
-
                                     if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                                         throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
                                     else {

@@ -84,19 +84,9 @@ class TypeService(
             if (keyJson.get(KeyConstants.KEY_TYPE).asString.contains("::")) {
               val keySuperTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").first()
               val keyTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").last()
-              if (keySuperTypeName == "") {
-                // key refers to some local type
-                try {
-                  validLocalTypes.first { it.id.name == keyTypeName }
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-                }
-              } else {
-                // key refers to local type inside some other global type
-                val referentialLocalType: Type = typeRepository.findType(organization = organization, superTypeName = keySuperTypeName, name = keyTypeName)
-                    ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-                referentialLocalType
-              }
+              val referentialLocalType: Type = typeRepository.findType(organization = organization, superTypeName = keySuperTypeName, name = keyTypeName)
+                  ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
+              referentialLocalType
             } else {
               // key refers to global type
               try {
