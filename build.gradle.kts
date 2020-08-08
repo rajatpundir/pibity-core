@@ -55,9 +55,9 @@ spotless {
 //        ktlint()
     licenseHeaderFile("pibity.kotlin.license")
   }
-  kotlinGradle {
-    ktlint()
-  }
+//  kotlinGradle {
+//    ktlint()
+//  }
 }
 
 configure<SourceSetContainer> {
