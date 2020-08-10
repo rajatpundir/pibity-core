@@ -522,8 +522,7 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
   return keys
 }
 
-
-fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0): String {
+fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, String> = mutableMapOf()): Triple<String, Int, MutableMap<String, String>> {
   var variableCount: Int = injectedVariableCount
   if (!query.has("operation"))
     throw CustomJsonException("{operation: 'Field is missing in request body'}")
@@ -541,12 +540,12 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0)
           throw CustomJsonException("{and: 'Unexpected value for parameter'}")
         if (query.get("and").asJsonArray.size() < 2)
           throw CustomJsonException("{and: 'Fields are missing for the parameter'}")
-        return try {
-          "(" + query.get("and").asJsonArray.joinToString(separator = " AND ") {
-            if (!it.isJsonObject)
-              throw CustomJsonException("{and: 'Unexpected value for parameter'}")
-            generateQuery(it.asJsonObject, type, variableCount)
-          } + ")"
+        try {
+          return Triple("(" + query.get("and").asJsonArray.map {
+            val (generatedQuery, count) = generateQuery(it.asJsonObject, type, variableCount)
+            variableCount = count
+            generatedQuery
+          }.joinToString(separator = " AND ") + ")", variableCount, injectedValues)
         } catch (exception: CustomJsonException) {
           throw CustomJsonException("{and: ${exception.message}}")
         }
@@ -558,12 +557,12 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0)
           throw CustomJsonException("{or: 'Unexpected value for parameter'}")
         if (query.get("or").asJsonArray.size() < 2)
           throw CustomJsonException("{or: 'Fields are missing for the parameter'}")
-        return try {
-          "(" + query.get("or").asJsonArray.joinToString(separator = " OR ") {
-            if (!it.isJsonObject)
-              throw CustomJsonException("{or: 'Unexpected value for parameter'}")
-            generateQuery(it.asJsonObject, type, variableCount)
-          } + ")"
+        try {
+          return Triple("(" + query.get("or").asJsonArray.map {
+            val (generatedQuery, count) = generateQuery(it.asJsonObject, type, variableCount)
+            variableCount = count
+            generatedQuery
+          }.joinToString(separator = " OR ") + ")", variableCount, injectedValues)
         } catch (exception: CustomJsonException) {
           throw CustomJsonException("{or: ${exception.message}}")
         }
@@ -573,7 +572,7 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0)
           throw CustomJsonException("{not: 'Field is missing in request body'}")
         if (!query.get("not").isJsonObject)
           throw CustomJsonException("{not: 'Unexpected value for parameter'}")
-        return query.get("not").asJsonObject.toString()
+        return Triple(query.get("not").asJsonObject.toString(), variableCount, injectedValues)
       }
       "query" -> {
         var hql = ""
@@ -581,23 +580,61 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0)
           throw CustomJsonException("{query: 'Field is missing in request body'}")
         if (!query.get("query").isJsonObject)
           throw CustomJsonException("{query: 'Unexpected value for parameter'}")
+        hql += "SELECT v.id.variable from Value v WHERE v.id.key.id.parentType.id.organization.id := v${variableCount}"
+        injectedValues["v${variableCount++}"] = type.id.organization.id
+        hql += " AND v.id.key.id.parentType.id.superTypeName := v${variableCount}"
+        injectedValues["v${variableCount++}"] = type.id.superTypeName
+        hql += " AND v.id.key.id.parentType.id.name := v${variableCount}"
+        injectedValues["v${variableCount++}"] = type.id.name
+        val keyQueries = mutableListOf<String>()
         for (key in type.keys) {
           if (query.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
             if (!query.get("query").asJsonObject.get(key.id.name).isJsonObject)
               throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}")
+            println("---------------------------------")
+            println(key.id.name)
             println(key.type.id.name)
+            println("---------------------------------")
             when (key.type.id.name) {
               TypeConstants.TEXT -> {
                 if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  println("${key.id.name} := v$variableCount")
-                  variableCount += 1
+                  var h = "$hql AND v.id.key.id.name := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key.id.name
+                  h += " AND v.stringValue := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                  keyQueries.add("($h)")
+                  println(h)
                 }
               }
               TypeConstants.NUMBER -> {
+                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  var h = "$hql AND v.id.key.id.name := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key.id.name
+                  h += " AND v.longValue := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                  keyQueries.add("($h)")
+                  println(h)
+                }
               }
               TypeConstants.BOOLEAN -> {
+                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  var h = "$hql AND v.id.key.id.name := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key.id.name
+                  h += " AND v.booleanValue := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                  keyQueries.add("($h)")
+                  println(h)
+                }
               }
               TypeConstants.DECIMAL -> {
+                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  var h = "$hql AND v.id.key.id.name := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key.id.name
+                  h += " AND v.doubleValue := v${variableCount}"
+                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                  keyQueries.add("($h)")
+                  println(h)
+                }
               }
               TypeConstants.LIST -> {
               }
@@ -606,7 +643,19 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0)
             }
           }
         }
-        return query.get("query").asJsonObject.toString()
+        return if (keyQueries.size != 0) {
+          println("################################")
+          Triple("SELECT v.id.variable FROM Value v WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
+        } else {
+          var h = "SELECT v from Variable v WHERE v.id.type.id.organization.id := v${variableCount}"
+          injectedValues["v${variableCount++}"] = type.id.organization.id
+          h += " AND v.id.type.id.superTypeName := ${variableCount}"
+          injectedValues["v${variableCount++}"] = type.id.superTypeName
+          h += " AND v.id.type.id.name := ${variableCount}"
+          injectedValues["v${variableCount++}"] = type.id.name
+          println("################################")
+          Triple(h, variableCount, injectedValues)
+        }
       }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
