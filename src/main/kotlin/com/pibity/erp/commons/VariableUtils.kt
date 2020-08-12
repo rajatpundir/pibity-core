@@ -580,12 +580,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
           throw CustomJsonException("{query: 'Field is missing in request body'}")
         if (!query.get("query").isJsonObject)
           throw CustomJsonException("{query: 'Unexpected value for parameter'}")
-        hql += "SELECT DISTINCT v.id.variable FROM Value v WHERE v.id.key.id.parentType.id.organization.id = :v${variableCount}"
-        injectedValues["v${variableCount++}"] = type.id.organization.id
-        hql += " AND v.id.key.id.parentType.id.superTypeName = :v${variableCount}"
-        injectedValues["v${variableCount++}"] = type.id.superTypeName
-        hql += " AND v.id.key.id.parentType.id.name = :v${variableCount}"
-        injectedValues["v${variableCount++}"] = type.id.name
+        hql += "SELECT DISTINCT v.id.variable FROM Value v WHERE v.id.key.id.parentType = :v${variableCount}"
+        injectedValues["v${variableCount++}"] = type
         val keyQueries = mutableListOf<String>()
         for (key in type.keys) {
           if (query.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
@@ -594,8 +590,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
             when (key.type.id.name) {
               TypeConstants.TEXT -> {
                 if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key.id.name = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = key.id.name
+                  var h = "$hql AND v.id.key = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key
                   h += " AND v.stringValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
                   keyQueries.add("($h)")
@@ -603,8 +599,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
               }
               TypeConstants.NUMBER -> {
                 if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key.id.name = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = key.id.name
+                  var h = "$hql AND v.id.key = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key
                   h += " AND v.longValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asLong
                   keyQueries.add("($h)")
@@ -612,8 +608,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
               }
               TypeConstants.BOOLEAN -> {
                 if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key.id.name = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = key.id.name
+                  var h = "$hql AND v.id.key = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key
                   h += " AND v.booleanValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asBoolean
                   keyQueries.add("($h)")
@@ -621,8 +617,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
               }
               TypeConstants.DECIMAL -> {
                 if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key.id.name = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = key.id.name
+                  var h = "$hql AND v.id.key = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = key
                   h += " AND v.doubleValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asDouble
                   keyQueries.add("($h)")
@@ -638,12 +634,8 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
         return if (keyQueries.size != 0) {
           Triple("SELECT DISTINCT v.id.variable FROM Value v WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
         } else {
-          var h = "SELECT DISTINCT v FROM Variable v WHERE v.id.type.id.organization.id = :v${variableCount}"
-          injectedValues["v${variableCount++}"] = type.id.organization.id
-          h += " AND v.id.type.id.superTypeName = :v${variableCount}"
-          injectedValues["v${variableCount++}"] = type.id.superTypeName
-          h += " AND v.id.type.id.name = :v${variableCount}"
-          injectedValues["v${variableCount++}"] = type.id.name
+          val h = "SELECT DISTINCT v FROM Variable v WHERE v.id.type = :v${variableCount}"
+          injectedValues["v${variableCount++}"] = type
           Triple(h, variableCount, injectedValues)
         }
       }
