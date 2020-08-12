@@ -18,10 +18,7 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
-import com.pibity.erp.repositories.OrganizationRepository
-import com.pibity.erp.repositories.TypeRepository
-import com.pibity.erp.repositories.VariableListRepository
-import com.pibity.erp.repositories.VariableRepository
+import com.pibity.erp.repositories.*
 import org.codehaus.janino.ExpressionEvaluator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +28,8 @@ class VariableService(
     val organizationRepository: OrganizationRepository,
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
-    val variableListRepository: VariableListRepository
+    val variableListRepository: VariableListRepository,
+    val valueRepository: ValueRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -562,7 +560,7 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun queryVariables(jsonParams: JsonObject): String {
+  fun queryVariables(jsonParams: JsonObject): List<Variable> {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val variableName: String = jsonParams.get("variableName").asString
@@ -570,8 +568,7 @@ class VariableService(
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    val (generatedQuery, _, _) = generateQuery(jsonParams.get("query").asJsonObject, type)
-    return generatedQuery
-//        return variableRepository.findBySimilarNames(superList = organization.superList!!, type = type, name = variableName)
+    val (generatedQuery, _, injectedValues) = generateQuery(jsonParams.get("query").asJsonObject, type)
+    return valueRepository.queryVariables(generatedQuery, injectedValues)
   }
 }
