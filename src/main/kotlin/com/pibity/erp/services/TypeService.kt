@@ -276,15 +276,4 @@ class TypeService(
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     return type.categories
   }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun listVariables(jsonParams: JsonObject): Set<Variable> {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    return type.variables
-  }
 }

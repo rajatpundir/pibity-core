@@ -29,7 +29,7 @@ interface VariableRepository : CrudRepository<Variable, VariableId> {
   fun findVariable(organization: Organization, superTypeName: String, typeName: String, superList: Long, name: String = ""): Variable?
 
   @Transactional(readOnly = true)
-  @Query("SELECT v from Variable v where v.id.superList = :superList and v.id.type = :type AND v.id.name LIKE %:name%")
+  @Query("SELECT v from Variable v where v.id.superList = :superList and v.id.type = :type AND v.id.name = :name")
   fun findBySimilarNames(
       @Param("superList") superList: VariableList,
       @Param("type") type: Type,

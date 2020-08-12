@@ -246,16 +246,6 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun getVariableDetails(jsonParams: JsonObject): Variable {
-    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-        ?: throw CustomJsonException("{organization: 'Organization not found'}")
-    val typeName: String = jsonParams.get("typeName").asString
-    val variableName: String = jsonParams.get("variableName").asString
-    return variableRepository.findVariable(organization = organization, superTypeName = "Any", typeName = typeName, superList = organization.superList!!.id, name = variableName)
-        ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateLocalVariableNames(variable: Variable, updatedVariableName: String) {
     variable.id.name = updatedVariableName
     variable.values.filter { it.id.key.type.id.name !in primitiveTypes }.forEach { value ->
@@ -560,19 +550,18 @@ class VariableService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun queryVariables(jsonParams: JsonObject): List<Variable> {
-    println(jsonParams)
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
-    val variableName: String = jsonParams.get("variableName").asString
     val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    val (generatedQuery, _, injectedValues) = generateQuery(jsonParams.get("query").asJsonObject, type)
-    println("--------------------------")
-    println(generatedQuery)
-    println(gson.toJson(type))
-    println("--------------------------")
-    return valueRepository.queryVariables(generatedQuery, injectedValues)
+    if (jsonParams.has("variableName?")) {
+      return (listOf(variableRepository.findVariable(organization = organization, superTypeName = "Any", typeName = typeName, superList = organization.superList!!.id, name = jsonParams.get("variableName?").asString)
+          ?: throw CustomJsonException("[]")))
+    } else {
+      val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
+          ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
+      val (generatedQuery, _, injectedValues) = generateQuery(jsonParams.get("query").asJsonObject, type)
+      return valueRepository.queryVariables(generatedQuery, injectedValues)
+    }
   }
 }

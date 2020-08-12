@@ -30,8 +30,7 @@ class TypeController(val typeService: TypeService) {
       "getTypeDetails" to getExpectedParams("type", "getTypeDetails"),
       "addCategory" to getExpectedParams("type", "addCategory"),
       "removeCategory" to getExpectedParams("type", "removeCategory"),
-      "listCategories" to getExpectedParams("type", "listCategories"),
-      "listVariables" to getExpectedParams("type", "listVariables")
+      "listCategories" to getExpectedParams("type", "listCategories")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -86,18 +85,6 @@ class TypeController(val typeService: TypeService) {
   fun listCategories(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(typeService.listCategories(jsonParams = getJsonParams(request, expectedParams["listCategories"]
-          ?: JsonObject()))), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/variables"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun listVariables(@RequestBody request: String): ResponseEntity<String> {
-    return try {
-      ResponseEntity(gson.toJson(typeService.listVariables(jsonParams = getJsonParams(request, expectedParams["listVariables"]
           ?: JsonObject()))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
