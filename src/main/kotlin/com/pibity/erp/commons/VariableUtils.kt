@@ -585,52 +585,53 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
           if (queryParams.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
             if (!queryParams.get("query").asJsonObject.get(key.id.name).isJsonObject)
               throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}")
+            val keyQueryJson: JsonObject = queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject
             val valueAlias = "v${variableCount++}"
             var keyQuery = "SELECT ${valueAlias} FROM Value ${valueAlias} WHERE ${valueAlias}.id.variable = ${variableAlias}"
             when (key.type.id.name) {
               TypeConstants.TEXT -> {
-                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                if (keyQueryJson.has("equals")) {
                   keyQuery += " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
                   keyQuery += " AND ${valueAlias}.stringValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = try {
-                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                    keyQueryJson.get("equals").asString
                   } catch (exception: Exception) {
                     throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
                   }
                 }
               }
               TypeConstants.NUMBER -> {
-                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                if (keyQueryJson.has("equals")) {
                   keyQuery = " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
                   keyQuery += " AND ${valueAlias}.longValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = try {
-                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asLong
+                    keyQueryJson.get("equals").asLong
                   } catch (exception: Exception) {
                     throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
                   }
                 }
               }
               TypeConstants.BOOLEAN -> {
-                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                if (keyQueryJson.has("equals")) {
                   keyQuery = " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
                   keyQuery += " AND ${valueAlias}.booleanValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = try {
-                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asBoolean
+                    keyQueryJson.get("equals").asBoolean
                   } catch (exception: Exception) {
                     throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
                   }
                 }
               }
               TypeConstants.DECIMAL -> {
-                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                if (keyQueryJson.has("equals")) {
                   keyQuery += " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
                   keyQuery += " AND ${valueAlias}.doubleValue = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = try {
-                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asDouble
+                    keyQueryJson.get("equals").asDouble
                   } catch (exception: Exception) {
                     throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
                   }
@@ -639,6 +640,7 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
               TypeConstants.LIST, TypeConstants.FORMULA -> {
               }
               else -> {
+
               }
             }
             keyQueries.add("($keyQuery)")
