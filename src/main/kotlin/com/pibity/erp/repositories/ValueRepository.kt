@@ -15,18 +15,13 @@ import javax.persistence.EntityManager
 import javax.persistence.TypedQuery
 
 @Repository
-@Transactional(readOnly = true)
-class ValueRepository(val em: EntityManager) {
+class ValueRepository(val entityManager: EntityManager) {
 
+  @Transactional(readOnly = true)
   fun queryVariables(hql: String, injectedValues: MutableMap<String, Any>): List<Variable> {
-    val query: TypedQuery<Variable> = em.createQuery(hql, Variable::class.java)
-    for ((k, v) in injectedValues) {
-      println("$$$$$$$$$$$$$$$")
-      println(k)
-      println(v)
+    val query: TypedQuery<Variable> = entityManager.createQuery(hql, Variable::class.java)
+    for ((k, v) in injectedValues)
       query.setParameter(k, v)
-    }
-    return(query.resultList)
+    return (query.resultList)
   }
-
 }

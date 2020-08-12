@@ -109,7 +109,6 @@ class VariableService(
           variable.values.add(Value(id = ValueId(variable = variable, key = it), list = list))
         }
         else -> {
-
           if (it.type.id.superTypeName == "Any") {
             val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = organization.superList!!, type = it.type, name = values.get(it.id.name).asString)
                 ?: throw CustomJsonException("{${it.id.name}: 'Unable to find referenced global variable'}")
@@ -561,6 +560,7 @@ class VariableService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun queryVariables(jsonParams: JsonObject): List<Variable> {
+    println(jsonParams)
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString
     val variableName: String = jsonParams.get("variableName").asString
@@ -569,6 +569,10 @@ class VariableService(
     val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val (generatedQuery, _, injectedValues) = generateQuery(jsonParams.get("query").asJsonObject, type)
+    println("--------------------------")
+    println(generatedQuery)
+    println(gson.toJson(type))
+    println("--------------------------")
     return valueRepository.queryVariables(generatedQuery, injectedValues)
   }
 }

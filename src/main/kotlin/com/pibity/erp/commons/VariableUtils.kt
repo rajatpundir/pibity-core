@@ -522,26 +522,26 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
   return keys
 }
 
-fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf()): Triple<String, Int, MutableMap<String, Any>> {
+fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf()): Triple<String, Int, MutableMap<String, Any>> {
   var variableCount: Int = injectedVariableCount
-  if (!query.has("operation"))
+  if (!queryParams.has("operation"))
     throw CustomJsonException("{operation: 'Field is missing in request body'}")
   else {
     val operation: String = try {
-      query.get("operation").asString
+      queryParams.get("operation").asString
     } catch (exception: Exception) {
       throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     when (operation) {
       "and" -> {
-        if (!query.has("and"))
+        if (!queryParams.has("and"))
           throw CustomJsonException("{and: 'Field is missing in request body'}")
-        if (!query.get("and").isJsonArray)
+        if (!queryParams.get("and").isJsonArray)
           throw CustomJsonException("{and: 'Unexpected value for parameter'}")
-        if (query.get("and").asJsonArray.size() < 2)
+        if (queryParams.get("and").asJsonArray.size() < 2)
           throw CustomJsonException("{and: 'Fields are missing for the parameter'}")
         try {
-          return Triple("(" + query.get("and").asJsonArray.map {
+          return Triple("(" + queryParams.get("and").asJsonArray.map {
             val (generatedQuery, count) = generateQuery(it.asJsonObject, type, variableCount)
             variableCount = count
             generatedQuery
@@ -551,14 +551,14 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
         }
       }
       "or" -> {
-        if (!query.has("or"))
+        if (!queryParams.has("or"))
           throw CustomJsonException("{or: 'Field is missing in request body'}")
-        if (!query.get("or").isJsonArray)
+        if (!queryParams.get("or").isJsonArray)
           throw CustomJsonException("{or: 'Unexpected value for parameter'}")
-        if (query.get("or").asJsonArray.size() < 2)
+        if (queryParams.get("or").asJsonArray.size() < 2)
           throw CustomJsonException("{or: 'Fields are missing for the parameter'}")
         try {
-          return Triple("(" + query.get("or").asJsonArray.map {
+          return Triple("(" + queryParams.get("or").asJsonArray.map {
             val (generatedQuery, count) = generateQuery(it.asJsonObject, type, variableCount)
             variableCount = count
             generatedQuery
@@ -568,73 +568,86 @@ fun generateQuery(query: JsonObject, type: Type, injectedVariableCount: Int = 0,
         }
       }
       "not" -> {
-        if (!query.has("not"))
+        if (!queryParams.has("not"))
           throw CustomJsonException("{not: 'Field is missing in request body'}")
-        if (!query.get("not").isJsonObject)
+        if (!queryParams.get("not").isJsonObject)
           throw CustomJsonException("{not: 'Unexpected value for parameter'}")
-        return Triple(query.get("not").asJsonObject.toString(), variableCount, injectedValues)
+        return Triple(queryParams.get("not").asJsonObject.toString(), variableCount, injectedValues)
       }
       "query" -> {
-        var hql = ""
-        if (!query.has("query"))
+        if (!queryParams.has("query"))
           throw CustomJsonException("{query: 'Field is missing in request body'}")
-        if (!query.get("query").isJsonObject)
+        if (!queryParams.get("query").isJsonObject)
           throw CustomJsonException("{query: 'Unexpected value for parameter'}")
-        hql += "SELECT DISTINCT v.id.variable FROM Value v WHERE v.id.key.id.parentType = :v${variableCount}"
-        injectedValues["v${variableCount++}"] = type
         val keyQueries = mutableListOf<String>()
+        val variableAlias = "v${variableCount++}"
         for (key in type.keys) {
-          if (query.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
-            if (!query.get("query").asJsonObject.get(key.id.name).isJsonObject)
+          if (queryParams.get("query").asJsonObject.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
+            if (!queryParams.get("query").asJsonObject.get(key.id.name).isJsonObject)
               throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}")
+            val valueAlias = "v${variableCount++}"
+            var keyQuery = "SELECT ${valueAlias} FROM Value ${valueAlias} WHERE ${valueAlias}.id.variable = ${variableAlias}"
             when (key.type.id.name) {
               TypeConstants.TEXT -> {
-                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key = :v${variableCount}"
+                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  keyQuery += " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
-                  h += " AND v.stringValue = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
-                  keyQueries.add("($h)")
+                  keyQuery += " AND ${valueAlias}.stringValue = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = try {
+                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asString
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
+                  }
                 }
               }
               TypeConstants.NUMBER -> {
-                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key = :v${variableCount}"
+                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  keyQuery = " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
-                  h += " AND v.longValue = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asLong
-                  keyQueries.add("($h)")
+                  keyQuery += " AND ${valueAlias}.longValue = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = try {
+                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asLong
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
+                  }
                 }
               }
               TypeConstants.BOOLEAN -> {
-                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key = :v${variableCount}"
+                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  keyQuery = " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
-                  h += " AND v.booleanValue = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asBoolean
-                  keyQueries.add("($h)")
+                  keyQuery += " AND ${valueAlias}.booleanValue = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = try {
+                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asBoolean
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
+                  }
                 }
               }
               TypeConstants.DECIMAL -> {
-                if (query.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
-                  var h = "$hql AND v.id.key = :v${variableCount}"
+                if (queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.has("equals")) {
+                  keyQuery += " AND ${valueAlias}.id.key = :v${variableCount}"
                   injectedValues["v${variableCount++}"] = key
-                  h += " AND v.doubleValue = :v${variableCount}"
-                  injectedValues["v${variableCount++}"] = query.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asDouble
-                  keyQueries.add("($h)")
+                  keyQuery += " AND ${valueAlias}.doubleValue = :v${variableCount}"
+                  injectedValues["v${variableCount++}"] = try {
+                    queryParams.get("query").asJsonObject.get(key.id.name).asJsonObject.get("equals").asDouble
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{query: {query: {${key.id.name}: 'Unexpected value for parameter'}}}")
+                  }
                 }
               }
-              TypeConstants.LIST -> {
+              TypeConstants.LIST, TypeConstants.FORMULA -> {
               }
               else -> {
               }
             }
+            keyQueries.add("($keyQuery)")
           }
         }
         return if (keyQueries.size != 0) {
-          Triple("SELECT DISTINCT v.id.variable FROM Value v WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
+          Triple("SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
         } else {
-          val h = "SELECT DISTINCT v FROM Variable v WHERE v.id.type = :v${variableCount}"
+          val h = "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias} .id.type = :v${variableCount}"
           injectedValues["v${variableCount++}"] = type
           Triple(h, variableCount, injectedValues)
         }
