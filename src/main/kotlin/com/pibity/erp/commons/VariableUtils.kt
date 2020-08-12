@@ -647,7 +647,7 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
         return if (keyQueries.size != 0) {
           Triple("SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
         } else {
-          val h = "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias} .id.type = :v${variableCount}"
+          val h = "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount}"
           injectedValues["v${variableCount++}"] = type
           Triple(h, variableCount, injectedValues)
         }
