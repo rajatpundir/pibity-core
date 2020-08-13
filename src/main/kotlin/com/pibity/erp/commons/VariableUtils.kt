@@ -637,6 +637,20 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
                       }
                     }
                   }
+                  keyQueryJson.has("in") -> {
+                    keyQuery += " AND ${valueAlias}.stringValue IN :v${variableCount}"
+                    if (!keyQueryJson.get("in").isJsonArray)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("in").asJsonArray.map {
+                        it.asString
+                      }
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    }
+                  }
                 }
               }
               TypeConstants.NUMBER -> {
@@ -677,6 +691,20 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
                       }
                     }
                   }
+                  keyQueryJson.has("in") -> {
+                    keyQuery += " AND ${valueAlias}.longValue IN :v${variableCount}"
+                    if (!keyQueryJson.get("in").isJsonArray)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("in").asJsonArray.map {
+                        it.asLong
+                      }
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    }
+                  }
                 }
               }
               TypeConstants.DECIMAL -> {
@@ -715,6 +743,20 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
                       } catch (exception: Exception) {
                         throw CustomJsonException("{query: {query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}}")
                       }
+                    }
+                  }
+                  keyQueryJson.has("in") -> {
+                    keyQuery += " AND ${valueAlias}.doubleValue IN :v${variableCount}"
+                    if (!keyQueryJson.get("in").isJsonArray)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("in").asJsonArray.map {
+                        it.asDouble
+                      }
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{query: {query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}}")
                     }
                   }
                 }
