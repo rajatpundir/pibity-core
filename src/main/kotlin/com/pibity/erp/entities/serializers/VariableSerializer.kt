@@ -22,8 +22,9 @@ class VariableSerializer : JsonSerializer<Variable> {
         json.addProperty("organization", src.id.type.id.organization.id)
       else
         json.addProperty("context", src.id.superList.id)
-      json.addProperty("variableName", src.id.name)
       json.addProperty("typeName", src.id.type.id.name)
+      json.addProperty("variableName", src.id.name)
+      json.addProperty("active", src.active)
       val jsonValues = JsonObject()
       for (value in src.values) {
         when (value.id.key.type.id.name) {
