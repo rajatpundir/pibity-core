@@ -1,0 +1,169 @@
+[
+  {
+    "typeName": "MachineCategory",
+    "displayName": "Category",
+    "keys": {},
+    "variables": {
+      "SMT": {},
+      "Printer": {},
+      "Reflow Oven": {},
+      "Conveyor": {},
+      "Automatic Loader": {}
+    }
+  },
+  {
+    "typeName": "MachineUnitForMeasure",
+    "displayName": "Machine Unit",
+    "keys": {},
+    "variables": {
+      "Unit": {}
+    }
+  },
+  {
+    "typeName": "Manufacturer",
+    "displayName": "Manufacturer",
+    "keys": {},
+    "variables": {
+      "JUKI": {},
+      "YAMAHAH": {},
+      "SAMSUNG": {},
+      "PANASONIC": {},
+      "FUJI": {}
+    }
+  },
+  {
+    "typeName": "BiddingStatus",
+    "displayName": "Bidding Status",
+    "keys": {},
+    "variables": {
+      "Approved": {},
+      "Declined": {},
+      "Pending": {}
+    }
+  },
+  {
+    "typeName": "Machine",
+    "displayName": "Machine",
+    "keys": {
+      "id": {
+        "type": "Text",
+        "displayName": "Id",
+        "order": "0"
+      },
+      "name": {
+        "type": "Text",
+        "displayName": "Name",
+        "order": "1"
+      },
+      "manufacturer": {
+        "type": "Manufacturer",
+        "displayName": "manufacturer",
+        "order": "2"
+      },
+      "model": {
+        "type": "Text",
+        "displayName": "Model",
+        "order": "3"
+      },
+      "description": {
+        "type": "Text",
+        "displayName": "description",
+        "order": "4",
+        "default": ""
+      },
+      "category": {
+        "type": "MachineCategory",
+        "displayName": "Category",
+        "order": "6"
+      },
+      "minPrice": {
+        "type": "Decimal",
+        "displayName": "Minimum Price",
+        "order": "7"
+      },
+      "url": {
+        "type": "Text",
+        "displayName": "Image Url",
+        "order":"8",
+        "default": ""
+      },
+      "bidPrice": {
+        "type": "Decimal",
+        "displayName": "Minimum Price",
+        "order": "9",
+        "default": 0.00
+      },
+      "termsAndConditions": {
+        "type": "Text",
+        "displayName": "Terms And Condition",
+        "order": "10",
+        "default": ""
+      },
+      "unitForMeasure": {
+        "type": "MachineUnitForMeasure",
+        "displayName": "unit for measure",
+        "order": "11",
+        "default": "Unit"
+      }
+    }
+  },
+  {
+    "typeName": "User",
+    "displayName": "User",
+    "keys": {
+      "firstName": {
+        "type": "Text",
+        "displayName": "First Name",
+        "order": "1"
+      },
+      "lastName": {
+        "type": "Text",
+        "displayName": "Last Name",
+        "order": "1"
+      },
+      "email": {
+        "type": "Text",
+        "displayName": "email",
+        "order": "2"
+      },
+      "phone": {
+        "type": "Number",
+        "displayName": "phone",
+        "order": "3"
+      }
+    }
+  },
+  {
+    "typeName": "BiddingList",
+    "autoId":true,
+    "displayName": "Bidding List",
+    "keys": {
+      "machine": {
+        "type": "Machine",
+        "displayName": "Machine",
+        "order": "1"
+      },
+      "user": {
+        "type": "User",
+        "displayName": "User",
+        "order": "2"
+      },
+      "price": {
+        "type": "Decimal",
+        "displayName": "Price",
+        "order": "2"
+      },
+      "quantity": {
+        "type": "Number",
+        "displayName": "Quantity",
+        "order": "3"
+      },
+      "status": {
+        "type": "BiddingStatus",
+        "displayName": "status",
+        "order": "3",
+        "default": "Pending"
+      }
+    }
+  }
+]

@@ -72,7 +72,7 @@ class OrganizationService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createCustomTypes(organization: Organization) {
-    val customTypesList = listOf("Country", "Currency", "Customer", "Supplier", "Product", "PurchaseOrder", "SaleCreditNote", "PurchaseCreditNote")
+    val customTypesList = listOf("Country", "Currency", "Customer", "Supplier", "Product", "PurchaseOrder", "SaleCreditNote", "PurchaseCreditNote","Machine")
     for (filename in customTypesList) {
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/$filename.json"), JsonArray::class.java)
       for (json in types) {
