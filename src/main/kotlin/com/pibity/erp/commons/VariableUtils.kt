@@ -774,7 +774,31 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
               TypeConstants.LIST, TypeConstants.FORMULA -> {
               }
               else -> {
+                if (key.type.id.superTypeName == "Any") {
+                  when {
+                    keyQueryJson.has("equals") -> {
+                      if (keyQueryJson.get("equals").isJsonObject) {
 
+                      } else {
+                        keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
+                        injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                        injectedValues["v${variableCount++}"] = key.type
+                        injectedValues["v${variableCount++}"] = try {
+                          keyQueryJson.get("equals").asString
+                        } catch (exception: Exception) {
+                          throw CustomJsonException("{query: {query: {${key.id.name}: {equals: 'Unexpected value for parameter'}}}}")
+                        }
+                      }
+                    }
+                  }
+                } else {
+                  if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                      || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+
+                  } else {
+
+                  }
+                }
               }
             }
             keyQueries.add("($keyQuery)")

@@ -51,9 +51,12 @@ class KeySerializer : JsonSerializer<Key> {
           json.add(KeyConstants.LIST_TYPE, gson.fromJson(gson.toJson(src.list?.type), JsonObject::class.java))
         }
         else -> {
-          json.add(KeyConstants.KEY_TYPE, gson.fromJson(gson.toJson(src.type), JsonObject::class.java))
-          if (src.referencedVariable != null)
-            json.add(KeyConstants.DEFAULT, gson.fromJson(gson.toJson(src.referencedVariable), JsonObject::class.java))
+          if (src.type.id.superTypeName == "Any") {
+            json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
+            if (src.referencedVariable != null)
+              json.add(KeyConstants.DEFAULT, gson.fromJson(gson.toJson(src.referencedVariable), JsonObject::class.java))
+          }
+          else json.add(KeyConstants.KEY_TYPE, gson.fromJson(gson.toJson(src.type), JsonObject::class.java))
         }
       }
     }
