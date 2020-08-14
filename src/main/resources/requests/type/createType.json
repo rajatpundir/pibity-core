@@ -2,9 +2,6 @@
   "organization": {
     "type": "String"
   },
-  "categoryId?": {
-    "type": "Long"
-  },
   "typeName": {
     "type": "String"
   },

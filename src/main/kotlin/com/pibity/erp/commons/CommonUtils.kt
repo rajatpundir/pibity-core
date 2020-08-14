@@ -13,11 +13,9 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.Category
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
-import com.pibity.erp.entities.serializers.CategorySerializer
 import com.pibity.erp.entities.serializers.KeySerializer
 import com.pibity.erp.entities.serializers.TypeSerializer
 import com.pibity.erp.entities.serializers.VariableSerializer
@@ -25,7 +23,6 @@ import java.io.FileReader
 
 val gson: Gson = GsonBuilder()
     .excludeFieldsWithoutExposeAnnotation()
-    .registerTypeAdapter(Category::class.java, CategorySerializer())
     .registerTypeAdapter(Type::class.java, TypeSerializer())
     .registerTypeAdapter(Key::class.java, KeySerializer())
     .registerTypeAdapter(Variable::class.java, VariableSerializer())
