@@ -122,7 +122,7 @@ class VariableService(
                 || (it.id.parentType.id.superTypeName != "Any" && it.id.parentType.id.superTypeName == it.type.id.superTypeName)) {
               val referencedVariable: Variable = try {
                 createVariable(JsonObject().apply {
-                  addProperty("variableName", values.get(it.id.name).asJsonObject.get("variableName").asString)
+                  addProperty("variableName", "")
                   add("values", values.get(it.id.name).asJsonObject.get("values").asJsonObject)
                 }, variableOrganization = organization, variableType = it.type, variableSuperList = variable.subList)
               } catch (exception: CustomJsonException) {

@@ -69,13 +69,6 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
               if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
                   || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
                 val valueJson = JsonObject()
-                if (values.get(key.id.name).asJsonObject.has("variableName")) {
-                  try {
-                    valueJson.addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
-                  }
-                } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
                 if (values.get(key.id.name).asJsonObject.has("values")) {
                   try {
                     valueJson.add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
