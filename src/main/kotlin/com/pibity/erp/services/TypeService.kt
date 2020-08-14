@@ -22,7 +22,6 @@ import com.pibity.erp.commons.validateTypeName
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
 import com.pibity.erp.entities.embeddables.TypeId
-import com.pibity.erp.repositories.CategoryRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
@@ -32,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class TypeService(
     val organizationRepository: OrganizationRepository,
-    val categoryRepository: CategoryRepository,
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
     val variableService: VariableService
@@ -50,16 +48,6 @@ class TypeService(
     val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type = Type(TypeId(organization = organization, superTypeName = superTypeName, name = typeName), autoAssignId = autoAssignId, displayName = displayName, multiplicity = multiplicity)
-    if (jsonParams.has("categoryId?")) {
-      val categoryId: Long = jsonParams.get("categoryId?").asLong
-      val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
-          ?: try {
-            categoryRepository.findByOrganizationAndParent(organization = organization).single()
-          } catch (exception: Exception) {
-            throw CustomJsonException("{categoryId: 'Category could not be determined'}")
-          }
-      type.categories.add(category)
-    }
     val validGlobalTypes: MutableSet<Type> = globalTypes
         ?: typeRepository.findGlobalTypes(organization = organization) as MutableSet<Type>
     val validLocalTypes: MutableSet<Type> = localTypes ?: mutableSetOf()
@@ -84,19 +72,9 @@ class TypeService(
             if (keyJson.get(KeyConstants.KEY_TYPE).asString.contains("::")) {
               val keySuperTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").first()
               val keyTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").last()
-              if (keySuperTypeName == "") {
-                // key refers to some local type
-                try {
-                  validLocalTypes.first { it.id.name == keyTypeName }
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-                }
-              } else {
-                // key refers to local type inside some other global type
-                val referentialLocalType: Type = typeRepository.findType(organization = organization, superTypeName = keySuperTypeName, name = keyTypeName)
-                    ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-                referentialLocalType
-              }
+              val referentialLocalType: Type = typeRepository.findType(organization = organization, superTypeName = keySuperTypeName, name = keyTypeName)
+                  ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
+              referentialLocalType
             } else {
               // key refers to global type
               try {
@@ -236,65 +214,5 @@ class TypeService(
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     return typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun addCategory(jsonParams: JsonObject): Type? {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
-        ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    type.categories.add(category)
-    return try {
-      typeRepository.save(type)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{categoryId: 'Category could not be added to type'}")
-    }
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun removeCategory(jsonParams: JsonObject): Type? {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val categoryId: Long = jsonParams.get("categoryId").asLong
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val category: Category = categoryRepository.findByOrganizationAndId(organization = organization, id = categoryId)
-        ?: throw CustomJsonException("{categoryId: 'Category could not be determined'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    type.categories.remove(category)
-    return try {
-      typeRepository.save(type)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{categoryId: 'Category could not be added to type'}")
-    }
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun listCategories(jsonParams: JsonObject): Set<Category> {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    return type.categories
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun listVariables(jsonParams: JsonObject): Set<Variable> {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    return type.variables
   }
 }

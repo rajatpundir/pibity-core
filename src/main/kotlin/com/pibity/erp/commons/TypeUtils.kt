@@ -21,7 +21,7 @@ val typeIdentifierPattern: Pattern = Pattern.compile("^[A-Z][a-zA-Z0-9]*$")
 
 val keyIdentifierPattern: Pattern = Pattern.compile("^[a-z][a-zA-Z0-9]*$")
 
-val keyTypeIdentifierPattern: Pattern = Pattern.compile("^([A-Z][a-zA-Z0-9]*)?(::[A-Z][a-zA-Z0-9]*)?\$")
+val keyTypeIdentifierPattern: Pattern = Pattern.compile("^([A-Z][a-zA-Z0-9]*)(::[A-Z][a-zA-Z0-9]*)?\$")
 
 fun validateTypeName(typeName: String): String {
   if (!typeIdentifierPattern.matcher(typeName).matches())
@@ -195,7 +195,7 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
               }
               expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
-              if (listMaxSize != -1 && listMaxSize < 1)
+              if (listMaxSize < 0)
                 throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
             }
             if (!key.has(KeyConstants.LIST_MIN_SIZE))

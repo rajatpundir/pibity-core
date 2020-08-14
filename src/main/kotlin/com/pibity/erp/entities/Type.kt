@@ -47,15 +47,7 @@ data class Type(
     val keys: MutableSet<Key> = HashSet(),
 
     @OneToMany(mappedBy = "id.type", cascade = [CascadeType.ALL])
-    var variables: MutableSet<Variable> = HashSet(),
-
-    @ManyToMany
-    @JoinTable(name = "mapping_type_category", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-          JoinColumn(name = "type_name", referencedColumnName = "type_name")],
-        inverseJoinColumns = [JoinColumn(name = "category_id")])
-    val categories: MutableSet<Category> = HashSet()
+    var variables: MutableSet<Variable> = HashSet()
 
 ) : Serializable {
 

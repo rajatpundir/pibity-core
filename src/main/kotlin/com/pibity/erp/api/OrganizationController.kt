@@ -8,18 +8,17 @@
 
 package com.pibity.erp.api
 
+//import org.keycloak.KeycloakSecurityContext
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.services.OrganizationService
-//import org.keycloak.KeycloakSecurityContext
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import javax.servlet.http.HttpServletRequest
 
 
 @CrossOrigin
@@ -30,26 +29,13 @@ class OrganizationController(val organizationService: OrganizationService) {
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createOrganization" to getExpectedParams("organization", "createOrganization"),
-      "listAllCategories" to getExpectedParams("organization", "listAllCategories")
+      "createOrganization" to getExpectedParams("organization", "createOrganization")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createOrganization(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = getJsonParams(request, expectedParams["createOrganization"]
-          ?: JsonObject()))), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/categories"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun listAllCategories(@RequestBody request: String): ResponseEntity<String> {
-    return try {
-      ResponseEntity(gson.toJson(organizationService.listAllCategories(jsonParams = getJsonParams(request, expectedParams["listAllCategories"]
           ?: JsonObject()))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

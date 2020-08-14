@@ -21,7 +21,7 @@ data class Value(
     @EmbeddedId
     val id: ValueId,
 
-    @Column(name = "string_value")
+    @Column(name = "string_value" ,length=1024)
     var stringValue: String? = null,
 
     @Column(name = "long_value")

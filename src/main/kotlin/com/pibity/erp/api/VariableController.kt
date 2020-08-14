@@ -28,27 +28,14 @@ class VariableController(val variableService: VariableService) {
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createVariable" to getExpectedParams("variable", "createVariable"),
-      "getVariableDetails" to getExpectedParams("variable", "getVariableDetails"),
       "updateVariable" to getExpectedParams("variable", "updateVariable"),
-      "searchVariables" to getExpectedParams("variable", "searchVariables")
+      "queryVariables" to getExpectedParams("variable", "queryVariables")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createVariable(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(variableService.createVariable(jsonParams = getJsonParams(request, expectedParams["createVariable"]
-          ?: JsonObject()))), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun getVariableDetails(@RequestBody request: String): ResponseEntity<String> {
-    return try {
-      ResponseEntity(gson.toJson(variableService.getVariableDetails(jsonParams = getJsonParams(request, expectedParams["getVariableDetails"]
           ?: JsonObject()))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -69,10 +56,10 @@ class VariableController(val variableService: VariableService) {
     }
   }
 
-  @PostMapping(path = ["/search"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun searchVariables(@RequestBody request: String): ResponseEntity<String> {
+  @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(variableService.searchVariables(jsonParams = getJsonParams(request, expectedParams["searchVariables"]
+      ResponseEntity(gson.toJson(variableService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
           ?: JsonObject()))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

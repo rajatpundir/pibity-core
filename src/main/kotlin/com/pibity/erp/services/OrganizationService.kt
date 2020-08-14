@@ -16,9 +16,15 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.*
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.TypeList
+import com.pibity.erp.entities.VariableList
 import com.pibity.erp.entities.embeddables.TypeId
-import com.pibity.erp.repositories.*
+import com.pibity.erp.repositories.OrganizationRepository
+import com.pibity.erp.repositories.TypeListRepository
+import com.pibity.erp.repositories.TypeRepository
+import com.pibity.erp.repositories.VariableListRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.FileReader
@@ -26,7 +32,6 @@ import java.io.FileReader
 @Service
 class OrganizationService(
     val organizationRepository: OrganizationRepository,
-    val categoryRepository: CategoryRepository,
     val typeRepository: TypeRepository,
     val typeListRepository: TypeListRepository,
     val variableListRepository: VariableListRepository,
@@ -41,14 +46,10 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
-    try {
-      categoryRepository.save(Category(organization = organization, name = "default"))
-    } catch (exception: Exception) {
-      throw CustomJsonException("{'organization': 'Default category for organization $organizationName could not be created'}")
-    }
     createPrimitiveTypes(organization = organization)
     try {
-      val anyType = typeRepository.findType(organization = organization, superTypeName = "Any", name = TypeConstants.TEXT) ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
+      val anyType = typeRepository.findType(organization = organization, superTypeName = "Any", name = TypeConstants.TEXT)
+          ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
       val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = -1))
       val vl = variableListRepository.save(VariableList(listType = tl))
       organization.superList = vl
@@ -72,7 +73,7 @@ class OrganizationService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createCustomTypes(organization: Organization) {
-    val customTypesList = listOf("Country", "Currency", "Customer", "Supplier", "Product", "PurchaseOrder", "SaleCreditNote", "PurchaseCreditNote")
+    val customTypesList = listOf("Country", "Currency", "Customer", "Supplier", "Product", "PurchaseOrder", "SaleCreditNote", "PurchaseCreditNote", "Machine")
     for (filename in customTypesList) {
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/$filename.json"), JsonArray::class.java)
       for (json in types) {
@@ -80,12 +81,5 @@ class OrganizationService(
         typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
       }
     }
-  }
-
-  fun listAllCategories(jsonParams: JsonObject): Set<Category> {
-    val organizationName: String = jsonParams.get("organization").asString
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{'organization': 'Organization could not be found'}")
-    return categoryRepository.findByOrganization(organization)
   }
 }

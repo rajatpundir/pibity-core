@@ -5,7 +5,10 @@
   "typeName": {
     "type": "String"
   },
-  "variableName": {
+  "variableName?": {
     "type": "String"
+  },
+  "query": {
+    "type": "Object"
   }
 }

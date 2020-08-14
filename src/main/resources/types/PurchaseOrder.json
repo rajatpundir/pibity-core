@@ -23,7 +23,7 @@
               "order": "0"
             },
             "contact": {
-              "type": "Text",
+              "type": "Supplier::Contact",
               "displayName": "Contact",
               "order": "1"
             },
@@ -33,12 +33,12 @@
               "order": "2"
             },
             "vendorAddressLine1": {
-              "type": "Text",
+              "type": "Supplier::Address",
               "displayName": "Vendor Address Line1",
               "order": "3"
             },
             "vendorAddressLine2": {
-              "type": "Text",
+              "type": "Supplier::Address",
               "displayName": "Vendor Address Line2",
               "order": "4"
             },
@@ -134,7 +134,7 @@
             "productInvoiceDetails": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "ProductInvoice",
                 "displayName": "Product Invoice",
@@ -192,7 +192,7 @@
             "additionalCost": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "AdditionalCost",
                 "displayName": "Additional Cost",
@@ -240,7 +240,7 @@
             "supplierDeposit": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "SupplierDeposit",
                 "displayName": "SupplierDeposit",
@@ -291,7 +291,7 @@
             "productInvoiceDetails": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "ProductInvoice",
                 "displayName": "Product Invoice",
@@ -349,7 +349,7 @@
             "additionalCost": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "AdditionalCost",
                 "displayName": "Additional Cost",
@@ -397,7 +397,7 @@
             "supplierDeposit": {
               "type": "List",
               "min": "0",
-              "max": "-1",
+              "max": "0",
               "listType": {
                 "typeName": "SupplierDeposit",
                 "displayName": "SupplierDeposit",
@@ -440,7 +440,7 @@
       "stockReceived": {
         "type": "List",
         "min": "0",
-        "max": "-1",
+        "max": "0",
         "listType": {
           "typeName": "StockReceived",
           "displayName": "Stock Received",

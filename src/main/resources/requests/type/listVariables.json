@@ -1,8 +1,0 @@
-{
-  "organization": {
-    "type": "String"
-  },
-  "typeName": {
-    "type": "String"
-  }
-}
