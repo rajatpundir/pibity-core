@@ -522,7 +522,7 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
   return keys
 }
 
-fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf()): Triple<String, Int, MutableMap<String, Any>> {
+fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {
   var variableCount: Int = injectedVariableCount
   if (!queryParams.has("operation"))
     throw CustomJsonException("{operation: 'Field is missing in request body'}")
@@ -779,12 +779,12 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
                     keyQueryJson.has("equals") -> {
                       if (keyQueryJson.get("equals").isJsonObject) {
                         val (generatedQuery, count, _) = try {
-                          generateQuery(queryParams = keyQueryJson.get("equals").asJsonObject, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues)
+                          generateQuery(queryParams = keyQueryJson.get("equals").asJsonObject, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
                         } catch (exception: CustomJsonException) {
                           throw CustomJsonException("{query: {query: {${key.id.name}: {equals: ${exception.message}}}}}")
                         }
                         variableCount = count
-                        keyQuery += " AND ${valueAlias}.referencedVariable IN (${generatedQuery})"
+                        keyQuery += " AND EXISTS (${generatedQuery})"
                       } else {
                         keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
                         injectedValues["v${variableCount++}"] = type.id.organization.superList!!
@@ -869,9 +869,15 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
           }
         }
         return if (keyQueries.size != 0) {
-          Triple("SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
+          if (parentValueAlias != null)
+            Triple("SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ") + " AND ${variableAlias}=${parentValueAlias}.referencedVariable", variableCount, injectedValues)
+          else
+            Triple("SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS "), variableCount, injectedValues)
         } else {
-          val h = "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount}"
+          val h = if(parentValueAlias != null)
+            "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount} AND ${variableAlias}=${parentValueAlias}.referencedVariable"
+          else
+            "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount}"
           injectedValues["v${variableCount++}"] = type
           Triple(h, variableCount, injectedValues)
         }

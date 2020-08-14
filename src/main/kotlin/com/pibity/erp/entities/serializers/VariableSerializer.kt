@@ -21,8 +21,7 @@ class VariableSerializer : JsonSerializer<Variable> {
       if (src.id.type.id.superTypeName == "Any") {
         json.addProperty("organization", src.id.type.id.organization.id)
         json.addProperty("active", src.active)
-      }
-      else
+      } else
         json.addProperty("context", src.id.superList.id)
       json.addProperty("typeName", src.id.type.id.name)
       json.addProperty("variableName", src.id.name)
@@ -43,10 +42,10 @@ class VariableSerializer : JsonSerializer<Variable> {
           }
           TypeConstants.LIST -> jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.list!!.variables), JsonArray::class.java))
           else -> {
-            if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
-              jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
-            else
-              jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
+//            if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
+//              jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
+//            else
+            jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
           }
         }
       }
