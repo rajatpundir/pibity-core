@@ -560,7 +560,11 @@ class VariableService(
     } else {
       val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
           ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-      val (generatedQuery, _, injectedValues) = generateQuery(jsonParams.get("query").asJsonObject, type)
+      val (generatedQuery, _, injectedValues) = try {
+        generateQuery(jsonParams.get("query").asJsonObject, type)
+      } catch (exception: CustomJsonException) {
+        throw CustomJsonException("{query : ${exception.message}}")
+      }
       println("-------------------------------------------")
       println(generatedQuery)
       println("-------------------------------------------")

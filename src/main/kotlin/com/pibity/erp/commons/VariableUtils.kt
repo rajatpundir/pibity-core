@@ -528,191 +528,227 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
   val variableAlias = "v${variableCount++}"
   for (key in type.keys) {
     if (queryParams.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
-      if (!queryParams.get(key.id.name).isJsonObject)
-        throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}")
-      val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
       val valueAlias = "v${variableCount++}"
-      var keyQuery = "SELECT ${valueAlias} FROM Value ${valueAlias} WHERE ${valueAlias}.id.variable = ${variableAlias}"
-      keyQuery += " AND ${valueAlias}.id.key = :v${variableCount}"
+      var keyQuery = "SELECT ${valueAlias} FROM Value ${valueAlias} WHERE ${valueAlias}.id.variable = ${variableAlias} AND ${valueAlias}.id.key = :v${variableCount}"
       injectedValues["v${variableCount++}"] = key
       when (key.type.id.name) {
         TypeConstants.TEXT -> {
-          when {
-            keyQueryJson.has("equals") -> {
-              keyQuery += " AND ${valueAlias}.stringValue = :v${variableCount}"
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("equals").asString
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {equals: 'Unexpected value for parameter'}}}")
-              }
+          if (!queryParams.get(key.id.name).isJsonObject) {
+            keyQuery += " AND ${valueAlias}.stringValue = :v${variableCount}"
+            injectedValues["v${variableCount++}"] = try {
+              queryParams.get(key.id.name).asString
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            keyQueryJson.has("like") -> {
-              keyQuery += " AND ${valueAlias}.stringValue LIKE :v${variableCount}"
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("like").asString
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {like: 'Unexpected value for parameter'}}}")
-              }
-            }
-            keyQueryJson.has("between") -> {
-              keyQuery += " AND ${valueAlias}.stringValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("between").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("between").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("between").asJsonArray.forEach {
+          } else {
+            val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+            when {
+              keyQueryJson.has("equals") -> {
+                keyQuery += " AND ${valueAlias}.stringValue = :v${variableCount}"
                 injectedValues["v${variableCount++}"] = try {
-                  it.asString
+                  keyQueryJson.get("equals").asString
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: {equals: 'Unexpected value for parameter'}}")
                 }
               }
-            }
-            keyQueryJson.has("notBetween") -> {
-              keyQuery += " AND ${valueAlias}.stringValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("notBetween").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("notBetween").asJsonArray.forEach {
+              keyQueryJson.has("like") -> {
+                keyQuery += " AND ${valueAlias}.stringValue LIKE :v${variableCount}"
                 injectedValues["v${variableCount++}"] = try {
-                  it.asString
+                  keyQueryJson.get("like").asString
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: {like: 'Unexpected value for parameter'}}")
                 }
               }
-            }
-            keyQueryJson.has("in") -> {
-              keyQuery += " AND ${valueAlias}.stringValue IN :v${variableCount}"
-              if (!keyQueryJson.get("in").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("in").asJsonArray.size() == 0)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("in").asJsonArray.map {
-                  it.asString
+              keyQueryJson.has("between") -> {
+                keyQuery += " AND ${valueAlias}.stringValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("between").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("between").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("between").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asString
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                  }
                 }
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
+              }
+              keyQueryJson.has("notBetween") -> {
+                keyQuery += " AND ${valueAlias}.stringValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("notBetween").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("notBetween").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asString
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                  }
+                }
+              }
+              keyQueryJson.has("in") -> {
+                keyQuery += " AND ${valueAlias}.stringValue IN :v${variableCount}"
+                if (!keyQueryJson.get("in").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                injectedValues["v${variableCount++}"] = try {
+                  keyQueryJson.get("in").asJsonArray.map {
+                    it.asString
+                  }
+                } catch (exception: Exception) {
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                }
               }
             }
           }
         }
         TypeConstants.NUMBER -> {
-          when {
-            keyQueryJson.has("equals") -> {
-              keyQuery += " AND ${valueAlias}.longValue = :v${variableCount}"
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("equals").asLong
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: 'Unexpected value for parameter'}}}")
-              }
+          if (!queryParams.get(key.id.name).isJsonObject) {
+            keyQuery += " AND ${valueAlias}.longValue = :v${variableCount}"
+            injectedValues["v${variableCount++}"] = try {
+              queryParams.get(key.id.name).asLong
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            keyQueryJson.has("between") -> {
-              keyQuery += " AND ${valueAlias}.longValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("between").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("between").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("between").asJsonArray.forEach {
+          } else {
+            val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+            when {
+              keyQueryJson.has("equals") -> {
+                keyQuery += " AND ${valueAlias}.longValue = :v${variableCount}"
                 injectedValues["v${variableCount++}"] = try {
-                  it.asLong
+                  keyQueryJson.get("equals").asLong
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
                 }
               }
-            }
-            keyQueryJson.has("notBetween") -> {
-              keyQuery += " AND ${valueAlias}.longValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("notBetween").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("notBetween").asJsonArray.forEach {
+              keyQueryJson.has("between") -> {
+                keyQuery += " AND ${valueAlias}.longValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("between").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("between").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("between").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asLong
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                  }
+                }
+              }
+              keyQueryJson.has("notBetween") -> {
+                keyQuery += " AND ${valueAlias}.longValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("notBetween").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("notBetween").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asLong
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                  }
+                }
+              }
+              keyQueryJson.has("in") -> {
+                keyQuery += " AND ${valueAlias}.longValue IN :v${variableCount}"
+                if (!keyQueryJson.get("in").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                 injectedValues["v${variableCount++}"] = try {
-                  it.asLong
+                  keyQueryJson.get("in").asJsonArray.map {
+                    it.asLong
+                  }
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                 }
-              }
-            }
-            keyQueryJson.has("in") -> {
-              keyQuery += " AND ${valueAlias}.longValue IN :v${variableCount}"
-              if (!keyQueryJson.get("in").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("in").asJsonArray.size() == 0)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("in").asJsonArray.map {
-                  it.asLong
-                }
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
               }
             }
           }
         }
         TypeConstants.DECIMAL -> {
-          when {
-            keyQueryJson.has("equals") -> {
-              keyQuery += " AND ${valueAlias}.doubleValue = :v${variableCount}"
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("equals").asDouble
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {equals:'Unexpected value for parameter'}}}")
-              }
+          if (!queryParams.get(key.id.name).isJsonObject) {
+            keyQuery += " AND ${valueAlias}.doubleValue = :v${variableCount}"
+            injectedValues["v${variableCount++}"] = try {
+              queryParams.get(key.id.name).asDouble
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            keyQueryJson.has("between") -> {
-              keyQuery += " AND ${valueAlias}.doubleValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("between").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("between").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("between").asJsonArray.forEach {
+          } else {
+            val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+            when {
+              keyQueryJson.has("equals") -> {
+                keyQuery += " AND ${valueAlias}.doubleValue = :v${variableCount}"
                 injectedValues["v${variableCount++}"] = try {
-                  it.asDouble
+                  keyQueryJson.get("equals").asDouble
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: {equals:'Unexpected value for parameter'}}")
                 }
               }
-            }
-            keyQueryJson.has("notBetween") -> {
-              keyQuery += " AND ${valueAlias}.doubleValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
-              if (!keyQueryJson.get("notBetween").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
-                throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-              keyQueryJson.get("notBetween").asJsonArray.forEach {
+              keyQueryJson.has("between") -> {
+                keyQuery += " AND ${valueAlias}.doubleValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("between").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("between").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("between").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asDouble
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                  }
+                }
+              }
+              keyQueryJson.has("notBetween") -> {
+                keyQuery += " AND ${valueAlias}.doubleValue NOT BETWEEN :v${variableCount} AND :v${variableCount + 1}"
+                if (!keyQueryJson.get("notBetween").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
+                  throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                keyQueryJson.get("notBetween").asJsonArray.forEach {
+                  injectedValues["v${variableCount++}"] = try {
+                    it.asDouble
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                  }
+                }
+              }
+              keyQueryJson.has("in") -> {
+                keyQuery += " AND ${valueAlias}.doubleValue IN :v${variableCount}"
+                if (!keyQueryJson.get("in").isJsonArray)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                 injectedValues["v${variableCount++}"] = try {
-                  it.asDouble
+                  keyQueryJson.get("in").asJsonArray.map {
+                    it.asDouble
+                  }
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
+                  throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                 }
-              }
-            }
-            keyQueryJson.has("in") -> {
-              keyQuery += " AND ${valueAlias}.doubleValue IN :v${variableCount}"
-              if (!keyQueryJson.get("in").isJsonArray)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              else if (keyQueryJson.get("in").asJsonArray.size() == 0)
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-              injectedValues["v${variableCount++}"] = try {
-                keyQueryJson.get("in").asJsonArray.map {
-                  it.asDouble
-                }
-              } catch (exception: Exception) {
-                throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
               }
             }
           }
         }
         TypeConstants.BOOLEAN -> {
-          if (keyQueryJson.has("equals")) {
+          if (!queryParams.get(key.id.name).isJsonObject) {
             keyQuery += " AND ${valueAlias}.booleanValue = :v${variableCount}"
             injectedValues["v${variableCount++}"] = try {
-              keyQueryJson.get("equals").asBoolean
+              queryParams.get(key.id.name).asBoolean
             } catch (exception: Exception) {
-              throw CustomJsonException("{query: {${key.id.name}: {equals: 'Unexpected value for parameter'}}}")
+              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+            }
+          } else {
+            val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+            if (keyQueryJson.has("equals")) {
+              keyQuery += " AND ${valueAlias}.booleanValue = :v${variableCount}"
+              injectedValues["v${variableCount++}"] = try {
+                keyQueryJson.get("equals").asBoolean
+              } catch (exception: Exception) {
+                throw CustomJsonException("{${key.id.name}: {equals: 'Unexpected value for parameter'}}")
+              }
             }
           }
         }
@@ -720,104 +756,126 @@ fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: In
         }
         else -> {
           if (key.type.id.superTypeName == "Any") {
-            when {
-              keyQueryJson.has("equals") -> {
-                if (keyQueryJson.get("equals").isJsonObject) {
-                  val (generatedQuery, count, _) = try {
-                    generateQuery(queryParams = keyQueryJson.get("equals").asJsonObject, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
-                  } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{query: {${key.id.name}: {equals: ${exception.message}}}}")
+            if (!queryParams.get(key.id.name).isJsonObject) {
+              keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
+              injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+              injectedValues["v${variableCount++}"] = key.type
+              injectedValues["v${variableCount++}"] = try {
+                queryParams.get(key.id.name).asString
+              } catch (exception: Exception) {
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              }
+            } else {
+              val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+              when {
+                keyQueryJson.has("equals") -> {
+                  if (keyQueryJson.get("equals").isJsonObject) {
+                    val (generatedQuery, count, _) = try {
+                      generateQuery(queryParams = keyQueryJson.get("equals").asJsonObject, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
+                    } catch (exception: CustomJsonException) {
+                      throw CustomJsonException("{${key.id.name}: {equals: ${exception.message}}}")
+                    }
+                    variableCount = count
+                    keyQuery += " AND EXISTS (${generatedQuery})"
+                  } else {
+                    keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
+                    injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                    injectedValues["v${variableCount++}"] = key.type
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("equals").asString
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: {equals: 'Unexpected value for parameter'}}")
+                    }
                   }
-                  variableCount = count
-                  keyQuery += " AND EXISTS (${generatedQuery})"
-                } else {
-                  keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
+                }
+                keyQueryJson.has("like") -> {
+                  keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name LIKE :v${variableCount + 2}"
                   injectedValues["v${variableCount++}"] = type.id.organization.superList!!
                   injectedValues["v${variableCount++}"] = key.type
                   injectedValues["v${variableCount++}"] = try {
-                    keyQueryJson.get("equals").asString
+                    keyQueryJson.get("like").asString
                   } catch (exception: Exception) {
-                    throw CustomJsonException("{query: {${key.id.name}: {equals: 'Unexpected value for parameter'}}}")
+                    throw CustomJsonException("{${key.id.name}: {like: 'Unexpected value for parameter'}}")
                   }
                 }
-              }
-              keyQueryJson.has("like") -> {
-                keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name LIKE :v${variableCount + 2}"
-                injectedValues["v${variableCount++}"] = type.id.organization.superList!!
-                injectedValues["v${variableCount++}"] = key.type
-                injectedValues["v${variableCount++}"] = try {
-                  keyQueryJson.get("like").asString
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {like: 'Unexpected value for parameter'}}}")
+                keyQueryJson.has("between") -> {
+                  keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
+                  injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                  injectedValues["v${variableCount++}"] = key.type
+                  if (!keyQueryJson.get("between").isJsonArray)
+                    throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                  else if (keyQueryJson.get("between").asJsonArray.size() != 2)
+                    throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                  keyQueryJson.get("between").asJsonArray.forEach {
+                    injectedValues["v${variableCount++}"] = try {
+                      it.asString
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
+                    }
+                  }
                 }
-              }
-              keyQueryJson.has("between") -> {
-                keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
-                injectedValues["v${variableCount++}"] = type.id.organization.superList!!
-                injectedValues["v${variableCount++}"] = key.type
-                if (!keyQueryJson.get("between").isJsonArray)
-                  throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-                else if (keyQueryJson.get("between").asJsonArray.size() != 2)
-                  throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
-                keyQueryJson.get("between").asJsonArray.forEach {
+                keyQueryJson.has("notBetween") -> {
+                  keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name NOT BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
+                  injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                  injectedValues["v${variableCount++}"] = key.type
+                  if (!keyQueryJson.get("notBetween").isJsonArray)
+                    throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                  else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
+                    throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                  keyQueryJson.get("notBetween").asJsonArray.forEach {
+                    injectedValues["v${variableCount++}"] = try {
+                      it.asString
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                }
+                keyQueryJson.has("in") -> {
+                  keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name IN :v${variableCount + 2}"
+                  injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                  injectedValues["v${variableCount++}"] = key.type
+                  if (!keyQueryJson.get("in").isJsonArray)
+                    throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
+                  else if (keyQueryJson.get("in").asJsonArray.size() == 0)
+                    throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                   injectedValues["v${variableCount++}"] = try {
-                    it.asString
+                    keyQueryJson.get("in").asJsonArray.map {
+                      it.asString
+                    }
                   } catch (exception: Exception) {
-                    throw CustomJsonException("{query: {${key.id.name}: {between: 'Unexpected value for parameter'}}}")
+                    throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
                   }
-                }
-              }
-              keyQueryJson.has("notBetween") -> {
-                keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name NOT BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
-                injectedValues["v${variableCount++}"] = type.id.organization.superList!!
-                injectedValues["v${variableCount++}"] = key.type
-                if (!keyQueryJson.get("notBetween").isJsonArray)
-                  throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-                else if (keyQueryJson.get("notBetween").asJsonArray.size() != 2)
-                  throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-                keyQueryJson.get("notBetween").asJsonArray.forEach {
-                  injectedValues["v${variableCount++}"] = try {
-                    it.asString
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{query: {${key.id.name}: {notBetween: 'Unexpected value for parameter'}}}")
-                  }
-                }
-              }
-              keyQueryJson.has("in") -> {
-                keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name IN :v${variableCount + 2}"
-                injectedValues["v${variableCount++}"] = type.id.organization.superList!!
-                injectedValues["v${variableCount++}"] = key.type
-                if (!keyQueryJson.get("in").isJsonArray)
-                  throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-                else if (keyQueryJson.get("in").asJsonArray.size() == 0)
-                  throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
-                injectedValues["v${variableCount++}"] = try {
-                  keyQueryJson.get("in").asJsonArray.map {
-                    it.asString
-                  }
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{query: {${key.id.name}: {in: 'Unexpected value for parameter'}}}")
                 }
               }
             }
           } else {
             if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-              val (generatedQuery, count, _) = try {
-                generateQuery(queryParams = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{query: {${key.id.name}: {equals: ${exception.message}}}}}")
+              if (!queryParams.get(key.id.name).isJsonObject)
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter''}")
+              else {
+                val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+                val (generatedQuery, count, _) = try {
+                  generateQuery(queryParams = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
+                } catch (exception: CustomJsonException) {
+                  throw CustomJsonException("{${key.id.name}: ${exception.message}}")
+                }
+                variableCount = count
+                keyQuery += " AND EXISTS (${generatedQuery})"
               }
-              variableCount = count
-              keyQuery += " AND EXISTS (${generatedQuery})"
             } else {
-              val (generatedQuery, count, _) = try {
-                generateQuery(queryParams = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{query: {${key.id.name}: {equals: ${exception.message}}}}}")
+              if (!queryParams.get(key.id.name).isJsonObject)
+                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter''}")
+              else {
+                val keyQueryJson: JsonObject = queryParams.get(key.id.name).asJsonObject
+                val (generatedQuery, count, _) = try {
+                  generateQuery(queryParams = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias)
+                } catch (exception: CustomJsonException) {
+                  throw CustomJsonException("{${key.id.name}: ${exception.message}}")
+                }
+                variableCount = count
+                keyQuery += " AND EXISTS (${generatedQuery})"
               }
-              variableCount = count
-              keyQuery += " AND EXISTS (${generatedQuery})"
             }
           }
         }
