@@ -245,31 +245,6 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun updateLocalVariableNames(variable: Variable, updatedVariableName: String) {
-    variable.id.name = updatedVariableName
-    variable.values.filter { it.id.key.type.id.name !in primitiveTypes }.forEach { value ->
-      when (value.id.key.type.id.name) {
-        TypeConstants.LIST -> {
-          if (value.list!!.listType.type.id.superTypeName != "Any") {
-            if ((value.id.key.id.parentType.id.superTypeName == "Any" && value.id.key.id.parentType.id.name == value.list!!.listType.type.id.superTypeName)
-                || (value.id.key.id.parentType.id.superTypeName != "Any" && value.id.key.id.parentType.id.superTypeName == value.list!!.listType.type.id.superTypeName)) {
-              value.list!!.variables.forEach {
-                updateLocalVariableNames(variable = it, updatedVariableName = updatedVariableName)
-              }
-            }
-          }
-        }
-        else -> {
-          if ((value.id.key.id.parentType.id.superTypeName == "Any" && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
-              || (value.id.key.id.parentType.id.superTypeName != "Any" && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
-            updateLocalVariableNames(variable = value.referencedVariable!!, updatedVariableName = updatedVariableName)
-          }
-        }
-      }
-    }
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateVariable(jsonParams: JsonObject, variableOrganization: Organization? = null, variableType: Type? = null, variableSuperList: VariableList? = null): Variable {
     val variableName: String = jsonParams.get("variableName").asString
     val organization: Organization = variableOrganization
@@ -538,7 +513,7 @@ class VariableService(
       }
     }
     if (jsonParams.has("updatedVariableName?"))
-      updateLocalVariableNames(variable = variable, updatedVariableName = jsonParams.get("updatedVariableName?").asString)
+      variable.id.name = jsonParams.get("updatedVariableName?").asString
     try {
       variableRepository.save(variable)
     } catch (exception: Exception) {
