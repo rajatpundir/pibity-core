@@ -6,36 +6,31 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities
+package com.pibity.erp.entities.embeddables
 
-import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.embeddables.KeyPermissionId
+import com.pibity.erp.entities.Organization
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 
-@Entity
-@Table(name = "key_permission", schema = "inventory")
-data class KeyPermission(
+@Embeddable
+data class RoleId(
 
-    @EmbeddedId
-    val id: KeyPermissionId,
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    val organization: Organization,
 
-    var accessLevel: Int = 0,
-
-    @OneToOne
-    var referencedTypePermission: TypePermission? = null
+    @Column(name = "role_name", nullable = false)
+    val name: String = ""
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as KeyPermission
-    return this.id == other.id
+    other as RoleId
+    return this.organization == other.organization && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
-
-  override fun toString(): String = gson.toJson(this)
+  override fun hashCode(): Int = Objects.hash(organization, name)
 }

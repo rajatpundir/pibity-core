@@ -15,7 +15,7 @@ import java.util.*
 import javax.persistence.*
 
 @Embeddable
-class KeyPermissionId(
+data class KeyPermissionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),

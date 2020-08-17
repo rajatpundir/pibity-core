@@ -16,7 +16,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "type_permission", schema = "inventory")
-class TypePermission(
+data class TypePermission(
 
     @EmbeddedId
     val id: TypePermissionId,
