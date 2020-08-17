@@ -15,8 +15,10 @@ import com.google.gson.JsonParser
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.serializers.KeySerializer
+import com.pibity.erp.entities.serializers.TypePermissionSerializer
 import com.pibity.erp.entities.serializers.TypeSerializer
 import com.pibity.erp.entities.serializers.VariableSerializer
 import java.io.FileReader
@@ -26,6 +28,7 @@ val gson: Gson = GsonBuilder()
     .registerTypeAdapter(Type::class.java, TypeSerializer())
     .registerTypeAdapter(Key::class.java, KeySerializer())
     .registerTypeAdapter(Variable::class.java, VariableSerializer())
+    .registerTypeAdapter(TypePermission::class.java, TypePermissionSerializer())
     .create()
 
 fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)

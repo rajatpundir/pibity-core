@@ -9,10 +9,15 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.validateKeyPermissions
+import com.pibity.erp.entities.KeyPermission
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.embeddables.KeyPermissionId
+import com.pibity.erp.entities.embeddables.TypePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypePermissionRepository
 import com.pibity.erp.repositories.TypeRepository
@@ -27,14 +32,65 @@ class PermissionService(
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createPermission(jsonParams: JsonObject) {
+  fun createPermission(jsonParams: JsonObject, permissionOrganization: Organization? = null, permissionType: Type? = null): TypePermission {
     println(jsonParams)
-    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
+    val organization: Organization = permissionOrganization
+        ?: organizationRepository.getById(jsonParams.get("organization").asString)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = jsonParams.get("typeName").asString)
+    val type: Type = permissionType
+        ?: typeRepository.findType(organization = organization, superTypeName = "Any", name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val keyPermissions: JsonObject = validateKeyPermissions(keyPermissions = jsonParams.get("keyPermissions").asJsonObject, type = type)
+    val typePermission = TypePermission(id = TypePermissionId(type = type, name = jsonParams.get("permissionName").asString))
+    for (key in type.keys) {
+      when (key.type.id.name) {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+          val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+          keyPermission.accessLevel = keyPermissions.get(key.id.name).asInt
+          typePermission.keyPermissions.add(keyPermission)
+        }
+        TypeConstants.FORMULA -> {
+        }
+        TypeConstants.LIST -> {
+          if (key.list!!.type.id.superTypeName == "Any") {
+            val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+            keyPermission.accessLevel = keyPermissions.get(key.id.name).asInt
+            typePermission.keyPermissions.add(keyPermission)
+          } else {
+            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+              val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+              keyPermission.referencedTypePermission = createPermission(jsonParams = keyPermissions.get(key.id.name).asJsonObject, permissionOrganization = organization, permissionType = key.list!!.type)
+              typePermission.keyPermissions.add(keyPermission)
+            } else {
+              val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+              keyPermission.accessLevel = keyPermissions.get(key.id.name).asInt
+              typePermission.keyPermissions.add(keyPermission)
+            }
+          }
+        }
+        else -> {
+          if (key.type.id.superTypeName == "Any") {
+            val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+            keyPermission.accessLevel = keyPermissions.get(key.id.name).asInt
+            typePermission.keyPermissions.add(keyPermission)
+          } else {
+            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+              keyPermission.referencedTypePermission = createPermission(jsonParams = keyPermissions.get(key.id.name).asJsonObject, permissionOrganization = organization, permissionType = key.type)
+              typePermission.keyPermissions.add(keyPermission)
+            } else {
+              val keyPermission = KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key))
+              keyPermission.accessLevel = keyPermissions.get(key.id.name).asInt
+              typePermission.keyPermissions.add(keyPermission)
+            }
+          }
+        }
+      }
+    }
     println(keyPermissions)
+    return typePermission
   }
 
 }

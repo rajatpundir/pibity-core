@@ -5,7 +5,7 @@
   "typeName": {
     "type": "String"
   },
-  "displayName": {
+  "permissionName": {
     "type": "String"
   },
   "keyPermissions": {

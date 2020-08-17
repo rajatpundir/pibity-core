@@ -12,9 +12,7 @@ import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.KeyPermissionId
 import java.io.Serializable
 import java.util.*
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
-import javax.persistence.Table
+import javax.persistence.*
 
 @Entity
 @Table(name = "key_permission", schema = "inventory")
@@ -23,7 +21,10 @@ class KeyPermission(
     @EmbeddedId
     val id: KeyPermissionId,
 
-    var accessLevel: Int = 0
+    var accessLevel: Int = 0,
+
+    @OneToOne
+    var referencedTypePermission: TypePermission? = null
 
 ) : Serializable {
 
