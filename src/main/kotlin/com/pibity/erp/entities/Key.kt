@@ -27,6 +27,9 @@ data class Key(
       JoinColumn(name = "key_type_name", referencedColumnName = "type_name")])
     val type: Type,
 
+    @OneToMany(mappedBy = "id.key", cascade = [CascadeType.ALL])
+    val permissions: Set<KeyPermission> = HashSet(),
+
     @Column(name = "display_name")
     var displayName: String = "",
 
@@ -45,7 +48,7 @@ data class Key(
     @Column(name = "default_boolean_value")
     var defaultBooleanValue: Boolean? = null,
 
-    @OneToOne
+    @ManyToOne
     @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
       JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),

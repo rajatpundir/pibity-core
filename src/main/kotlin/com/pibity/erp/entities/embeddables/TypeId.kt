@@ -11,15 +11,12 @@ package com.pibity.erp.entities.embeddables
 import com.pibity.erp.entities.Organization
 import java.io.Serializable
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.Embeddable
-import javax.persistence.JoinColumn
-import javax.persistence.OneToOne
+import javax.persistence.*
 
 @Embeddable
 data class TypeId(
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "organization_id", nullable = false)
     val organization: Organization,
 

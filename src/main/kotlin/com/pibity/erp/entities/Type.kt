@@ -46,8 +46,11 @@ data class Type(
     @OneToMany(mappedBy = "id.parentType", cascade = [CascadeType.ALL])
     val keys: MutableSet<Key> = HashSet(),
 
+    @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
+    val referencingKeys: Set<Key> = HashSet(),
+
     @OneToMany(mappedBy = "id.type", cascade = [CascadeType.ALL])
-    var variables: MutableSet<Variable> = HashSet()
+    val permissions: Set<TypePermission> = HashSet()
 
 ) : Serializable {
 

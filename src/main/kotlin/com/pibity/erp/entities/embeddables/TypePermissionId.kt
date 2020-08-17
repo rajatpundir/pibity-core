@@ -9,32 +9,28 @@
 package com.pibity.erp.entities.embeddables
 
 import com.pibity.erp.entities.Type
-import com.pibity.erp.entities.VariableList
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 
 @Embeddable
-data class VariableId(
-
-    @ManyToOne
-    val superList: VariableList,
+class TypePermissionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-        JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-        JoinColumn(name = "type_name", referencedColumnName = "type_name")])
+      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "type_name", referencedColumnName = "type_name")])
     val type: Type,
 
-    @Column(name = "variable_name", nullable = false)
-    var name: String
+    @Column(name = "permission_name", nullable = false)
+    val name: String
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as VariableId
+    other as TypePermissionId
     return this.type == other.type && this.name == other.name
   }
 

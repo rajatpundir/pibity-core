@@ -33,7 +33,7 @@ data class Value(
     @Column(name = "boolean_value")
     var booleanValue: Boolean? = null,
 
-    @OneToOne
+    @ManyToOne
     @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
       JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
       JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),

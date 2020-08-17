@@ -37,9 +37,12 @@ data class Variable(
     @OneToMany(mappedBy = "id.variable", cascade = [CascadeType.ALL])
     val values: MutableSet<Value> = HashSet(),
 
+    @OneToMany(mappedBy = "referencedVariable", cascade = [CascadeType.ALL])
+    val referencingValues: Set<Value> = HashSet(),
+
     // Use this to find out which lists contain this variable
     @ManyToMany(mappedBy = "variables")
-    val lists: MutableSet<VariableList> = HashSet()
+    val referencingLists: Set<VariableList> = HashSet()
 
 ) : Serializable {
 

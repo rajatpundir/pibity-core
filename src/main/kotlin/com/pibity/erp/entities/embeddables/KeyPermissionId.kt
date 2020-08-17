@@ -9,21 +9,20 @@
 package com.pibity.erp.entities.embeddables
 
 import com.pibity.erp.entities.Key
-import com.pibity.erp.entities.Variable
+import com.pibity.erp.entities.TypePermission
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 
 @Embeddable
-data class ValueId(
+class KeyPermissionId(
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "variable_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "variable_super_list_id", referencedColumnName = "super_list_id"),
-      JoinColumn(name = "variable_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "variable_name", referencedColumnName = "variable_name")])
-    val variable: Variable,
+    @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "type_name", referencedColumnName = "type_name"),
+      JoinColumn(name = "permission_name", referencedColumnName = "permission_name")])
+    val typePermission: TypePermission,
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "key_organization_id", referencedColumnName = "parent_type_organization_id"),
@@ -37,9 +36,9 @@ data class ValueId(
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as ValueId
-    return this.variable == other.variable && this.key == other.key
+    other as KeyPermissionId
+    return this.typePermission == other.typePermission && this.key == other.key
   }
 
-  override fun hashCode(): Int = Objects.hash(variable, key)
+  override fun hashCode(): Int = Objects.hash(typePermission, key)
 }
