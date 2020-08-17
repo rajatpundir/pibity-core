@@ -8,7 +8,7 @@
 
 package com.pibity.erp.repositories
 
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.Role
 import org.springframework.data.repository.CrudRepository
 
-interface TypePermissionRepository : CrudRepository<TypePermission, Long>
+interface RoleRepository : CrudRepository<Role, Long>
