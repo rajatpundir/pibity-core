@@ -25,14 +25,14 @@ class RoleService(
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createRole(jsonParams: JsonObject) {
+  fun createRole(jsonParams: JsonObject): Role {
     val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val role = Role(id = RoleId(organization = organization, name = jsonParams.get("roleName").asString))
-    try {
+    val role = Role(id = RoleId(organization = organization, name = jsonParams.get("role").asString))
+    return try {
       roleRepository.save(role)
     } catch (exception: Exception) {
-      throw CustomJsonException("{roleName: 'Role could not be created'}")
+      throw CustomJsonException("{role: 'Role could not be created'}")
     }
   }
 }
