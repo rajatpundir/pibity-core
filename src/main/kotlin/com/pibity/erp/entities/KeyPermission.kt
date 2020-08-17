@@ -21,7 +21,9 @@ import javax.persistence.Table
 class KeyPermission(
 
     @EmbeddedId
-    val id: KeyPermissionId
+    val id: KeyPermissionId,
+
+    var accessLevel: Int = 0
 
 ) : Serializable {
 

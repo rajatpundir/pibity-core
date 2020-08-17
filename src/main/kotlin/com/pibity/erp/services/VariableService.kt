@@ -13,7 +13,6 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.*
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
