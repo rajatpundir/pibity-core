@@ -17,14 +17,12 @@ import com.pibity.erp.entities.embeddables.RoleId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.TypePermissionRepository
-import com.pibity.erp.repositories.TypeRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class RoleService(
     val organizationRepository: OrganizationRepository,
-    val typeRepository: TypeRepository,
     val typePermissionRepository: TypePermissionRepository,
     val roleRepository: RoleRepository
 ) {
@@ -42,8 +40,8 @@ class RoleService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun modifyPermission(jsonParams: JsonObject): Role {
-    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organizationName").asString, name = jsonParams.get("roleName").asString)
+  fun updateRole(jsonParams: JsonObject): Role {
+    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(
         organizationName = jsonParams.get("organization").asString,

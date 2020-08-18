@@ -88,7 +88,11 @@ class PermissionService(
         }
       }
     }
-    return typePermission
+    return try {
+      typePermissionRepository.save(typePermission)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{permissionName: 'Permission could not be created'}")
+    }
   }
 
 }

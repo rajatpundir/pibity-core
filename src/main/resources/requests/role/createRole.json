@@ -2,7 +2,7 @@
   "organization": {
     "type": "String"
   },
-  "role": {
+  "roleName": {
     "type": "String"
   }
 }

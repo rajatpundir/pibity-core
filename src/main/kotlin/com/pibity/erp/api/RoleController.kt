@@ -27,13 +27,26 @@ class RoleController(val RoleService: RoleService) {
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createRole" to getExpectedParams("role", "createRole")
+      "createRole" to getExpectedParams("role", "createRole"),
+      "updateRole" to getExpectedParams("role", "updateRole")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(RoleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun updateRole(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(RoleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
