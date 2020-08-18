@@ -21,39 +21,46 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
   override fun serialize(src: TypePermission?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
+      if (src.id.type.id.superTypeName == "Any") {
+        json.addProperty("organization", src.id.type.id.organization.id)
+        json.addProperty("typeName", src.id.type.id.name)
+        json.addProperty("permissionName", src.id.name)
+      }
+      val jsonKeyPermissions = JsonObject()
       for (keyPermission in src.keyPermissions) {
         when (keyPermission.id.key.type.id.name) {
           TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
-            json.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
+            jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
           }
           TypeConstants.FORMULA -> {
           }
           TypeConstants.LIST -> {
             if (keyPermission.id.key.list!!.type.id.superTypeName == "Any") {
-              json.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
+              jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
             } else {
               if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
                   || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName)) {
-                json.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
+                jsonKeyPermissions.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
               } else {
-                json.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
+                jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
               }
             }
           }
           else -> {
             if (keyPermission.id.key.type.id.superTypeName == "Any") {
-              json.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
+              jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
             } else {
               if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
                   || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
-                json.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
+                jsonKeyPermissions.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
               } else {
-                json.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
+                jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
               }
             }
           }
         }
       }
+      json.add("permissions", jsonKeyPermissions)
     }
     return json
   }

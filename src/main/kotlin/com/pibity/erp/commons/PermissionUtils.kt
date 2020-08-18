@@ -13,7 +13,12 @@ import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
 
-fun validateKeyPermissions(keyPermissions: JsonObject, type: Type): JsonObject {
+fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
+  val keyPermissions: JsonObject = try {
+    jsonParams.get("permissions").asJsonObject
+  } catch (exception: Exception) {
+    throw CustomJsonException("{permissions: 'Unexpected value for parameter'}")
+  }
   val expectedKeyPermissions = JsonObject()
   for (key in type.keys) {
     if (keyPermissions.has(key.id.name)) {
@@ -49,7 +54,7 @@ fun validateKeyPermissions(keyPermissions: JsonObject, type: Type): JsonObject {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
               try {
-                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(keyPermissions = keyPermission, type = key.list!!.type))
+                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(jsonParams = keyPermission, type = key.list!!.type))
               } catch (exception: CustomJsonException) {
                 throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
@@ -84,7 +89,7 @@ fun validateKeyPermissions(keyPermissions: JsonObject, type: Type): JsonObject {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
               try {
-                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(keyPermissions = keyPermission, type = key.type))
+                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(jsonParams = keyPermission, type = key.type))
               } catch (exception: CustomJsonException) {
                 throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
@@ -103,5 +108,5 @@ fun validateKeyPermissions(keyPermissions: JsonObject, type: Type): JsonObject {
       }
     } else throw CustomJsonException("{${key.id.name}: 'Field is missing in request body'}")
   }
-  return expectedKeyPermissions
+  return JsonObject().apply { add("permissions", expectedKeyPermissions)}
 }

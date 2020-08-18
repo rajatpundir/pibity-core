@@ -8,7 +8,7 @@
   "permissionName": {
     "type": "String"
   },
-  "keyPermissions": {
+  "permissions": {
     "type": "Object"
   }
 }
