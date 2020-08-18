@@ -9,6 +9,15 @@
 package com.pibity.erp.repositories
 
 import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.embeddables.RoleId
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import org.springframework.transaction.annotation.Transactional
 
-interface RoleRepository : CrudRepository<Role, Long>
+interface RoleRepository : CrudRepository<Role, RoleId> {
+
+  @Transactional(readOnly = true)
+  @Query("SELECT r FROM Role r WHERE r.id.organization.id = :organizationName AND r.id.name = :name")
+  fun findRole(organizationName: String, name: String): Role?
+}

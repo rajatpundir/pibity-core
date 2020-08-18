@@ -21,18 +21,10 @@ import org.springframework.transaction.annotation.Transactional
 interface VariableRepository : CrudRepository<Variable, VariableId> {
 
   @Transactional(readOnly = true)
-  @Query("SELECT v from Variable v where v.id.superList = :superList and v.id.type = :type and v.id.name = :name")
+  @Query("SELECT v FROM Variable v WHERE v.id.superList = :superList AND v.id.type = :type AND v.id.name = :name")
   fun findByTypeAndName(superList: VariableList, type: Type, name: String = ""): Variable?
 
   @Transactional(readOnly = true)
-  @Query("SELECT v from Variable v where v.id.type.id.organization = :organization and v.id.type.id.superTypeName = :superTypeName and v.id.type.id.name = :typeName and v.id.superList.id = :superList and v.id.name = :name")
+  @Query("SELECT v FROM Variable v WHERE v.id.type.id.organization = :organization AND v.id.type.id.superTypeName = :superTypeName AND v.id.type.id.name = :typeName AND v.id.superList.id = :superList AND v.id.name = :name")
   fun findVariable(organization: Organization, superTypeName: String, typeName: String, superList: Long, name: String = ""): Variable?
-
-  @Transactional(readOnly = true)
-  @Query("SELECT v from Variable v where v.id.superList = :superList and v.id.type = :type AND v.id.name = :name")
-  fun findBySimilarNames(
-      @Param("superList") superList: VariableList,
-      @Param("type") type: Type,
-      @Param("name") name: String
-  ): Set<Variable>
 }

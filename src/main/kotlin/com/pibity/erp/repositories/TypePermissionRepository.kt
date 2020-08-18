@@ -9,6 +9,14 @@
 package com.pibity.erp.repositories
 
 import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.embeddables.TypePermissionId
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import org.springframework.transaction.annotation.Transactional
 
-interface TypePermissionRepository : CrudRepository<TypePermission, Long>
+interface TypePermissionRepository : CrudRepository<TypePermission, TypePermissionId> {
+
+  @Transactional(readOnly = true)
+  @Query("SELECT p FROM TypePermission p WHERE p.id.type.id.organization.id = :organizationName AND p.id.type.id.superTypeName = :superTypeName AND p.id.type.id.name = :typeName AND p.id.name = :name")
+  fun findTypePermission(organizationName: String, superTypeName: String, typeName: String, name: String): TypePermission?
+}

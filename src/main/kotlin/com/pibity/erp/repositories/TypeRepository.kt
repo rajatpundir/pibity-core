@@ -18,14 +18,14 @@ import org.springframework.transaction.annotation.Transactional
 interface TypeRepository : CrudRepository<Type, TypeId> {
 
   @Transactional(readOnly = true)
-  @Query("SELECT t from Type t where t.id.organization = :organization")
+  @Query("SELECT t FROM Type t WHERE t.id.organization = :organization")
   fun findByOrganization(organization: Organization): Set<Type>
 
   @Transactional(readOnly = true)
-  @Query("SELECT t from Type t where t.id.organization = :organization and t.id.superTypeName = 'Any'")
+  @Query("SELECT t FROM Type t WHERE t.id.organization = :organization AND t.id.superTypeName = 'Any'")
   fun findGlobalTypes(organization: Organization): Set<Type>
 
   @Transactional(readOnly = true)
-  @Query("SELECT t from Type t where t.id.organization = :organization and t.id.superTypeName = :superTypeName and t.id.name = :name")
+  @Query("SELECT t FROM Type t WHERE t.id.organization = :organization AND t.id.superTypeName = :superTypeName AND t.id.name = :name")
   fun findType(organization: Organization, superTypeName: String, name: String): Type?
 }
