@@ -83,6 +83,58 @@ class PermissionService(
     }
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun updatePermission(jsonParams: JsonObject, keyTypePermission: TypePermission? = null): TypePermission {
+    val typePermission: TypePermission = keyTypePermission ?: typePermissionRepository.findTypePermission(
+        organizationName = jsonParams.get("organization").asString,
+        superTypeName = "Any",
+        typeName = jsonParams.get("typeName").asString,
+        name = jsonParams.get("permissionName").asString
+    ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
+    val keyPermissions: JsonObject = validateKeyPermissions(jsonParams = jsonParams, type = typePermission.id.type).get("permissions").asJsonObject
+    val updatedPermissions = mutableSetOf<KeyPermission>()
+    for (keyPermission in typePermission.keyPermissions) {
+      when (keyPermission.id.key.type.id.name) {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+          updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
+        }
+        TypeConstants.FORMULA -> {
+        }
+        TypeConstants.LIST -> {
+          if (keyPermission.id.key.list!!.type.id.superTypeName == "Any") {
+            updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
+          } else {
+            if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
+                || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName)) {
+              updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), referencedTypePermission = updatePermission(jsonParams = keyPermissions.get(keyPermission.id.key.id.name).asJsonObject, keyTypePermission = keyPermission.referencedTypePermission!!)))
+            } else {
+              updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
+            }
+          }
+        }
+        else -> {
+          if (keyPermission.id.key.type.id.superTypeName == "Any") {
+            updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
+          } else {
+            if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
+                || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
+              updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), referencedTypePermission = updatePermission(jsonParams = keyPermissions.get(keyPermission.id.key.id.name).asJsonObject, keyTypePermission = keyPermission.referencedTypePermission!!)))
+            } else {
+              updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
+            }
+          }
+        }
+      }
+    }
+    typePermission.keyPermissions = updatedPermissions
+    return try {
+      typePermissionRepository.save(typePermission)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{typeName: 'Permission could not be updated'}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultPermission(type: Type, permissionName: String, accessLevel: Int): TypePermission {
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName))
     for (key in type.keys) {
@@ -122,5 +174,4 @@ class PermissionService(
       throw CustomJsonException("{typeName: 'Permission $permissionName could not be created'}")
     }
   }
-
 }

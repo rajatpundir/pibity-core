@@ -60,4 +60,9 @@ class RoleService(
     }
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun getSuperimposedPermission(jsonParams: JsonObject) {
+
+  }
+
 }

@@ -22,7 +22,7 @@ data class TypePermission(
     val id: TypePermissionId,
 
     @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
-    val keyPermissions: MutableSet<KeyPermission> = HashSet()
+    var keyPermissions: MutableSet<KeyPermission> = HashSet()
 
 ) : Serializable {
 
