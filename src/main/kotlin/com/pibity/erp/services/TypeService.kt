@@ -21,9 +21,7 @@ import com.pibity.erp.commons.validateTypeKeys
 import com.pibity.erp.commons.validateTypeName
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
-import com.pibity.erp.entities.embeddables.KeyPermissionId
 import com.pibity.erp.entities.embeddables.TypeId
-import com.pibity.erp.entities.embeddables.TypePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
@@ -164,13 +162,11 @@ class TypeService(
     } catch (exception: Exception) {
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
     }
-    println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     if (type.id.superTypeName == "Any") {
-      println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
       createDefaultPermissionsForType(type = createdType)
+      if (jsonParams.has("variables?"))
+        createVariablesForType(jsonParams = jsonParams)
     }
-    if (jsonParams.has("variables?"))
-      createVariablesForType(jsonParams = jsonParams)
     return type
   }
 
@@ -218,7 +214,7 @@ class TypeService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultPermissionsForType(type: Type) {
     permissionService.createDefaultPermission(type = type, permissionName = "READ_ALL", accessLevel = 1)
-    permissionService.createDefaultPermission(type = type, permissionName = "WRITE_ALL", accessLevel = 1)
+    permissionService.createDefaultPermission(type = type, permissionName = "WRITE_ALL", accessLevel = 2)
   }
 
   fun getTypeDetails(jsonParams: JsonObject): Type {

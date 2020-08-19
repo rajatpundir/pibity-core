@@ -35,32 +35,25 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
           TypeConstants.FORMULA -> {
           }
           TypeConstants.LIST -> {
-            if (keyPermission.id.key.list!!.type.id.superTypeName == "Any") {
+            if (keyPermission.id.key.list!!.type.id.superTypeName == "Any")
               jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
-            } else {
+            else {
               if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
-                  || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName)) {
+                  || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName))
                 jsonKeyPermissions.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
-              } else {
+              else
                 jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
-              }
             }
           }
           else -> {
-            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            if (keyPermission.id.key.type.id.superTypeName == "Any") {
-              println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            if (keyPermission.id.key.type.id.superTypeName == "Any")
               jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
-            } else {
+            else {
               if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
-                  || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
-                println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-                println(keyPermission.id.key.id.name)
+                  || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName))
                 jsonKeyPermissions.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
-              } else {
-                println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+              else
                 jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
-              }
             }
           }
         }
