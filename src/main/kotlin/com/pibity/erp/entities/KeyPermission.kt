@@ -24,7 +24,7 @@ data class KeyPermission(
     var accessLevel: Int = 0,
 
     @OneToOne
-    var referencedTypePermission: TypePermission? = null
+    val referencedTypePermission: TypePermission? = null
 
 ) : Serializable {
 

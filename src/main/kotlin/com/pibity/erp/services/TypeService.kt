@@ -21,7 +21,9 @@ import com.pibity.erp.commons.validateTypeKeys
 import com.pibity.erp.commons.validateTypeName
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
+import com.pibity.erp.entities.embeddables.KeyPermissionId
 import com.pibity.erp.entities.embeddables.TypeId
+import com.pibity.erp.entities.embeddables.TypePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
@@ -33,7 +35,8 @@ class TypeService(
     val organizationRepository: OrganizationRepository,
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
-    val variableService: VariableService
+    val variableService: VariableService,
+    val permissionService: PermissionService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -61,7 +64,7 @@ class TypeService(
             val nestedType: Type = try {
               createType(keyJson.get(KeyConstants.KEY_TYPE).asJsonObject.apply {
                 addProperty("organization", organizationName)
-                addProperty("superTypeName", typeName)
+                addProperty("superTypeName", if (superTypeName == "Any") typeName else superTypeName)
               }, validGlobalTypes, validLocalTypes)
             } catch (exception: CustomJsonException) {
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: '${exception.message}'}}}")
@@ -95,7 +98,7 @@ class TypeService(
                 val nestedType: Type = try {
                   createType(keyJson.get(KeyConstants.LIST_TYPE).asJsonObject.apply {
                     addProperty("organization", organizationName)
-                    addProperty("superTypeName", typeName)
+                    addProperty("superTypeName", if (superTypeName == "Any") typeName else superTypeName)
                   }, validGlobalTypes, validLocalTypes)
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: '${exception.message}'}}}")
@@ -156,10 +159,15 @@ class TypeService(
     type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
     if (type.depth > 12)
       throw CustomJsonException("{$typeName: 'Type could not be saved due to high nestedness'}")
-    try {
+    val createdType = try {
       typeRepository.save(type)
     } catch (exception: Exception) {
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
+    }
+    println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    if (type.id.superTypeName == "Any") {
+      println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+      createDefaultPermissionsForType(type = createdType)
     }
     if (jsonParams.has("variables?"))
       createVariablesForType(jsonParams = jsonParams)
@@ -205,6 +213,12 @@ class TypeService(
         throw CustomJsonException("{variables: {$variableName: ${exception.message}}}")
       }
     }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun createDefaultPermissionsForType(type: Type) {
+    permissionService.createDefaultPermission(type = type, permissionName = "READ_ALL", accessLevel = 1)
+    permissionService.createDefaultPermission(type = type, permissionName = "WRITE_ALL", accessLevel = 1)
   }
 
   fun getTypeDetails(jsonParams: JsonObject): Type {

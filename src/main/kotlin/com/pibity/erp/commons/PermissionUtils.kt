@@ -36,7 +36,9 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
+          println("LIST")
           if (key.list!!.type.id.superTypeName == "Any") {
+            println("CHECK -- GLOBAL -- ${key.id.name}")
             val accessLevel: Int = try {
               keyPermissions.get(key.id.name).asInt
             } catch (exception: Exception) {
@@ -48,6 +50,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
           } else {
             if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+              println("CHECK -- LOCAL -- ${key.id.name}")
               val keyPermission: JsonObject = try {
                 keyPermissions.get(key.id.name).asJsonObject
               } catch (exception: Exception) {
@@ -59,6 +62,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
                 throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
             } else {
+              println("CHECK -- EXTERNAL -- ${key.id.name}")
               val accessLevel: Int = try {
                 keyPermissions.get(key.id.name).asInt
               } catch (exception: Exception) {
@@ -71,7 +75,9 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
           }
         }
         else -> {
+          println("VARIABLE")
           if (key.type.id.superTypeName == "Any") {
+            println("CHECK -- GLOBAL VAR -- ${key.id.name}")
             val accessLevel: Int = try {
               keyPermissions.get(key.id.name).asInt
             } catch (exception: Exception) {
@@ -81,8 +87,14 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
+            println("#########")
+            println(key.id.parentType.id.superTypeName)
+            println(key.id.parentType.id.name)
+            println(key.type.id.superTypeName)
+            println("#########")
             if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              println("CHECK -- LOCAL VAR -- ${key.id.name}")
               val keyPermission: JsonObject = try {
                 keyPermissions.get(key.id.name).asJsonObject
               } catch (exception: Exception) {
@@ -94,6 +106,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
                 throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
             } else {
+              println("CHECK -- EXTERNAL VAR -- ${key.id.name}")
               val accessLevel: Int = try {
                 keyPermissions.get(key.id.name).asInt
               } catch (exception: Exception) {

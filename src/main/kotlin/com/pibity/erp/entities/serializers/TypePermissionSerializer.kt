@@ -47,13 +47,18 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
             }
           }
           else -> {
+            println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             if (keyPermission.id.key.type.id.superTypeName == "Any") {
+              println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
               jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
             } else {
               if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
                   || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
+                println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+                println(keyPermission.id.key.id.name)
                 jsonKeyPermissions.add(keyPermission.id.key.id.name, gson.fromJson(gson.toJson(keyPermission.referencedTypePermission), JsonObject::class.java))
               } else {
+                println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
                 jsonKeyPermissions.addProperty(keyPermission.id.key.id.name, keyPermission.accessLevel)
               }
             }
