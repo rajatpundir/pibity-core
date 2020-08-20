@@ -42,9 +42,9 @@ class VariableSerializer : JsonSerializer<Variable> {
           }
           TypeConstants.LIST -> jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.list!!.variables), JsonArray::class.java))
           else -> {
-//            if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
-//              jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
-//            else
+            if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
+              jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
+            else
             jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
           }
         }

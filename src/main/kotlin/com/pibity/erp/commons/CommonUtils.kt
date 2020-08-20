@@ -24,6 +24,7 @@ val gson: Gson = GsonBuilder()
     .registerTypeAdapter(Variable::class.java, VariableSerializer())
     .registerTypeAdapter(TypePermission::class.java, TypePermissionSerializer())
     .registerTypeAdapter(Role::class.java, RoleSerializer())
+    .registerTypeAdapter(Group::class.java, GroupSerializer())
     .create()
 
 fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)
