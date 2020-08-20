@@ -9,35 +9,39 @@
 package com.pibity.erp.entities
 
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.embeddables.GroupId
+import com.pibity.erp.entities.embeddables.UserId
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "group", schema = "inventory")
-data class Group(
+@Table(name = "user", schema = "inventory")
+data class User(
 
     @EmbeddedId
-    val id: GroupId,
+    val id: UserId,
 
     @ManyToMany
-    @JoinTable(name = "mapping_group_roles", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "group_name")],
+    @JoinTable(name = "mapping_user_roles", schema = "inventory",
+        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "username")],
         inverseJoinColumns = [JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
           JoinColumn(name = "role_name", referencedColumnName = "role_name")])
     val roles: MutableSet<Role> = HashSet(),
 
-    @ManyToMany(mappedBy = "groups")
-    val users: Set<User> = HashSet()
+    @ManyToMany
+    @JoinTable(name = "mapping_user_groups", schema = "inventory",
+        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "username")],
+        inverseJoinColumns = [JoinColumn(name = "group_organization_id", referencedColumnName = "organization_id"),
+          JoinColumn(name = "group_name", referencedColumnName = "group_name")])
+    val groups: MutableSet<Group> = HashSet()
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as Group
+    other as User
     return this.id == other.id
   }
 

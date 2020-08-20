@@ -57,7 +57,7 @@ class RoleService(
     return try {
       roleRepository.save(role)
     } catch (exception: Exception) {
-      throw CustomJsonException("{roleName: 'Unable to assign permission to role'}")
+      throw CustomJsonException("{roleName: 'Unable to update permission for role'}")
     }
   }
 }

@@ -29,7 +29,13 @@ data class Role(
           JoinColumn(name = "permission_super_type_name", referencedColumnName = "super_type_name"),
           JoinColumn(name = "permission_type_name", referencedColumnName = "type_name"),
           JoinColumn(name = "permission_name", referencedColumnName = "permission_name")])
-    val permissions: MutableSet<TypePermission> = HashSet()
+    val permissions: MutableSet<TypePermission> = HashSet(),
+
+    @ManyToMany(mappedBy = "roles")
+    val groups: Set<Group> = HashSet(),
+
+    @ManyToMany(mappedBy = "roles")
+    val users: Set<User> = HashSet()
 
 ) : Serializable {
 

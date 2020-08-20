@@ -1,0 +1,14 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "username": {
+    "type": "String"
+  },
+  "groupName": {
+    "type": "String"
+  },
+  "operation": {
+    "type": "String"
+  }
+}
