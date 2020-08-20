@@ -75,8 +75,10 @@ class PermissionService(
         }
       }
     }
-    typePermission.highestAccessLevel = typePermission.keyPermissions.map { it.accessLevel }.max() ?: 0
-    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { it.accessLevel }.min() ?: 0
+    typePermission.highestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.highestAccessLevel }.max()
+        ?: 0
+    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.lowestAccessLevel }.min()
+        ?: 0
     return try {
       typePermissionRepository.save(typePermission)
     } catch (exception: Exception) {
@@ -128,9 +130,11 @@ class PermissionService(
       }
     }
     typePermission.keyPermissions = updatedPermissions
-    typePermission.highestAccessLevel = typePermission.keyPermissions.map { it.accessLevel }.max() ?: 0
-    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { it.accessLevel }.min() ?: 0
-        return try {
+    typePermission.highestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.highestAccessLevel }.max()
+        ?: 0
+    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.lowestAccessLevel }.min()
+        ?: 0
+    return try {
       typePermissionRepository.save(typePermission)
     } catch (exception: Exception) {
       throw CustomJsonException("{typeName: 'Permission could not be updated'}")
