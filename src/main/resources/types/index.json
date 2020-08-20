@@ -1,0 +1,11 @@
+[
+  "Country",
+  "Currency",
+  "Customer",
+  "Supplier",
+  "Product",
+  "PurchaseOrder",
+  "SaleCreditNote",
+  "PurchaseCreditNote",
+  "Machine"
+]
