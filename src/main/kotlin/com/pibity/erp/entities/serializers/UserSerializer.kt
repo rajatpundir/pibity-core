@@ -20,11 +20,7 @@ class UserSerializer : JsonSerializer<User> {
       json.addProperty("organization", src.id.organization.id)
       json.addProperty("username", src.id.username)
       json.add("groups", gson.fromJson(gson.toJson(src.groups), JsonArray::class.java))
-      val roles = emptySet<Role>()
-      for (group in src.groups)
-        for (role in group.roles)
-          roles.plus(role)
-      json.add("roles", gson.fromJson(gson.toJson(roles), JsonArray::class.java))
+      json.add("roles", gson.fromJson(gson.toJson(src.roles), JsonArray::class.java))
     }
     return json
   }

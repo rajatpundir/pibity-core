@@ -16,15 +16,18 @@ class TypeSerializer : JsonSerializer<Type> {
   override fun serialize(src: Type?, typeOfSrc: java.lang.reflect.Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
-      json.addProperty("organizationId", src.id.organization.id)
+      if (src.id.superTypeName == "Any")
+        json.addProperty("organizationId", src.id.organization.id)
+      else
+        json.addProperty("superTypeName", src.id.superTypeName)
       json.addProperty("typeName", src.id.name)
-      json.addProperty("superTypeName", src.id.superTypeName)
       json.addProperty("displayName", src.displayName)
       val jsonKeys = JsonObject()
       for (key in src.keys)
         jsonKeys.add(key.id.name, gson.fromJson(gson.toJson(key), JsonObject::class.java))
       json.add("keys", jsonKeys)
-      json.add("permissions", gson.fromJson(gson.toJson(src.permissions), JsonArray::class.java))
+      if (src.id.superTypeName == "Any")
+        json.add("permissions", gson.fromJson(gson.toJson(src.permissions), JsonArray::class.java))
     }
     return json
   }

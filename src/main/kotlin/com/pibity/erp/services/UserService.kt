@@ -63,7 +63,7 @@ class UserService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateUserRoles(jsonParams: JsonObject): User {
     val user: User = userRepository.findUser(organizationName = jsonParams.get("organization").asString, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{userName: 'user could not be determined'}")
+        ?: throw CustomJsonException("{username: 'user could not be determined'}")
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
