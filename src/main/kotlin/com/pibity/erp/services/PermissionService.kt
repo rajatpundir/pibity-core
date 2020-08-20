@@ -11,7 +11,6 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.validateKeyPermissions
 import com.pibity.erp.entities.KeyPermission
 import com.pibity.erp.entities.Organization
@@ -173,5 +172,14 @@ class PermissionService(
     } catch (exception: Exception) {
       throw CustomJsonException("{typeName: 'Permission $permissionName could not be created'}")
     }
+  }
+
+  fun getPermissionDetails(jsonParams: JsonObject): TypePermission {
+    return (typePermissionRepository.findTypePermission(
+        organizationName = jsonParams.get("organization").asString,
+        superTypeName = "Any",
+        typeName = jsonParams.get("typeName").asString,
+        name = jsonParams.get("permissionName").asString
+    ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
   }
 }

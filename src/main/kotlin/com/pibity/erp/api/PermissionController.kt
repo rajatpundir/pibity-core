@@ -28,7 +28,8 @@ class PermissionController(val permissionService: PermissionService) {
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createPermission" to getExpectedParams("permission", "createPermission"),
-      "updatePermission" to getExpectedParams("permission", "updatePermission")
+      "updatePermission" to getExpectedParams("permission", "updatePermission"),
+      "getPermissionDetails" to getExpectedParams("permission", "getPermissionDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -47,6 +48,18 @@ class PermissionController(val permissionService: PermissionService) {
   fun updatePermission(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(permissionService.updatePermission(jsonParams = (getJsonParams(request, expectedParams["updatePermission"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun getPermissionDetails(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(permissionService.getPermissionDetails(jsonParams = (getJsonParams(request, expectedParams["getPermissionDetails"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

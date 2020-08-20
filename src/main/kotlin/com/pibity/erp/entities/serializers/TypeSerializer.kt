@@ -8,10 +8,7 @@
 
 package com.pibity.erp.entities.serializers
 
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
+import com.google.gson.*
 import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.Type
 
@@ -27,6 +24,7 @@ class TypeSerializer : JsonSerializer<Type> {
       for (key in src.keys)
         jsonKeys.add(key.id.name, gson.fromJson(gson.toJson(key), JsonObject::class.java))
       json.add("keys", jsonKeys)
+      json.add("permissions", gson.fromJson(gson.toJson(src.permissions), JsonArray::class.java))
     }
     return json
   }

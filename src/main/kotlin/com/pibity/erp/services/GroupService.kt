@@ -10,9 +10,13 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.*
+import com.pibity.erp.entities.Group
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Role
 import com.pibity.erp.entities.embeddables.GroupId
-import com.pibity.erp.repositories.*
+import com.pibity.erp.repositories.GroupRepository
+import com.pibity.erp.repositories.OrganizationRepository
+import com.pibity.erp.repositories.RoleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -38,7 +42,7 @@ class GroupService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateGroup(jsonParams: JsonObject): Group {
     val group: Group = groupRepository.findGroup(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("groupName").asString)
-        ?: throw CustomJsonException("{groupName: 'group could not be determined'}")
+        ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
@@ -51,5 +55,10 @@ class GroupService(
     } catch (exception: Exception) {
       throw CustomJsonException("{groupName: 'Unable to update role for group'}")
     }
+  }
+
+  fun getGroupDetails(jsonParams: JsonObject): Group {
+    return (groupRepository.findGroup(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("groupName").asString)
+        ?: throw CustomJsonException("{groupName: 'Group could not be determined'}"))
   }
 }

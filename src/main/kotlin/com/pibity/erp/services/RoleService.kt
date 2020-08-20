@@ -60,4 +60,9 @@ class RoleService(
       throw CustomJsonException("{roleName: 'Unable to update permission for role'}")
     }
   }
+
+  fun getRoleDetails(jsonParams: JsonObject): Role {
+    return (roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
+        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}"))
+  }
 }

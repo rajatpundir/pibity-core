@@ -10,9 +10,15 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.*
+import com.pibity.erp.entities.Group
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.User
 import com.pibity.erp.entities.embeddables.UserId
-import com.pibity.erp.repositories.*
+import com.pibity.erp.repositories.GroupRepository
+import com.pibity.erp.repositories.OrganizationRepository
+import com.pibity.erp.repositories.RoleRepository
+import com.pibity.erp.repositories.UserRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -70,5 +76,10 @@ class UserService(
     } catch (exception: Exception) {
       throw CustomJsonException("{username: 'Unable to update role for user'}")
     }
+  }
+
+  fun getUserDetails(jsonParams: JsonObject): User {
+    return (userRepository.findUser(organizationName = jsonParams.get("organization").asString, username = jsonParams.get("username").asString)
+        ?: throw CustomJsonException("{username: 'User could not be determined'}"))
   }
 }

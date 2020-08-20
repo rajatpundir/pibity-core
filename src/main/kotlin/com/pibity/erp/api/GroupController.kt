@@ -28,7 +28,8 @@ class GroupController(val groupService: GroupService) {
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createGroup" to getExpectedParams("group", "createGroup"),
-      "updateGroup" to getExpectedParams("group", "updateGroup")
+      "updateGroup" to getExpectedParams("group", "updateGroup"),
+      "getGroupDetails" to getExpectedParams("group", "getGroupDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -47,6 +48,18 @@ class GroupController(val groupService: GroupService) {
   fun updateGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun getGroupDetails(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

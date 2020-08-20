@@ -22,19 +22,20 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin
 @RestController
 @RequestMapping(path = ["/api/role"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-class RoleController(val RoleService: RoleService) {
+class RoleController(val roleService: RoleService) {
 
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createRole" to getExpectedParams("role", "createRole"),
-      "updateRole" to getExpectedParams("role", "updateRole")
+      "updateRole" to getExpectedParams("role", "updateRole"),
+      "getRoleDetails" to getExpectedParams("role", "getRoleDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(RoleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
+      ResponseEntity(gson.toJson(roleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -46,7 +47,19 @@ class RoleController(val RoleService: RoleService) {
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun updateRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(RoleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
+      ResponseEntity(gson.toJson(roleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun getRoleDetails(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

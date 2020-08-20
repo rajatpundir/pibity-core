@@ -29,8 +29,9 @@ class UserController(val userService: UserService) {
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createUser" to getExpectedParams("user", "createUser"),
       "updateUserGroups" to getExpectedParams("user", "updateUserGroups"),
-      "updateUserRoles" to getExpectedParams("user", "updateUserRoles")
-  )
+      "updateUserRoles" to getExpectedParams("user", "updateUserRoles"),
+      "getUserDetails" to getExpectedParams("user", "getUserDetails")
+      )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createUser(@RequestBody request: String): ResponseEntity<String> {
@@ -60,6 +61,18 @@ class UserController(val userService: UserService) {
   fun updateUserRoles(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(userService.updateUserRoles(jsonParams = (getJsonParams(request, expectedParams["updateUserRoles"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun getUserDetails(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(userService.getUserDetails(jsonParams = (getJsonParams(request, expectedParams["getUserDetails"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
