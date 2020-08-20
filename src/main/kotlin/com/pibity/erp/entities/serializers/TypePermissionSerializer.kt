@@ -26,6 +26,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
         json.addProperty("typeName", src.id.type.id.name)
         json.addProperty("permissionName", src.id.name)
       }
+      json.addProperty("highestAccessLevel", src.highestAccessLevel)
+      json.addProperty("lowestAccessLevel", src.lowestAccessLevel)
       val jsonKeyPermissions = JsonObject()
       for (keyPermission in src.keyPermissions) {
         when (keyPermission.id.key.type.id.name) {

@@ -21,6 +21,10 @@ data class TypePermission(
     @EmbeddedId
     val id: TypePermissionId,
 
+    var highestAccessLevel: Int = 0,
+
+    var lowestAccessLevel: Int = 0,
+
     @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
     var keyPermissions: MutableSet<KeyPermission> = HashSet()
 

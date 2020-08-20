@@ -22,7 +22,7 @@ data class User(
     @EmbeddedId
     val id: UserId,
 
-    val active: Boolean = true,
+    var active: Boolean = true,
 
     @ManyToMany
     @JoinTable(name = "mapping_user_roles", schema = "inventory",
