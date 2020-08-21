@@ -9,6 +9,7 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.validateKeyPermissions
@@ -37,7 +38,7 @@ class PermissionService(
         ?: organizationRepository.getById(jsonParams.get("organization").asString)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = permissionType
-        ?: typeRepository.findType(organization = organization, superTypeName = "Any", name = jsonParams.get("typeName").asString)
+        ?: typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val keyPermissions: JsonObject = validateKeyPermissions(jsonParams = jsonParams, type = type).get("permissions").asJsonObject
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName
@@ -50,11 +51,11 @@ class PermissionService(
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (key.list!!.type.id.superTypeName == "Any") {
+          if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createPermission(jsonParams = keyPermissions.get(key.id.name).asJsonObject, permissionOrganization = organization, permissionType = key.list!!.type, permissionName = typePermission.id.name)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
@@ -62,11 +63,11 @@ class PermissionService(
           }
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createPermission(jsonParams = keyPermissions.get(key.id.name).asJsonObject, permissionOrganization = organization, permissionType = key.type, permissionName = typePermission.id.name)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
@@ -90,7 +91,7 @@ class PermissionService(
   fun updatePermission(jsonParams: JsonObject, keyTypePermission: TypePermission? = null): TypePermission {
     val typePermission: TypePermission = keyTypePermission ?: typePermissionRepository.findTypePermission(
         organizationName = jsonParams.get("organization").asString,
-        superTypeName = "Any",
+        superTypeName = GLOBAL_TYPE,
         typeName = jsonParams.get("typeName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
@@ -104,11 +105,11 @@ class PermissionService(
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (keyPermission.id.key.list!!.type.id.superTypeName == "Any") {
+          if (keyPermission.id.key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
           } else {
-            if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
-                || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName)) {
+            if ((keyPermission.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
+                || (keyPermission.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName)) {
               updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), referencedTypePermission = updatePermission(jsonParams = keyPermissions.get(keyPermission.id.key.id.name).asJsonObject, keyTypePermission = keyPermission.referencedTypePermission!!)))
             } else {
               updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
@@ -116,11 +117,11 @@ class PermissionService(
           }
         }
         else -> {
-          if (keyPermission.id.key.type.id.superTypeName == "Any") {
+          if (keyPermission.id.key.type.id.superTypeName == GLOBAL_TYPE) {
             updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
           } else {
-            if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
-                || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
+            if ((keyPermission.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
+                || (keyPermission.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName)) {
               updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), referencedTypePermission = updatePermission(jsonParams = keyPermissions.get(keyPermission.id.key.id.name).asJsonObject, keyTypePermission = keyPermission.referencedTypePermission!!)))
             } else {
               updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
@@ -150,11 +151,11 @@ class PermissionService(
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (key.list!!.type.id.superTypeName == "Any") {
+          if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createDefaultPermission(key.list!!.type, permissionName, accessLevel)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
@@ -162,11 +163,11 @@ class PermissionService(
           }
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createDefaultPermission(key.type, permissionName, accessLevel)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
@@ -185,7 +186,7 @@ class PermissionService(
   fun getPermissionDetails(jsonParams: JsonObject): TypePermission {
     return (typePermissionRepository.findTypePermission(
         organizationName = jsonParams.get("organization").asString,
-        superTypeName = "Any",
+        superTypeName = GLOBAL_TYPE,
         typeName = jsonParams.get("typeName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
@@ -201,11 +202,11 @@ class PermissionService(
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (key.list!!.type.id.superTypeName == "Any") {
+          if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = superimposePermissions(typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().referencedTypePermission!! }.toSet(), key.type)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
@@ -213,11 +214,11 @@ class PermissionService(
           }
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = superimposePermissions(typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().referencedTypePermission!! }.toSet(), key.type)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))

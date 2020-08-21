@@ -21,8 +21,10 @@ data class TypeList(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = -1,
 
+    @Column(name = "min", nullable = false)
     val min: Int,
 
+    @Column(name = "max", nullable = false)
     val max: Int,
 
     @ManyToOne

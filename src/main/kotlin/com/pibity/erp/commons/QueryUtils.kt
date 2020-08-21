@@ -9,6 +9,7 @@
 package com.pibity.erp.commons
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
@@ -255,7 +256,7 @@ fun generateQuery(queryJson: JsonObject, type: Type, injectedVariableCount: Int 
         TypeConstants.LIST, TypeConstants.FORMULA -> {
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             if (!valuesJson.get(key.id.name).isJsonObject) {
               keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
               injectedValues["v${variableCount++}"] = type.id.organization.superList!!
@@ -349,8 +350,8 @@ fun generateQuery(queryJson: JsonObject, type: Type, injectedVariableCount: Int 
               }
             }
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               if (!valuesJson.get(key.id.name).isJsonObject)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter''}")
               else {

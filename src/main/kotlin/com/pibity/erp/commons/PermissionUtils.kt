@@ -9,6 +9,7 @@
 package com.pibity.erp.commons
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
@@ -36,7 +37,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (key.list!!.type.id.superTypeName == "Any") {
+          if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             val accessLevel: Int = try {
               keyPermissions.get(key.id.name).asInt
             } catch (exception: Exception) {
@@ -46,8 +47,8 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
               val keyPermission: JsonObject = try {
                 keyPermissions.get(key.id.name).asJsonObject
               } catch (exception: Exception) {
@@ -71,7 +72,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
           }
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             val accessLevel: Int = try {
               keyPermissions.get(key.id.name).asInt
             } catch (exception: Exception) {
@@ -81,8 +82,8 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               val keyPermission: JsonObject = try {
                 keyPermissions.get(key.id.name).asJsonObject
               } catch (exception: Exception) {

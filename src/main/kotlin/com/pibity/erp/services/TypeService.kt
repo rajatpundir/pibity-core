@@ -10,10 +10,7 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.KeyConstants
-import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.commons.constants.formulaReturnTypes
-import com.pibity.erp.commons.constants.primitiveTypes
+import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.validateFormulaTypeKeys
 import com.pibity.erp.commons.validateSuperTypeName
@@ -42,7 +39,7 @@ class TypeService(
     val organizationName: String = jsonParams.get("organization").asString
     val displayName: String = jsonParams.get("displayName").asString
     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
-    val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else "Any"
+    val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else GLOBAL_TYPE
     val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
     val multiplicity: Long = if (jsonParams.has("multiplicity?")) jsonParams.get("multiplicity?").asLong else 0
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject)
@@ -53,7 +50,7 @@ class TypeService(
         ?: typeRepository.findGlobalTypes(organization = organization) as MutableSet<Type>
     val validLocalTypes: MutableSet<Type> = localTypes ?: mutableSetOf()
     // Raise exception if type with same name already exists
-    if (superTypeName == "Any" && validGlobalTypes.any { it.id.name == typeName })
+    if (superTypeName == GLOBAL_TYPE && validGlobalTypes.any { it.id.name == typeName })
       throw CustomJsonException("{typeName: 'Type with same name already exists'}")
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
@@ -62,7 +59,7 @@ class TypeService(
             val nestedType: Type = try {
               createType(keyJson.get(KeyConstants.KEY_TYPE).asJsonObject.apply {
                 addProperty("organization", organizationName)
-                addProperty("superTypeName", if (superTypeName == "Any") typeName else superTypeName)
+                addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
               }, validGlobalTypes, validLocalTypes)
             } catch (exception: CustomJsonException) {
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: '${exception.message}'}}}")
@@ -96,7 +93,7 @@ class TypeService(
                 val nestedType: Type = try {
                   createType(keyJson.get(KeyConstants.LIST_TYPE).asJsonObject.apply {
                     addProperty("organization", organizationName)
-                    addProperty("superTypeName", if (superTypeName == "Any") typeName else superTypeName)
+                    addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
                   }, validGlobalTypes, validLocalTypes)
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: '${exception.message}'}}}")
@@ -162,7 +159,7 @@ class TypeService(
     } catch (exception: Exception) {
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
     }
-    if (type.id.superTypeName == "Any") {
+    if (type.id.superTypeName == GLOBAL_TYPE) {
       createDefaultPermissionsForType(type = createdType)
       if (jsonParams.has("variables?"))
         createVariablesForType(jsonParams = jsonParams)
@@ -181,7 +178,7 @@ class TypeService(
       }
       else -> {
         // Default values for variable references only makes sense when they refer a Global variable
-        if (key.type.id.superTypeName == "Any" && defaultValue != null) {
+        if (key.type.id.superTypeName == GLOBAL_TYPE && defaultValue != null) {
           key.referencedVariable = variableRepository.findByTypeAndName(superList = key.id.parentType.id.organization.superList!!, type = key.type, name = defaultValue.asString)
               ?: throw CustomJsonException("{keys: {${key.id.name}: {default: 'Variable reference is not correct'}}}")
         }
@@ -222,7 +219,7 @@ class TypeService(
     val typeName: String = jsonParams.get("typeName").asString
     val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    return typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
+    return typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = typeName)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
   }
 }

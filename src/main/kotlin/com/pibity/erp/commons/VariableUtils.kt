@@ -10,6 +10,7 @@ package com.pibity.erp.commons
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
@@ -36,11 +37,11 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
           if (key.referencedVariable == null)
             throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}")
           else {
-            if (key.type.id.superTypeName == "Any") {
+            if (key.type.id.superTypeName == GLOBAL_TYPE) {
               expectedValues.addProperty(key.id.name, key.referencedVariable!!.id.name)
             } else {
-              if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
                 throw CustomJsonException("{${key.id.name}: 'Internal local values cannot have a default'}")
               } else {
                 expectedValues.add(key.id.name, JsonObject().apply {
@@ -63,11 +64,11 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
           TypeConstants.FORMULA -> {
           }
           else -> {
-            if (key.type.id.superTypeName == "Any")
+            if (key.type.id.superTypeName == GLOBAL_TYPE)
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             else {
-              if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
                 val valueJson = JsonObject()
                 if (values.get(key.id.name).asJsonObject.has("values")) {
                   try {
@@ -132,7 +133,7 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
               throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${key.list!!.min} variables'}")
             val expectedArray = JsonArray()
             for (ref in jsonArray) {
-              if (key.list!!.type.id.superTypeName == "Any") {
+              if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
                 try {
                   expectedArray.add(ref.asString)
                 } catch (exception: Exception) {
@@ -140,8 +141,8 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
                 }
               } else {
                 if (ref.isJsonObject) {
-                  if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                      || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+                  if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                      || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
                     val valueJson = JsonObject()
                     if (ref.asJsonObject.has("variableName")) {
                       try {
@@ -184,7 +185,7 @@ fun validateVariableValues(values: JsonObject, type: Type): JsonObject {
           TypeConstants.FORMULA -> {
           }
           else -> {
-            if (key.type.id.superTypeName == "Any") {
+            if (key.type.id.superTypeName == GLOBAL_TYPE) {
               try {
                 expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
               } catch (exception: Exception) {
@@ -237,7 +238,7 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           else {
             val listParams = JsonObject()
-            if (key.list!!.type.id.superTypeName == "Any") {
+            if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
               if (values.get(key.id.name).asJsonObject.has("add")) {
                 if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                   throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
@@ -269,8 +270,8 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                 }
               }
             } else {
-              if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
                 if (values.get(key.id.name).asJsonObject.has("add")) {
                   if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                     throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
@@ -423,15 +424,15 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
         TypeConstants.FORMULA -> {
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             try {
               expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               if (!values.get(key.id.name).isJsonObject)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               else expectedValues.add(key.id.name, JsonObject().apply {

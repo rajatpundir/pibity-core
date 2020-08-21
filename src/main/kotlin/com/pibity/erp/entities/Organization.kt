@@ -23,6 +23,7 @@ data class Organization(
     val id: String,
 
     @Expose
+    @Column(name = "display_name", nullable = false)
     var displayName: String = "",
 
     @OneToOne

@@ -22,6 +22,7 @@ data class VariableList(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = -1,
 
+    @Column(name = "size", nullable = false)
     var size: Int = 0,
 
     @ManyToOne

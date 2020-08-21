@@ -21,8 +21,10 @@ data class TypePermission(
     @EmbeddedId
     val id: TypePermissionId,
 
+    @Column(name = "max_access_level", nullable = false)
     var maxAccessLevel: Int = 0,
 
+    @Column(name = "min_access_level", nullable = false)
     var minAccessLevel: Int = 0,
 
     @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])

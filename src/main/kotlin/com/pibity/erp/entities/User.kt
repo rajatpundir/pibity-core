@@ -22,6 +22,7 @@ data class User(
     @EmbeddedId
     val id: UserId,
 
+    @Column(name = "active", nullable = false)
     var active: Boolean = true,
 
     @ManyToMany
