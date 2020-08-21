@@ -1,0 +1,11 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "roleName": {
+    "type": "String"
+  },
+  "typeName": {
+    "type": "String"
+  }
+}

@@ -190,4 +190,42 @@ class PermissionService(
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
   }
+
+  fun superimposePermissions(typePermissions: Set<TypePermission>, type: Type): TypePermission {
+    val typePermission = TypePermission(id = TypePermissionId(type = type, name = "SUPERIMPOSED_PERMISSION"))
+    for (key in type.keys) {
+      when (key.type.id.name) {
+        TypeConstants.TEXT, TypeConstants.DECIMAL, TypeConstants.NUMBER, TypeConstants.BOOLEAN -> {
+          typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
+        }
+        TypeConstants.FORMULA -> {
+        }
+        TypeConstants.LIST -> {
+          if (key.list!!.type.id.superTypeName == "Any") {
+            typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
+          } else {
+            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = superimposePermissions(typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().referencedTypePermission!! }.toSet(), key.type)))
+            } else {
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
+            }
+          }
+        }
+        else -> {
+          if (key.type.id.superTypeName == "Any") {
+            typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
+          } else {
+            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = superimposePermissions(typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().referencedTypePermission!! }.toSet(), key.type)))
+            } else {
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { it.keyPermissions.filter { it.id.key == key }.single().accessLevel }.max()!!))
+            }
+          }
+        }
+      }
+    }
+    return typePermission
+  }
 }
