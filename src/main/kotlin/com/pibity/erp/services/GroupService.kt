@@ -11,9 +11,11 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Group
+import com.pibity.erp.entities.GroupRole
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
 import com.pibity.erp.entities.embeddables.GroupId
+import com.pibity.erp.entities.embeddables.GroupRoleId
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
@@ -46,8 +48,8 @@ class GroupService(
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> group.roles.add(role)
-      "remove" -> group.roles.remove(role)
+      "add" -> group.groupRoles.add(GroupRole(id = GroupRoleId(group = group, role = role)))
+      "remove" -> group.groupRoles.remove(GroupRole(id = GroupRoleId(group = group, role = role)))
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {

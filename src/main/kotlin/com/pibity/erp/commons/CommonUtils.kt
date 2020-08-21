@@ -26,6 +26,7 @@ val gson: Gson = GsonBuilder()
     .registerTypeAdapter(Role::class.java, RoleSerializer())
     .registerTypeAdapter(RolePermission::class.java, RolePermissionSerializer())
     .registerTypeAdapter(Group::class.java, GroupSerializer())
+    .registerTypeAdapter(GroupRole::class.java, GroupRoleSerializer())
     .registerTypeAdapter(User::class.java, UserSerializer())
     .create()
 

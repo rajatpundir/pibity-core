@@ -18,7 +18,7 @@ class GroupSerializer : JsonSerializer<Group> {
     if (src != null) {
       json.addProperty("organization", src.id.organization.id)
       json.addProperty("groupName", src.id.name)
-      json.add("roles", gson.fromJson(gson.toJson(src.roles), JsonArray::class.java))
+      json.add("roles", gson.fromJson(gson.toJson(src.groupRoles), JsonArray::class.java))
     }
     return json
   }

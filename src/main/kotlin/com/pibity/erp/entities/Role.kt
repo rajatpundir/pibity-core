@@ -25,8 +25,8 @@ data class Role(
     @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
     val rolePermissions: MutableSet<RolePermission> = HashSet(),
 
-    @ManyToMany(mappedBy = "roles")
-    val groups: Set<Group> = HashSet(),
+    @OneToMany(mappedBy = "id.role")
+    val roleGroups: Set<GroupRole> = HashSet(),
 
     @ManyToMany(mappedBy = "roles")
     val users: Set<User> = HashSet()
