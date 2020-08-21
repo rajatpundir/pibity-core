@@ -18,28 +18,31 @@ import javax.persistence.*
 @Table(name = "type_permission", schema = "inventory")
 data class TypePermission(
 
-    @EmbeddedId
-    val id: TypePermissionId,
+        @EmbeddedId
+        val id: TypePermissionId,
 
-    @Column(name = "max_access_level", nullable = false)
-    var maxAccessLevel: Int = 0,
+        @Column(name = "max_access_level", nullable = false)
+        var maxAccessLevel: Int = 0,
 
-    @Column(name = "min_access_level", nullable = false)
-    var minAccessLevel: Int = 0,
+        @Column(name = "min_access_level", nullable = false)
+        var minAccessLevel: Int = 0,
 
-    @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
-    var keyPermissions: MutableSet<KeyPermission> = HashSet()
+        @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
+        var keyPermissions: MutableSet<KeyPermission> = HashSet(),
+
+        @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
+        val permissionRoles: MutableSet<RolePermission> = HashSet()
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as TypePermission
-    return this.id == other.id
-  }
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as TypePermission
+        return this.id == other.id
+    }
 
-  override fun hashCode(): Int = Objects.hash(id)
+    override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+    override fun toString(): String = gson.toJson(this)
 }

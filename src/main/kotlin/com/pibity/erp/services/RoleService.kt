@@ -13,8 +13,10 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.RolePermission
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
+import com.pibity.erp.entities.embeddables.RolePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.TypePermissionRepository
@@ -51,8 +53,8 @@ class RoleService(
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> role.permissions.add(typePermission)
-      "remove" -> role.permissions.remove(typePermission)
+      "add" -> role.rolePermissions.add(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      "remove" -> role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {

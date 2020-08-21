@@ -22,6 +22,6 @@ interface RoleRepository : CrudRepository<Role, RoleId> {
   fun findRole(organizationName: String, name: String): Role?
 
   @Transactional(readOnly = true)
-  @Query("SELECT r.permissions FROM Role r INNER JOIN r.permissions p WHERE r.id.organization.id = :organizationName AND r.id.name = :roleName AND p.id.type.id.organization.id = :organizationName AND p.id.type.id.superTypeName = :superTypeName AND  p.id.type.id.name = :typeName")
+  @Query("SELECT p FROM TypePermission p JOIN p.permissionRoles pr JOIN pr.id.role r WHERE r.id.organization.id=:organizationName AND r.id.name=:roleName AND p.id.type.id.organization.id=:organizationName AND p.id.type.id.superTypeName=:superTypeName AND p.id.type.id.name=:typeName")
   fun getTypePermissionsForRole(organizationName: String, superTypeName: String, typeName: String, roleName: String): Set<TypePermission>
 }

@@ -8,17 +8,18 @@
 
 package com.pibity.erp.entities.serializers
 
-import com.google.gson.*
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.RolePermission
 
-class RoleSerializer : JsonSerializer<Role> {
-  override fun serialize(src: Role?, typeOfSrc: java.lang.reflect.Type?, context: JsonSerializationContext?): JsonElement {
+class RolePermissionSerializer : JsonSerializer<RolePermission> {
+  override fun serialize(src: RolePermission?, typeOfSrc: java.lang.reflect.Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
-      json.addProperty("organization", src.id.organization.id)
-      json.addProperty("roleName", src.id.name)
-      json.add("permissions", gson.fromJson(gson.toJson(src.rolePermissions), JsonArray::class.java))
+      return (gson.fromJson(gson.toJson(src.id.permission), JsonObject::class.java))
     }
     return json
   }
