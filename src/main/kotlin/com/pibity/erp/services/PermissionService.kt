@@ -75,9 +75,9 @@ class PermissionService(
         }
       }
     }
-    typePermission.highestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.highestAccessLevel }.max()
+    typePermission.maxAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.maxAccessLevel }.max()
         ?: 0
-    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.lowestAccessLevel }.min()
+    typePermission.minAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.minAccessLevel }.min()
         ?: 0
     return try {
       typePermissionRepository.save(typePermission)
@@ -130,9 +130,9 @@ class PermissionService(
       }
     }
     typePermission.keyPermissions = updatedPermissions
-    typePermission.highestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.highestAccessLevel }.max()
+    typePermission.maxAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.maxAccessLevel }.max()
         ?: 0
-    typePermission.lowestAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.lowestAccessLevel }.min()
+    typePermission.minAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.minAccessLevel }.min()
         ?: 0
     return try {
       typePermissionRepository.save(typePermission)

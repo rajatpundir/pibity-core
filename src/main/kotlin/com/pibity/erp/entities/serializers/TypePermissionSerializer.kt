@@ -27,15 +27,15 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
         json.addProperty("permissionName", src.id.name)
       }
       json.addProperty(
-          "highestAccessLevel",
-          when (src.highestAccessLevel) {
+          "maxAccessLevel",
+          when (src.maxAccessLevel) {
             1 -> "READ"
             2 -> "WRITE"
             else -> "NONE"
           })
       json.addProperty(
-          "lowestAccessLevel",
-          when (src.lowestAccessLevel) {
+          "minAccessLevel",
+          when (src.minAccessLevel) {
             1 -> "READ"
             2 -> "WRITE"
             else -> "NONE"
