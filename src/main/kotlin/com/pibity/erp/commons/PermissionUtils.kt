@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) PermissionConstants.WRITE_ACCESSPermissionConstants.NO_ACCESSPermissionConstants.WRITE_ACCESSPermissionConstants.NO_ACCESS Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -10,6 +10,7 @@ package com.pibity.erp.commons
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
@@ -30,7 +31,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
           } catch (exception: Exception) {
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           }
-          if (accessLevel < 0 || accessLevel > 2)
+          if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           expectedKeyPermissions.addProperty(key.id.name, accessLevel)
         }
@@ -43,7 +44,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            if (accessLevel < 0 || accessLevel > 2)
+            if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
@@ -65,7 +66,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
               } catch (exception: Exception) {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
-              if (accessLevel < 0 || accessLevel > 2)
+              if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               expectedKeyPermissions.addProperty(key.id.name, accessLevel)
             }
@@ -78,7 +79,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            if (accessLevel < 0 || accessLevel > 2)
+            if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
@@ -100,7 +101,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
               } catch (exception: Exception) {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
-              if (accessLevel < 0 || accessLevel > 2)
+              if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               expectedKeyPermissions.addProperty(key.id.name, accessLevel)
             }

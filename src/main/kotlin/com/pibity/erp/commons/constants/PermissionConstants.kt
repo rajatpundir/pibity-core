@@ -8,6 +8,8 @@
 
 package com.pibity.erp.commons.constants
 
-const val NO_ACCESS = 0
-const val READ_ACCESS = 1
-const val WRITE_ACCESS = 2
+object PermissionConstants {
+  const val NO_ACCESS = 0
+  const val READ_ACCESS = 1
+  const val WRITE_ACCESS = 2
+}
