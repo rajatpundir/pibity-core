@@ -12,6 +12,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.TypePermission
@@ -29,15 +30,15 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
       json.addProperty(
           "maxAccessLevel",
           when (src.maxAccessLevel) {
-            1 -> "READ"
-            2 -> "WRITE"
+            PermissionConstants.READ_ACCESS -> "READ"
+            PermissionConstants.WRITE_ACCESS -> "WRITE"
             else -> "NONE"
           })
       json.addProperty(
           "minAccessLevel",
           when (src.minAccessLevel) {
-            1 -> "READ"
-            2 -> "WRITE"
+            PermissionConstants.READ_ACCESS -> "READ"
+            PermissionConstants.WRITE_ACCESS -> "WRITE"
             else -> "NONE"
           })
       val jsonKeyPermissions = JsonObject()
@@ -47,8 +48,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
             jsonKeyPermissions.addProperty(
                 keyPermission.id.key.id.name,
                 when (keyPermission.accessLevel) {
-                  1 -> "READ"
-                  2 -> "WRITE"
+                  PermissionConstants.READ_ACCESS -> "READ"
+                  PermissionConstants.WRITE_ACCESS -> "WRITE"
                   else -> "NONE"
                 })
           }
@@ -59,8 +60,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
               jsonKeyPermissions.addProperty(
                   keyPermission.id.key.id.name,
                   when (keyPermission.accessLevel) {
-                    1 -> "READ"
-                    2 -> "WRITE"
+                    PermissionConstants.READ_ACCESS -> "READ"
+                    PermissionConstants.WRITE_ACCESS -> "WRITE"
                     else -> "NONE"
                   })
             else {
@@ -71,8 +72,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
                 jsonKeyPermissions.addProperty(
                     keyPermission.id.key.id.name,
                     when (keyPermission.accessLevel) {
-                      1 -> "READ"
-                      2 -> "WRITE"
+                      PermissionConstants.READ_ACCESS -> "READ"
+                      PermissionConstants.WRITE_ACCESS -> "WRITE"
                       else -> "NONE"
                     })
             }
@@ -82,8 +83,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
               jsonKeyPermissions.addProperty(
                   keyPermission.id.key.id.name,
                   when (keyPermission.accessLevel) {
-                    1 -> "READ"
-                    2 -> "WRITE"
+                    PermissionConstants.READ_ACCESS -> "READ"
+                    PermissionConstants.WRITE_ACCESS -> "WRITE"
                     else -> "NONE"
                   })
             else {
@@ -94,8 +95,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
                 jsonKeyPermissions.addProperty(
                     keyPermission.id.key.id.name,
                     when (keyPermission.accessLevel) {
-                      1 -> "READ"
-                      2 -> "WRITE"
+                      PermissionConstants.READ_ACCESS -> "READ"
+                      PermissionConstants.WRITE_ACCESS -> "WRITE"
                       else -> "NONE"
                     })
             }
