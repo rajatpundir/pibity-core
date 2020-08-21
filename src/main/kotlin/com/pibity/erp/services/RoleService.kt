@@ -12,7 +12,6 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
 import com.pibity.erp.repositories.OrganizationRepository
