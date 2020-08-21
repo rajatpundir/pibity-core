@@ -515,7 +515,11 @@ fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, 
   return keys
 }
 
-fun generateQuery(queryParams: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {
+fun generateQuery(queryParams: JsonObject,
+                  type: Type,
+                  injectedVariableCount: Int = 0,
+                  injectedValues: MutableMap<String, Any> = mutableMapOf(),
+                  parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {
   var variableCount: Int = injectedVariableCount
   val keyQueries = mutableListOf<String>()
   val variableAlias = "v${variableCount++}"

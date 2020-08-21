@@ -24,7 +24,8 @@ data class Group(
 
     @ManyToMany
     @JoinTable(name = "mapping_group_roles", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "group_name")],
+        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
+          JoinColumn(name = "group_name", referencedColumnName = "group_name")],
         inverseJoinColumns = [JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
           JoinColumn(name = "role_name", referencedColumnName = "role_name")])
     val roles: MutableSet<Role> = HashSet(),

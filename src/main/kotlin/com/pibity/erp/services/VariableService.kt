@@ -527,18 +527,13 @@ class VariableService(
     val typeName: String = jsonParams.get("typeName").asString
     val organization: Organization = organizationRepository.getById(organizationName)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    if (jsonParams.has("variableName?")) {
-      return (listOf(variableRepository.findVariable(organization = organization, superTypeName = "Any", typeName = typeName, superList = organization.superList!!.id, name = jsonParams.get("variableName?").asString)
-          ?: throw CustomJsonException("[]")))
-    } else {
-      val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
-          ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-      val (generatedQuery, _, injectedValues) = try {
-        generateQuery(jsonParams.get("query").asJsonObject, type)
-      } catch (exception: CustomJsonException) {
-        throw CustomJsonException("{query : ${exception.message}}")
-      }
-      return valueRepository.queryVariables(generatedQuery, injectedValues)
+    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = typeName)
+        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
+    val (generatedQuery, _, injectedValues) = try {
+      generateQuery(jsonParams.get("query").asJsonObject, type)
+    } catch (exception: CustomJsonException) {
+      throw CustomJsonException("{query : ${exception.message}}")
     }
+    return valueRepository.queryVariables(generatedQuery, injectedValues)
   }
 }

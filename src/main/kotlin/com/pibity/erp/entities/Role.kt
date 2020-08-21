@@ -24,7 +24,8 @@ data class Role(
 
     @ManyToMany
     @JoinTable(name = "mapping_role_permissions", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "role_name")],
+        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
+          JoinColumn(name = "role_name", referencedColumnName = "role_name")],
         inverseJoinColumns = [JoinColumn(name = "permission_organization_id", referencedColumnName = "organization_id"),
           JoinColumn(name = "permission_super_type_name", referencedColumnName = "super_type_name"),
           JoinColumn(name = "permission_type_name", referencedColumnName = "type_name"),
