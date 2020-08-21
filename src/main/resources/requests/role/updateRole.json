@@ -1,0 +1,17 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "roleName": {
+    "type": "String"
+  },
+  "typeName": {
+    "type": "String"
+  },
+  "permissionName": {
+    "type": "String"
+  },
+  "operation": {
+    "type": "String"
+  }
+}

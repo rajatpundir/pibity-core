@@ -1,0 +1,14 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "username": {
+    "type": "String"
+  },
+  "roleName": {
+    "type": "String"
+  },
+  "operation": {
+    "type": "String"
+  }
+}

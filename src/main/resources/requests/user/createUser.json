@@ -1,0 +1,8 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "username": {
+    "type": "String"
+  }
+}

@@ -8,37 +8,34 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.commons.gson
+import com.pibity.erp.entities.embeddables.KeyPermissionId
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "list_type", schema = "inventory")
-data class TypeList(
+@Table(name = "key_permission", schema = "inventory")
+data class KeyPermission(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = -1,
+    @EmbeddedId
+    val id: KeyPermissionId,
 
-    val min: Int,
+    var accessLevel: Int = 0,
 
-    val max: Int,
-
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "type_name", referencedColumnName = "type_name")])
-    var type: Type
+    @OneToOne
+    val referencedTypePermission: TypePermission? = null
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as TypeList
+    other as KeyPermission
     return this.id == other.id
   }
 
   override fun hashCode(): Int = Objects.hash(id)
+
+  override fun toString(): String = gson.toJson(this)
 }

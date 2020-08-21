@@ -45,7 +45,7 @@ class VariableSerializer : JsonSerializer<Variable> {
             if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
               jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
             else
-              jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
+            jsonValues.add(value.id.key.id.name, gson.fromJson(gson.toJson(value.referencedVariable!!), JsonObject::class.java))
           }
         }
       }

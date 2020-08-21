@@ -24,7 +24,7 @@ data class VariableList(
 
     var size: Int = 0,
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "list_type_id")
     val listType: TypeList,
 
