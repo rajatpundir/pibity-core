@@ -25,8 +25,8 @@ data class Group(
     @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL])
     val groupRoles: MutableSet<GroupRole> = HashSet(),
 
-    @ManyToMany(mappedBy = "groups")
-    val users: Set<User> = HashSet()
+    @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL])
+    val groupUsers: MutableSet<UserGroup> = HashSet()
 
 ) : Serializable {
 

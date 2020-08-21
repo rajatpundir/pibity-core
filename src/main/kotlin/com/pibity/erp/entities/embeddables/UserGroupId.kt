@@ -8,7 +8,7 @@
 
 package com.pibity.erp.entities.embeddables
 
-import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.Group
 import com.pibity.erp.entities.User
 import java.io.Serializable
 import java.util.*
@@ -18,7 +18,7 @@ import javax.persistence.JoinColumns
 import javax.persistence.ManyToOne
 
 @Embeddable
-data class UserRoleId(
+data class UserGroupId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "user_organization_id", referencedColumnName = "organization_id"),
@@ -26,18 +26,18 @@ data class UserRoleId(
     val user: User,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "role_name", referencedColumnName = "role_name")])
-    val role: Role
+    @JoinColumns(*[JoinColumn(name = "group_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "group_name", referencedColumnName = "group_name")])
+    val group: Group
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as UserRoleId
-    return this.user == other.user && this.role == other.role
+    other as UserGroupId
+    return this.user == other.user && this.group == other.group
   }
 
-  override fun hashCode(): Int = Objects.hash(user, role)
+  override fun hashCode(): Int = Objects.hash(user, group)
 }

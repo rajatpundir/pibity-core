@@ -11,6 +11,7 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
+import com.pibity.erp.entities.embeddables.UserGroupId
 import com.pibity.erp.entities.embeddables.UserId
 import com.pibity.erp.entities.embeddables.UserRoleId
 import com.pibity.erp.repositories.GroupRepository
@@ -47,8 +48,8 @@ class UserService(
     val group: Group = groupRepository.findGroup(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("groupName").asString)
         ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> user.groups.add(group)
-      "remove" -> user.groups.remove(group)
+      "add" -> user.userGroups.add(UserGroup(id = UserGroupId(user = user, group = group)))
+      "remove" -> user.userGroups.remove(UserGroup(id = UserGroupId(user = user, group = group)))
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
@@ -65,8 +66,8 @@ class UserService(
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> user.userRoles.add(UserRole(id= UserRoleId(user=user,role=role)))
-      "remove" -> user.userRoles.remove(UserRole(id= UserRoleId(user=user,role=role)))
+      "add" -> user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role)))
+      "remove" -> user.userRoles.remove(UserRole(id = UserRoleId(user = user, role = role)))
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
