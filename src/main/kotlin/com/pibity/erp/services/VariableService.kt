@@ -534,6 +534,9 @@ class VariableService(
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{query : ${exception.message}}")
     }
+    println("------------------------------------")
+    println(generatedQuery)
+    println("------------------------------------")
     return valueRepository.queryVariables(generatedQuery, injectedValues)
   }
 }
