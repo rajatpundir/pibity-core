@@ -25,12 +25,8 @@ data class User(
     @Column(name = "active", nullable = false)
     var active: Boolean = true,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_user_roles", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "username")],
-        inverseJoinColumns = [JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "role_name", referencedColumnName = "role_name")])
-    val roles: MutableSet<Role> = HashSet(),
+    @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL])
+    val userRoles: MutableSet<UserRole> = HashSet(),
 
     @ManyToMany
     @JoinTable(name = "mapping_user_groups", schema = "inventory",

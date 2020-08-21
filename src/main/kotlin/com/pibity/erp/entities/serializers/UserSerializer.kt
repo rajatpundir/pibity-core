@@ -10,7 +10,6 @@ package com.pibity.erp.entities.serializers
 
 import com.google.gson.*
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.Role
 import com.pibity.erp.entities.User
 
 class UserSerializer : JsonSerializer<User> {
@@ -20,7 +19,7 @@ class UserSerializer : JsonSerializer<User> {
       json.addProperty("organization", src.id.organization.id)
       json.addProperty("username", src.id.username)
       json.add("groups", gson.fromJson(gson.toJson(src.groups), JsonArray::class.java))
-      json.add("roles", gson.fromJson(gson.toJson(src.roles), JsonArray::class.java))
+      json.add("roles", gson.fromJson(gson.toJson(src.userRoles), JsonArray::class.java))
     }
     return json
   }
