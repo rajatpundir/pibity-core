@@ -10,6 +10,8 @@ package com.pibity.erp.entities
 
 import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.UserId
+import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.entities.mappings.UserRole
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*

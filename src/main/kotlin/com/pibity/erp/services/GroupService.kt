@@ -11,11 +11,11 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Group
-import com.pibity.erp.entities.GroupRole
+import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
 import com.pibity.erp.entities.embeddables.GroupId
-import com.pibity.erp.entities.embeddables.GroupRoleId
+import com.pibity.erp.entities.mappings.embeddables.GroupRoleId
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository

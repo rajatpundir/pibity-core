@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities.embeddables
+package com.pibity.erp.entities.mappings.embeddables
 
 import com.pibity.erp.entities.Group
 import com.pibity.erp.entities.Role

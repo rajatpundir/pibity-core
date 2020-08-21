@@ -14,6 +14,14 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
+import com.pibity.erp.entities.mappings.GroupRole
+import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.entities.mappings.UserRole
+import com.pibity.erp.entities.mappings.serializers.GroupRoleSerializer
+import com.pibity.erp.entities.mappings.serializers.RolePermissionSerializer
+import com.pibity.erp.entities.mappings.serializers.UserGroupSerializer
+import com.pibity.erp.entities.mappings.serializers.UserRoleSerializer
 import com.pibity.erp.entities.serializers.*
 import java.io.FileReader
 
@@ -29,6 +37,7 @@ val gson: Gson = GsonBuilder()
     .registerTypeAdapter(GroupRole::class.java, GroupRoleSerializer())
     .registerTypeAdapter(User::class.java, UserSerializer())
     .registerTypeAdapter(UserGroup::class.java, UserGroupSerializer())
+    .registerTypeAdapter(UserRole::class.java, UserRoleSerializer())
     .create()
 
 fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)

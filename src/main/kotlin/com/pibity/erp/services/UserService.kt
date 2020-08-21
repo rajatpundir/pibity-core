@@ -11,9 +11,11 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
-import com.pibity.erp.entities.embeddables.UserGroupId
+import com.pibity.erp.entities.mappings.embeddables.UserGroupId
 import com.pibity.erp.entities.embeddables.UserId
-import com.pibity.erp.entities.embeddables.UserRoleId
+import com.pibity.erp.entities.mappings.embeddables.UserRoleId
+import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.entities.mappings.UserRole
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository

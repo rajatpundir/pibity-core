@@ -6,20 +6,20 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities.serializers
+package com.pibity.erp.entities.mappings.serializers
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.UserRole
+import com.pibity.erp.entities.mappings.UserGroup
 
-class UserRoleSerializer : JsonSerializer<UserRole> {
-  override fun serialize(src: UserRole?, typeOfSrc: java.lang.reflect.Type?, context: JsonSerializationContext?): JsonElement {
+class UserGroupSerializer : JsonSerializer<UserGroup> {
+  override fun serialize(src: UserGroup?, typeOfSrc: java.lang.reflect.Type?, context: JsonSerializationContext?): JsonElement {
     val json = JsonObject()
     if (src != null) {
-      return (gson.fromJson(gson.toJson(src.id.role), JsonObject::class.java))
+      return (gson.fromJson(gson.toJson(src.id.group), JsonObject::class.java))
     }
     return json
   }
