@@ -10,6 +10,7 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.validateKeyPermissions
@@ -76,10 +77,8 @@ class PermissionService(
         }
       }
     }
-    typePermission.maxAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.maxAccessLevel }.max()
-        ?: 0
-    typePermission.minAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.minAccessLevel }.min()
-        ?: 0
+    typePermission.maxAccessLevel = typePermission.keyPermissions.map { it.referencedTypePermission?.maxAccessLevel ?: it.accessLevel }.max() ?: PermissionConstants.NO_ACCESS
+    typePermission.minAccessLevel = typePermission.keyPermissions.map { it.referencedTypePermission?.minAccessLevel ?: it.accessLevel }.min() ?: PermissionConstants.NO_ACCESS
     return try {
       typePermissionRepository.save(typePermission)
     } catch (exception: Exception) {
@@ -131,10 +130,8 @@ class PermissionService(
       }
     }
     typePermission.keyPermissions = updatedPermissions
-    typePermission.maxAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.maxAccessLevel }.max()
-        ?: 0
-    typePermission.minAccessLevel = typePermission.keyPermissions.map { if (it.referencedTypePermission == null) it.accessLevel else it.referencedTypePermission.minAccessLevel }.min()
-        ?: 0
+    typePermission.maxAccessLevel = typePermission.keyPermissions.map { it.referencedTypePermission?.maxAccessLevel ?: it.accessLevel }.max() ?: PermissionConstants.NO_ACCESS
+    typePermission.minAccessLevel = typePermission.keyPermissions.map { it.referencedTypePermission?.minAccessLevel ?: it.accessLevel }.min() ?: PermissionConstants.NO_ACCESS
     return try {
       typePermissionRepository.save(typePermission)
     } catch (exception: Exception) {
