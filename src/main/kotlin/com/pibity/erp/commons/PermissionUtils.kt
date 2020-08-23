@@ -110,5 +110,5 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
       }
     } else throw CustomJsonException("{${key.id.name}: 'Field is missing in request body'}")
   }
-  return JsonObject().apply { add("permissions", expectedKeyPermissions)}
+  return expectedKeyPermissions
 }
