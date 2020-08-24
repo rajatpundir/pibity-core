@@ -54,6 +54,7 @@ class RoleService(
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
     when (jsonParams.get("operation").asString) {
       "add" -> role.rolePermissions.add(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      // TODO: Permission is not being removed for role
       "remove" -> role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
@@ -68,18 +69,5 @@ class RoleService(
   fun getRoleDetails(jsonParams: JsonObject): Role {
     return (roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}"))
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun getSuperimposedPermission(jsonParams: JsonObject): Set<TypePermission> {
-//    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
-//        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-//    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-//        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-//    val type: Type = typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
-//        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    // Not correct
-    return roleRepository.getTypePermissionsForRole(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, roleName = jsonParams.get("roleName").asString)
-//    return typePermissionService.superimposePermissions(role.permissions, type)
   }
 }

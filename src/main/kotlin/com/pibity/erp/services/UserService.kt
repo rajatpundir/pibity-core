@@ -9,6 +9,7 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.mappings.embeddables.UserGroupId
@@ -79,8 +80,14 @@ class UserService(
     }
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserDetails(jsonParams: JsonObject): User {
     return (userRepository.findUser(organizationName = jsonParams.get("organization").asString, username = jsonParams.get("username").asString)
         ?: throw CustomJsonException("{username: 'User could not be determined'}"))
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun getUserPermissions(jsonParams: JsonObject): Set<TypePermission> {
+    return (userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
   }
 }

@@ -11,5 +11,4 @@ package com.pibity.erp.lisp
 import org.springframework.stereotype.Service
 
 @Service
-class Lisp {
-}
+class Lisp {}

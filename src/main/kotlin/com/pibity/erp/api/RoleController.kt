@@ -29,8 +29,7 @@ class RoleController(val roleService: RoleService) {
   private val expectedParams: Map<String, JsonObject> = mapOf(
       "createRole" to getExpectedParams("role", "createRole"),
       "updateRole" to getExpectedParams("role", "updateRole"),
-      "getRoleDetails" to getExpectedParams("role", "getRoleDetails"),
-      "getSuperimposedPermission" to getExpectedParams("role", "getSuperimposedPermission")
+      "getRoleDetails" to getExpectedParams("role", "getRoleDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -61,18 +60,6 @@ class RoleController(val roleService: RoleService) {
   fun getRoleDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]
-          ?: JsonObject())))), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/superimpose"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  fun getSuperimposedPermission(@RequestBody request: String): ResponseEntity<String> {
-    return try {
-      ResponseEntity(gson.toJson(roleService.getSuperimposedPermission(jsonParams = (getJsonParams(request, expectedParams["getSuperimposedPermission"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
