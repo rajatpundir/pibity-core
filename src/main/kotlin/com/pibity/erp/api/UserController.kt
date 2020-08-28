@@ -31,7 +31,8 @@ class UserController(val userService: UserService) {
       "updateUserGroups" to getExpectedParams("user", "updateUserGroups"),
       "updateUserRoles" to getExpectedParams("user", "updateUserRoles"),
       "getUserDetails" to getExpectedParams("user", "getUserDetails"),
-      "getUserPermissions" to getExpectedParams("user", "getUserPermissions")
+      "getUserPermissions" to getExpectedParams("user", "getUserPermissions"),
+      "superimposeUserPermissions" to getExpectedParams("user", "superimposeUserPermissions")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -86,6 +87,18 @@ class UserController(val userService: UserService) {
   fun getUserPermissions(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(userService.getUserPermissions(jsonParams = (getJsonParams(request, expectedParams["getUserPermissions"]
+          ?: JsonObject())))), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/superimpose"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  fun superimposeUserPermissions(@RequestBody request: String): ResponseEntity<String> {
+    return try {
+      ResponseEntity(gson.toJson(userService.superimposeUserPermissions(jsonParams = (getJsonParams(request, expectedParams["superimposeUserPermissions"]
           ?: JsonObject())))), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

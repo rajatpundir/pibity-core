@@ -12,11 +12,11 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.*
-import com.pibity.erp.entities.mappings.embeddables.UserGroupId
 import com.pibity.erp.entities.embeddables.UserId
-import com.pibity.erp.entities.mappings.embeddables.UserRoleId
 import com.pibity.erp.entities.mappings.UserGroup
 import com.pibity.erp.entities.mappings.UserRole
+import com.pibity.erp.entities.mappings.embeddables.UserGroupId
+import com.pibity.erp.entities.mappings.embeddables.UserRoleId
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
@@ -29,7 +29,8 @@ class UserService(
     val organizationRepository: OrganizationRepository,
     val roleRepository: RoleRepository,
     val groupRepository: GroupRepository,
-    val userRepository: UserRepository
+    val userRepository: UserRepository,
+    val permissionService: PermissionService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -89,5 +90,14 @@ class UserService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserPermissions(jsonParams: JsonObject): Set<TypePermission> {
     return (userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun superimposeUserPermissions(jsonParams: JsonObject): TypePermission {
+    val typePermissions = userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
+    if (typePermissions.isNotEmpty())
+      return permissionService.superimposePermissions(typePermissions = typePermissions, type = typePermissions.first().id.type)
+    else
+      throw CustomJsonException("[]")
   }
 }
