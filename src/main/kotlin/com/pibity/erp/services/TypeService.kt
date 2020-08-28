@@ -214,6 +214,7 @@ class TypeService(
     permissionService.createDefaultPermission(type = type, permissionName = "WRITE_ALL", accessLevel = 2)
   }
 
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getTypeDetails(jsonParams: JsonObject): Type {
     val organizationName: String = jsonParams.get("organization").asString
     val typeName: String = jsonParams.get("typeName").asString

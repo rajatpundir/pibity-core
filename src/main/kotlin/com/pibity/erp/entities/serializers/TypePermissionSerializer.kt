@@ -26,6 +26,8 @@ class TypePermissionSerializer : JsonSerializer<TypePermission> {
         json.addProperty("organization", src.id.type.id.organization.id)
         json.addProperty("typeName", src.id.type.id.name)
         json.addProperty("permissionName", src.id.name)
+        json.addProperty("creatable", src.creatable)
+        json.addProperty("deletable", src.deletable)
       }
       json.addProperty(
           "maxAccessLevel",

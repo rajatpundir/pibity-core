@@ -22,6 +22,12 @@ data class TypePermission(
         @EmbeddedId
         val id: TypePermissionId,
 
+        @Column(name = "create_permission", nullable = false)
+        var creatable: Boolean,
+
+        @Column(name = "deletion_permission", nullable = false)
+        var deletable: Boolean,
+
         @Column(name = "max_access_level", nullable = false)
         var maxAccessLevel: Int = 0,
 
