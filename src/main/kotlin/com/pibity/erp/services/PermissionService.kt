@@ -214,10 +214,6 @@ class PermissionService(
   }
 
   fun superimposePermissions(typePermissions: Set<TypePermission>, type: Type): TypePermission {
-    println("------------------------")
-    typePermissions.forEach { println("*") }
-    typePermissions.forEach { println(gson.toJson(it)) }
-    println("------------------------")
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = "SUPERIMPOSED_PERMISSION"),
         creatable = typePermissions.fold(false) { acc, it -> acc || it.creatable },
         deletable = typePermissions.fold(false) { acc, it -> acc || it.deletable })
@@ -254,8 +250,17 @@ class PermissionService(
         }
       }
     }
-    typePermission.maxAccessLevel = typePermissions.map { it.maxAccessLevel }.max() ?: PermissionConstants.NO_ACCESS
-    typePermission.minAccessLevel = typePermissions.map { it.minAccessLevel }.min() ?: PermissionConstants.NO_ACCESS
+    if (typePermission.id.type.id.superTypeName == GLOBAL_TYPE && typePermission.keyPermissions.size == 0) {
+      typePermission.minAccessLevel = PermissionConstants.READ_ACCESS
+      typePermission.maxAccessLevel = PermissionConstants.READ_ACCESS
+    } else {
+      typePermission.maxAccessLevel = typePermission.keyPermissions.map {
+        it.referencedTypePermission?.maxAccessLevel ?: it.accessLevel
+      }.max() ?: PermissionConstants.NO_ACCESS
+      typePermission.minAccessLevel = typePermission.keyPermissions.map {
+        it.referencedTypePermission?.minAccessLevel ?: it.accessLevel
+      }.min() ?: PermissionConstants.NO_ACCESS
+    }
     return typePermission
   }
 }
