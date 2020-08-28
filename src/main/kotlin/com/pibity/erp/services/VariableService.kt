@@ -10,12 +10,15 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.*
+import com.pibity.erp.commons.FormulaUtils
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.commons.getLeafNameTypeValues
+import com.pibity.erp.commons.validateUpdatedVariableValues
+import com.pibity.erp.commons.validateVariableValues
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
@@ -565,7 +568,7 @@ class VariableService(
         val key = keyPermission.id.key
         if (valuesJson.has(key.id.name) && key.type.id.name != TypeConstants.FORMULA) {
           val valueAlias = "v${variableCount++}"
-          var keyQuery = "SELECT ${valueAlias} FROM Value ${valueAlias} WHERE ${valueAlias}.id.variable = ${variableAlias} AND ${valueAlias}.id.key = :v${variableCount}"
+          var keyQuery = "SELECT $valueAlias FROM Value $valueAlias WHERE ${valueAlias}.id.variable = $variableAlias AND ${valueAlias}.id.key = :v${variableCount}"
           injectedValues["v${variableCount++}"] = key
           when (key.type.id.name) {
             TypeConstants.TEXT -> {
@@ -931,9 +934,9 @@ class VariableService(
     }
     return if (keyQueries.size != 0) {
       var hql = if (parentValueAlias != null)
-        "SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ") + " AND ${variableAlias}=${parentValueAlias}.referencedVariable"
+        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ") + " AND ${variableAlias}=${parentValueAlias}.referencedVariable"
       else
-        "SELECT DISTINCT ${variableAlias} FROM Variable ${variableAlias} WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ")
+        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ")
       if (queryJson.has("variableName")) {
         if (queryJson.get("variableName").isJsonObject) {
           val variableQueryJson: JsonObject = queryJson.get("variableName").asJsonObject
@@ -1009,9 +1012,9 @@ class VariableService(
       Triple(hql, variableCount, injectedValues)
     } else {
       var hql = if (parentValueAlias != null)
-        "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount} AND ${variableAlias}=${parentValueAlias}.referencedVariable"
+        "SELECT DISTINCT $variableAlias  FROM Variable $variableAlias  WHERE ${variableAlias}.id.type = :v${variableCount} AND ${variableAlias}=${parentValueAlias}.referencedVariable"
       else
-        "SELECT DISTINCT ${variableAlias}  FROM Variable ${variableAlias}  WHERE ${variableAlias}.id.type = :v${variableCount}"
+        "SELECT DISTINCT $variableAlias  FROM Variable $variableAlias  WHERE ${variableAlias}.id.type = :v${variableCount}"
       injectedValues["v${variableCount++}"] = type
       if (queryJson.has("variableName")) {
         if (queryJson.get("variableName").isJsonObject) {
@@ -1088,7 +1091,4 @@ class VariableService(
       Triple(hql, variableCount, injectedValues)
     }
   }
-
-
 }
-
