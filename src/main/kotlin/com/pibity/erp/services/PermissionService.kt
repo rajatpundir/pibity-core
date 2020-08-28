@@ -41,11 +41,7 @@ class PermissionService(
     val type: Type = permissionType
         ?: typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    println("---------------------------------")
-    println(jsonParams)
     val keyPermissions: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = type)
-    println(keyPermissions)
-    println("---------------------------------")
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName
         ?: jsonParams.get("permissionName").asString),
         creatable = if (jsonParams.has("creatable")) jsonParams.get("creatable").asBoolean else false,
@@ -109,7 +105,9 @@ class PermissionService(
         typeName = jsonParams.get("typeName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
-    val keyPermissions: JsonObject = if (keyTypePermission != null) jsonParams else validateKeyPermissions(jsonParams = jsonParams, type = typePermission.id.type)
+    typePermission.creatable = jsonParams.get("creatable").asBoolean
+    typePermission.deletable = jsonParams.get("deletable").asBoolean
+    val keyPermissions: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = typePermission.id.type)
     val updatedPermissions = mutableSetOf<KeyPermission>()
     for (keyPermission in typePermission.keyPermissions) {
       when (keyPermission.id.key.type.id.name) {

@@ -8,6 +8,12 @@
   "permissionName": {
     "type": "String"
   },
+  "creatable": {
+    "type": "Boolean"
+  },
+  "deletable": {
+    "type": "Boolean"
+  },
   "permissions": {
     "type": "Object"
   }
