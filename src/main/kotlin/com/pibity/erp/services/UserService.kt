@@ -94,7 +94,7 @@ class UserService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun superimposeUserPermissions(jsonParams: JsonObject): TypePermission {
-    val typePermissions = userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
+    val typePermissions = userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = if(jsonParams.has("superTypeName") )jsonParams.get("superTypeName").asString else GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
     if (typePermissions.isNotEmpty())
       return permissionService.superimposePermissions(typePermissions = typePermissions, type = typePermissions.first().id.type)
     else
