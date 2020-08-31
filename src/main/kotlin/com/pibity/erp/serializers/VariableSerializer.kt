@@ -50,9 +50,9 @@ fun serialize(variable: Variable): JsonObject {
   return json
 }
 
-fun serialize(src: Set<Variable>): JsonArray {
+fun serialize(entities: Set<Variable>): JsonArray {
   val json = JsonArray()
-  for (entity in src)
+  for (entity in entities)
     json.add(serialize(entity))
   return json
 }
