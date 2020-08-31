@@ -13,48 +13,35 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.Organization
-import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.Variable
-import com.pibity.erp.repositories.OrganizationRepository
-import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.ValueRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class QueryService(
-    val organizationRepository: OrganizationRepository,
-    val typeRepository: TypeRepository,
     val valueRepository: ValueRepository,
     val userService: UserService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun queryVariables(jsonParams: JsonObject): List<Variable> {
-    val organizationName: String = jsonParams.get("organization").asString
-    val typeName: String = jsonParams.get("typeName").asString
-    val username = jsonParams.get("username").asString
     val typePermission = userService.superimposeUserPermissions(jsonParams =
     JsonObject().apply {
-      addProperty("organization", organizationName)
-      addProperty("username", username)
-      addProperty("typeName", typeName)
+      addProperty("organization", jsonParams.get("organization").asString)
+      addProperty("username", jsonParams.get("username").asString)
+      addProperty("typeName", jsonParams.get("typeName").asString)
     })
-    val organization: Organization = organizationRepository.getById(organizationName)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val type: Type = typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = typeName)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val (generatedQuery, _, injectedValues) = try {
-      generateQuery(jsonParams.get("query").asJsonObject, type, username = username, typePermission = typePermission)
+      generateQuery(jsonParams.get("query").asJsonObject, username = jsonParams.get("username").asString, typePermission = typePermission)
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{query : ${exception.message}}")
     }
     return valueRepository.queryVariables(generatedQuery, injectedValues)
   }
 
-  fun generateQuery(queryJson: JsonObject, type: Type, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null, username: String, typePermission: TypePermission): Triple<String, Int, MutableMap<String, Any>> {
+  fun generateQuery(queryJson: JsonObject, username: String, typePermission: TypePermission, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {
     val valuesJson: JsonObject = if (!queryJson.has("values"))
       throw CustomJsonException("{values: 'Field is missing in request body'}")
     else {
@@ -301,7 +288,7 @@ class QueryService(
               if (key.type.id.superTypeName == GLOBAL_TYPE) {
                 if (!valuesJson.get(key.id.name).isJsonObject) {
                   keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
-                  injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                  injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                   injectedValues["v${variableCount++}"] = key.type
                   injectedValues["v${variableCount++}"] = try {
                     valuesJson.get(key.id.name).asString
@@ -314,7 +301,7 @@ class QueryService(
                     keyQueryJson.has("equals") -> {
                       if (keyQueryJson.get("equals").isJsonObject) {
                         val (generatedQuery, count, _) = try {
-                          generateQuery(queryJson = keyQueryJson.get("equals").asJsonObject, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                          generateQuery(queryJson = keyQueryJson.get("equals").asJsonObject, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
                             addProperty("organization", key.id.parentType.id.organization.id)
                             addProperty("username", username)
                             addProperty("typeName", key.type.id.name)
@@ -326,7 +313,7 @@ class QueryService(
                         keyQuery += " AND EXISTS (${generatedQuery})"
                       } else {
                         keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name = :v${variableCount + 2}"
-                        injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                        injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                         injectedValues["v${variableCount++}"] = key.type
                         injectedValues["v${variableCount++}"] = try {
                           keyQueryJson.get("equals").asString
@@ -337,7 +324,7 @@ class QueryService(
                     }
                     keyQueryJson.has("like") -> {
                       keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name LIKE :v${variableCount + 2}"
-                      injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                      injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                       injectedValues["v${variableCount++}"] = key.type
                       injectedValues["v${variableCount++}"] = try {
                         keyQueryJson.get("like").asString
@@ -347,7 +334,7 @@ class QueryService(
                     }
                     keyQueryJson.has("between") -> {
                       keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
-                      injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                      injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                       injectedValues["v${variableCount++}"] = key.type
                       if (!keyQueryJson.get("between").isJsonArray)
                         throw CustomJsonException("{${key.id.name}: {between: 'Unexpected value for parameter'}}")
@@ -363,7 +350,7 @@ class QueryService(
                     }
                     keyQueryJson.has("notBetween") -> {
                       keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name NOT BETWEEN :v${variableCount + 2} AND :v${variableCount + 3}"
-                      injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                      injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                       injectedValues["v${variableCount++}"] = key.type
                       if (!keyQueryJson.get("notBetween").isJsonArray)
                         throw CustomJsonException("{${key.id.name}: {notBetween: 'Unexpected value for parameter'}}")
@@ -379,7 +366,7 @@ class QueryService(
                     }
                     keyQueryJson.has("in") -> {
                       keyQuery += " AND ${valueAlias}.referencedVariable.id.superList = :v${variableCount} AND ${valueAlias}.referencedVariable.id.type = :v${variableCount + 1} AND ${valueAlias}.referencedVariable.id.name IN :v${variableCount + 2}"
-                      injectedValues["v${variableCount++}"] = type.id.organization.superList!!
+                      injectedValues["v${variableCount++}"] = typePermission.id.type.id.organization.superList!!
                       injectedValues["v${variableCount++}"] = key.type
                       if (!keyQueryJson.get("in").isJsonArray)
                         throw CustomJsonException("{${key.id.name}: {in: 'Unexpected value for parameter'}}")
@@ -403,7 +390,7 @@ class QueryService(
                   else {
                     val keyQueryJson: JsonObject = valuesJson.get(key.id.name).asJsonObject
                     val (generatedQuery, count, _) = try {
-                      generateQuery(queryJson = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = keyPermission.referencedTypePermission!!)
+                      generateQuery(queryJson = keyQueryJson, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = keyPermission.referencedTypePermission!!)
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${key.id.name}: ${exception.message}}")
                     }
@@ -416,7 +403,7 @@ class QueryService(
                   else {
                     val keyQueryJson: JsonObject = valuesJson.get(key.id.name).asJsonObject
                     val (generatedQuery, count, _) = try {
-                      generateQuery(queryJson = keyQueryJson, type = key.type, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                      generateQuery(queryJson = keyQueryJson, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
                         addProperty("organization", key.id.parentType.id.organization.id)
                         addProperty("username", username)
                         addProperty("suerTypeName", key.type.id.superTypeName)
@@ -519,7 +506,7 @@ class QueryService(
         "SELECT DISTINCT $variableAlias  FROM Variable $variableAlias  WHERE ${variableAlias}.id.type = :v${variableCount} AND ${variableAlias}=${parentValueAlias}.referencedVariable"
       else
         "SELECT DISTINCT $variableAlias  FROM Variable $variableAlias  WHERE ${variableAlias}.id.type = :v${variableCount}"
-      injectedValues["v${variableCount++}"] = type
+      injectedValues["v${variableCount++}"] = typePermission.id.type
       if (queryJson.has("variableName")) {
         if (queryJson.get("variableName").isJsonObject) {
           val variableQueryJson: JsonObject = queryJson.get("variableName").asJsonObject

@@ -50,7 +50,7 @@ data class Type(
     val referencingKeys: Set<Key> = HashSet(),
 
     @OneToMany(mappedBy = "id.type", cascade = [CascadeType.ALL])
-    val permissions: Set<TypePermission> = HashSet()
+    val permissions: MutableSet<TypePermission> = HashSet()
 
 ) : Serializable {
 

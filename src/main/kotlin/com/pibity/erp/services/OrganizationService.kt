@@ -49,7 +49,7 @@ class OrganizationService(
     }
     createPrimitiveTypes(organization = organization)
     try {
-      val anyType = typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = TypeConstants.TEXT)
+      val anyType = typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, name = TypeConstants.TEXT)
           ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
       val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = -1))
       val vl = variableListRepository.save(VariableList(listType = tl))

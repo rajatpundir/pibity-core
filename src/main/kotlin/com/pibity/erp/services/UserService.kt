@@ -98,6 +98,6 @@ class UserService(
     if (typePermissions.isNotEmpty())
       return permissionService.superimposePermissions(typePermissions = typePermissions, type = typePermissions.first().id.type)
     else
-      throw CustomJsonException("{}")
+      throw CustomJsonException("{error: 'Unauthorized Access'}")
   }
 }

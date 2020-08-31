@@ -13,7 +13,6 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.validateKeyPermissions
 import com.pibity.erp.entities.KeyPermission
 import com.pibity.erp.entities.Organization
@@ -40,7 +39,7 @@ class PermissionService(
         ?: organizationRepository.getById(jsonParams.get("organization").asString)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
     val type: Type = permissionType
-        ?: typeRepository.findType(organization = organization, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
+        ?: typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val keyPermissions: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = type)
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName
@@ -196,11 +195,12 @@ class PermissionService(
         }
       }
     }
-    return try {
-      typePermissionRepository.save(typePermission)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{typeName: 'Permission $permissionName could not be created'}")
-    }
+    return typePermission
+//    return try {
+//      typePermissionRepository.save(typePermission)
+//    } catch (exception: Exception) {
+//      throw CustomJsonException("{typeName: 'Permission $permissionName could not be created'}")
+//    }
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])

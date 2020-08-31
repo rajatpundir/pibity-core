@@ -8,14 +8,12 @@
 
 package com.pibity.erp.repositories
 
-import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.VariableList
 import com.pibity.erp.entities.embeddables.VariableId
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
-import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 
 interface VariableRepository : CrudRepository<Variable, VariableId> {
@@ -25,6 +23,6 @@ interface VariableRepository : CrudRepository<Variable, VariableId> {
   fun findByTypeAndName(superList: VariableList, type: Type, name: String = ""): Variable?
 
   @Transactional(readOnly = true)
-  @Query("SELECT v FROM Variable v WHERE v.id.type.id.organization = :organization AND v.id.type.id.superTypeName = :superTypeName AND v.id.type.id.name = :typeName AND v.id.superList.id = :superList AND v.id.name = :name")
-  fun findVariable(organization: Organization, superTypeName: String, typeName: String, superList: Long, name: String = ""): Variable?
+  @Query("SELECT v FROM Variable v WHERE v.id.type.id.organization.id = :organizationName AND v.id.type.id.superTypeName = :superTypeName AND v.id.type.id.name = :typeName AND v.id.superList.id = :superList AND v.id.name = :name")
+  fun findVariable(organizationName: String, superTypeName: String, typeName: String, superList: Long, name: String = ""): Variable?
 }
