@@ -195,12 +195,18 @@ class PermissionService(
         }
       }
     }
+    if (typePermission.id.type.id.superTypeName == GLOBAL_TYPE && typePermission.keyPermissions.size == 0) {
+      typePermission.minAccessLevel = PermissionConstants.READ_ACCESS
+      typePermission.maxAccessLevel = PermissionConstants.READ_ACCESS
+    } else {
+      typePermission.maxAccessLevel = typePermission.keyPermissions.map {
+        it.referencedTypePermission?.maxAccessLevel ?: it.accessLevel
+      }.max() ?: PermissionConstants.NO_ACCESS
+      typePermission.minAccessLevel = typePermission.keyPermissions.map {
+        it.referencedTypePermission?.minAccessLevel ?: it.accessLevel
+      }.min() ?: PermissionConstants.NO_ACCESS
+    }
     return typePermission
-//    return try {
-//      typePermissionRepository.save(typePermission)
-//    } catch (exception: Exception) {
-//      throw CustomJsonException("{typeName: 'Permission $permissionName could not be created'}")
-//    }
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])

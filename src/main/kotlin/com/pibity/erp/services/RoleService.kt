@@ -13,13 +13,14 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.mappings.RolePermission
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
+import com.pibity.erp.entities.mappings.RolePermission
 import com.pibity.erp.entities.mappings.embeddables.RolePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.TypePermissionRepository
+import com.pibity.erp.repositories.mappings.RolePermissionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -27,7 +28,8 @@ import org.springframework.transaction.annotation.Transactional
 class RoleService(
     val organizationRepository: OrganizationRepository,
     val typePermissionRepository: TypePermissionRepository,
-    val roleRepository: RoleRepository
+    val roleRepository: RoleRepository,
+    val rolePermissionRepository: RolePermissionRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -54,8 +56,10 @@ class RoleService(
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
     when (jsonParams.get("operation").asString) {
       "add" -> role.rolePermissions.add(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
-      // TODO: Permission is not being removed for role
-      "remove" -> role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      "remove" -> {
+        rolePermissionRepository.delete(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+        role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {

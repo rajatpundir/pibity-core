@@ -10,6 +10,7 @@ package com.pibity.erp.entities
 
 import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.VariableId
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -55,5 +56,5 @@ data class Variable(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

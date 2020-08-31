@@ -13,15 +13,13 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.FormulaUtils
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.getLeafNameTypeValues
 import com.pibity.erp.commons.validateUpdatedVariableValues
 import com.pibity.erp.commons.validateVariableValues
-import com.pibity.erp.entities.Type
-import com.pibity.erp.entities.Value
-import com.pibity.erp.entities.Variable
-import com.pibity.erp.entities.VariableList
+import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
 import com.pibity.erp.repositories.TypeRepository
@@ -35,7 +33,8 @@ import org.springframework.transaction.annotation.Transactional
 class VariableService(
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
-    val variableListRepository: VariableListRepository
+    val variableListRepository: VariableListRepository,
+    val userService: UserService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -248,14 +247,16 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun updateVariable(jsonParams: JsonObject, variableType: Type? = null, variableSuperList: VariableList? = null): Variable {
-    val variableName: String = jsonParams.get("variableName").asString
-    val type: Type = variableType
-        ?: typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = variableType?.id?.superTypeName
-            ?: GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    val superList: VariableList = variableSuperList ?: type.id.organization.superList!!
-    val variable: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = type.id.superTypeName, typeName = type.id.name, superList = superList.id, name = variableName)
+  fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Variable {
+    val typePermission: TypePermission = variableTypePermission
+        ?: userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+          addProperty("organization", jsonParams.get("organization").asString)
+          addProperty("username", jsonParams.get("username").asString)
+          addProperty("typeName", jsonParams.get("typeName").asString)
+        })
+    val superList: VariableList = variableSuperList ?: typePermission.id.type.id.organization.superList!!
+    // Note. May not need to query for local variables here, use referenced variable that can be passed.
+    val variable: Variable = referencedKeyVariable ?: variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = typePermission.id.type.id.superTypeName, typeName = typePermission.id.type.id.name, superList = superList.id, name = jsonParams.get("variableName").asString)
         ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
     if (jsonParams.has("active?"))
       variable.active = jsonParams.get("active?").asBoolean
@@ -264,10 +265,22 @@ class VariableService(
     variable.values.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach { value ->
       if (values.has(value.id.key.id.name)) {
         when (value.id.key.type.id.name) {
-          TypeConstants.TEXT -> value.stringValue = values.get(value.id.key.id.name).asString
-          TypeConstants.NUMBER -> value.longValue = values.get(value.id.key.id.name).asLong
-          TypeConstants.DECIMAL -> value.doubleValue = values.get(value.id.key.id.name).asDouble
-          TypeConstants.BOOLEAN -> value.booleanValue = values.get(value.id.key.id.name).asBoolean
+          TypeConstants.TEXT -> {
+            if (typePermission.keyPermissions.single { it.id.key.id.name == value.id.key.id.name }.accessLevel == PermissionConstants.WRITE_ACCESS)
+              value.stringValue = values.get(value.id.key.id.name).asString
+          }
+          TypeConstants.NUMBER -> {
+            if (typePermission.keyPermissions.single { it.id.key.id.name == value.id.key.id.name }.accessLevel == PermissionConstants.WRITE_ACCESS)
+              value.longValue = values.get(value.id.key.id.name).asLong
+          }
+          TypeConstants.DECIMAL -> {
+            if (typePermission.keyPermissions.single { it.id.key.id.name == value.id.key.id.name }.accessLevel == PermissionConstants.WRITE_ACCESS)
+              value.doubleValue = values.get(value.id.key.id.name).asDouble
+          }
+          TypeConstants.BOOLEAN -> {
+            if (typePermission.keyPermissions.single { it.id.key.id.name == value.id.key.id.name }.accessLevel == PermissionConstants.WRITE_ACCESS)
+              value.booleanValue = values.get(value.id.key.id.name).asBoolean
+          }
           TypeConstants.FORMULA -> {/* Formulas may depend on provided values, so they will be computed separately */
           }
           TypeConstants.LIST -> {
@@ -275,7 +288,7 @@ class VariableService(
             if (value.list!!.listType.type.id.superTypeName == GLOBAL_TYPE) {
               if (listValues.has("add")) {
                 listValues.get("add").asJsonArray.forEach {
-                  val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = type.id.organization.superList!!.id, name = it.asString)
+                  val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = typePermission.id.type.id.organization.superList!!.id, name = it.asString)
                       ?: throw CustomJsonException("{${value.id.key.id.name}: {add: 'Unable to insert ${it.asString} referenced in list'}}")
                   if (!value.list!!.variables.contains(referencedVariable)) {
                     referencedVariable.referenceCount += 1
@@ -290,7 +303,7 @@ class VariableService(
               }
               if (listValues.has("remove")) {
                 listValues.get("remove").asJsonArray.forEach {
-                  val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = type.id.organization.superList!!.id, name = it.asString)
+                  val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = typePermission.id.type.id.organization.superList!!.id, name = it.asString)
                       ?: throw CustomJsonException("{${value.id.key.id.name}: {remove: 'Unable to remove ${it.asString} referenced in list'}}")
                   if (value.list!!.variables.contains(referencedVariable)) {
                     referencedVariable.referenceCount -= 1
@@ -321,7 +334,7 @@ class VariableService(
                 }
                 if (listValues.has("remove")) {
                   listValues.get("remove").asJsonArray.forEach {
-                    val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = value.list!!.id, name = it.asString)
+                    val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = value.list!!.id, name = it.asString)
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {remove: 'Unable to find ${it.asString} referenced in list'}}")
                     if (value.list!!.variables.contains(referencedVariable)) {
                       referencedVariable.referenceCount -= 1
@@ -337,11 +350,12 @@ class VariableService(
                 }
                 if (listValues.has("update")) {
                   listValues.get("update").asJsonArray.forEach {
-                    val variableToUpdate: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = value.list!!.id, name = it.asJsonObject.get("variableName").asString)
+                    val variableToUpdate: Variable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = value.list!!.id, name = it.asJsonObject.get("variableName").asString)
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {update: 'Unable to find referenced variable in list'}}")
                     value.list!!.variables.remove(variableToUpdate)
                     val updatedVariable: Variable = try {
-                      updateVariable(jsonParams = it.asJsonObject, variableType = value.list!!.listType.type, variableSuperList = value.list!!)
+                      // TODO: RECHECK BELOW
+                      updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission ->  keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.list!!)
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${value.id.key.id.name}: {update: ${exception.message}}}")
                     }
@@ -351,7 +365,7 @@ class VariableService(
               } else {
                 if (listValues.has("add")) {
                   listValues.get("add").asJsonArray.forEach {
-                    val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = it.asJsonObject.get("context").asLong, name = it.asJsonObject.get("variableName").asString)
+                    val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = it.asJsonObject.get("context").asLong, name = it.asJsonObject.get("variableName").asString)
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {add: 'Unable to insert ${it.asJsonObject.get("variableName").asString} referenced in list'}}")
                     if (!value.list!!.variables.contains(referencedVariable)) {
                       referencedVariable.referenceCount += 1
@@ -366,7 +380,7 @@ class VariableService(
                 }
                 if (listValues.has("remove")) {
                   listValues.get("remove").asJsonArray.forEach {
-                    val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = it.asJsonObject.get("context").asLong, name = it.asJsonObject.get("variableName").asString)
+                    val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.list!!.listType.type.id.superTypeName, typeName = value.list!!.listType.type.id.name, superList = it.asJsonObject.get("context").asLong, name = it.asJsonObject.get("variableName").asString)
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {remove: 'Unable to remove ${it.asJsonObject.get("variableName").asString} referenced in list'}}")
                     if (value.list!!.variables.contains(referencedVariable)) {
                       referencedVariable.referenceCount -= 1
@@ -387,7 +401,7 @@ class VariableService(
             if (value.id.key.type.id.superTypeName == GLOBAL_TYPE) {
               value.referencedVariable!!.referenceCount -= 1
               variableRepository.save(value.referencedVariable!!)
-              val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.id.key.type.id.superTypeName, typeName = value.id.key.type.id.name, superList = type.id.organization.superList!!.id, name = values.get(value.id.key.id.name).asString)
+              val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.id.key.type.id.superTypeName, typeName = value.id.key.type.id.name, superList = typePermission.id.type.id.organization.superList!!.id, name = values.get(value.id.key.id.name).asString)
                   ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable ${values.get(value.id.key.id.name).asString}'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
@@ -399,14 +413,14 @@ class VariableService(
               if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
                   || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
                 value.referencedVariable = try {
-                  updateVariable(jsonParams = values.get(value.id.key.id.name).asJsonObject, variableType = value.id.key.type, variableSuperList = value.referencedVariable!!.id.superList)
+                  updateVariable(jsonParams = values.get(value.id.key.id.name).asJsonObject, referencedKeyVariable = value.referencedVariable!!, variableTypePermission = typePermission.keyPermissions.single { keyPermission ->  keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.referencedVariable!!.id.superList)
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{${value.id.key.id.name}: ${exception.message}}")
                 }
               } else {
                 value.referencedVariable!!.referenceCount -= 1
                 variableRepository.save(value.referencedVariable!!)
-                val referencedVariable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = value.id.key.type.id.superTypeName, typeName = value.id.key.type.id.name, superList = values.get(value.id.key.id.name).asJsonObject.get("context").asLong, name = values.get(value.id.key.id.name).asJsonObject.get("variableName").asString)
+                val referencedVariable = variableRepository.findVariable(organizationName = typePermission.id.type.id.organization.id, superTypeName = value.id.key.type.id.superTypeName, typeName = value.id.key.type.id.name, superList = values.get(value.id.key.id.name).asJsonObject.get("context").asLong, name = values.get(value.id.key.id.name).asJsonObject.get("variableName").asString)
                     ?: throw CustomJsonException("{${value.id.key.id.name}: 'Unable to find referenced variable ${values.get(value.id.key.id.name).asJsonObject.get("variableName").asString}'}")
                 referencedVariable.referenceCount += 1
                 if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)

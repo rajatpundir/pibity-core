@@ -12,6 +12,7 @@ import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.GroupId
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -41,5 +42,5 @@ data class Group(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

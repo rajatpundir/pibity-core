@@ -27,8 +27,7 @@ class QueryService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun queryVariables(jsonParams: JsonObject): List<Variable> {
-    val typePermission = userService.superimposeUserPermissions(jsonParams =
-    JsonObject().apply {
+    val typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
       addProperty("organization", jsonParams.get("organization").asString)
       addProperty("username", jsonParams.get("username").asString)
       addProperty("typeName", jsonParams.get("typeName").asString)

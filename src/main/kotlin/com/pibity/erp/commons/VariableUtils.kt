@@ -278,30 +278,26 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                   else {
                     val params = JsonArray()
                     values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
-                      try {
-                        val jsonObject = JsonObject()
-                        if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
-                          } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
-                          }
+                      val jsonObject = JsonObject()
+                      if (!it.asJsonObject.has("variableName"))
+                        throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Field is missing in request body'}}}")
+                      else {
+                        try {
+                          jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
+                        } catch (exception: Exception) {
+                          throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
                         }
-                        if (!it.asJsonObject.has("values"))
-                          throw CustomJsonException("{${key.id.name}: {add: {values: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.add("values", validateVariableValues(it.asJsonObject.get("values").asJsonObject, key.list!!.type))
-                          } catch (exception: CustomJsonException) {
-                            throw CustomJsonException("{${key.id.name}: {add: {values: ${exception.message}}}}")
-                          }
-                        }
-                        params.add(jsonObject)
-                      } catch (exception: Exception) {
-                        throw CustomJsonException("{${key.id.name}: {add: {values: {'Unexpected value for parameter'}}}")
                       }
+                      if (!it.asJsonObject.has("values"))
+                        throw CustomJsonException("{${key.id.name}: {add: {values: 'Field is missing in request body'}}}")
+                      else {
+                        try {
+                          jsonObject.add("values", validateVariableValues(it.asJsonObject.get("values").asJsonObject, key.list!!.type))
+                        } catch (exception: CustomJsonException) {
+                          throw CustomJsonException("{${key.id.name}: {add: {values: ${exception.message}}}}")
+                        }
+                      }
+                      params.add(jsonObject)
                     }
                     listParams.add("add", params)
                   }
@@ -327,30 +323,26 @@ fun validateUpdatedVariableValues(values: JsonObject, type: Type): JsonObject {
                   else {
                     val params = JsonArray()
                     values.get(key.id.name).asJsonObject.get("update").asJsonArray.toSet().forEach {
-                      try {
-                        val jsonObject = JsonObject()
-                        if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
-                          } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
-                          }
+                      val jsonObject = JsonObject()
+                      if (!it.asJsonObject.has("variableName"))
+                        throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Field is missing in request body'}}}")
+                      else {
+                        try {
+                          jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
+                        } catch (exception: Exception) {
+                          throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
                         }
-                        if (!it.asJsonObject.has("values"))
-                          throw CustomJsonException("{${key.id.name}: {update: {values: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.add("values", validateUpdatedVariableValues(it.asJsonObject.get("values").asJsonObject, key.list!!.type))
-                          } catch (exception: CustomJsonException) {
-                            throw CustomJsonException("{${key.id.name}: {update: {values: ${exception.message}}}")
-                          }
-                        }
-                        params.add(jsonObject)
-                      } catch (exception: Exception) {
-                        throw CustomJsonException("{${key.id.name}: {update: {values: {'Unexpected value for parameter'}}}")
                       }
+                      if (!it.asJsonObject.has("values"))
+                        throw CustomJsonException("{${key.id.name}: {update: {values: 'Field is missing in request body'}}}")
+                      else {
+                        try {
+                          jsonObject.add("values", validateUpdatedVariableValues(it.asJsonObject.get("values").asJsonObject, key.list!!.type))
+                        } catch (exception: CustomJsonException) {
+                          throw CustomJsonException("{${key.id.name}: {update: {values: ${exception.message}}}")
+                        }
+                      }
+                      params.add(jsonObject)
                     }
                     listParams.add("update", params)
                   }

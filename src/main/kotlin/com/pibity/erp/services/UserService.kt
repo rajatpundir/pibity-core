@@ -21,6 +21,8 @@ import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.UserRepository
+import com.pibity.erp.repositories.mappings.UserGroupRepository
+import com.pibity.erp.repositories.mappings.UserRoleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -30,7 +32,9 @@ class UserService(
     val roleRepository: RoleRepository,
     val groupRepository: GroupRepository,
     val userRepository: UserRepository,
-    val permissionService: PermissionService
+    val permissionService: PermissionService,
+    val userRoleRepository: UserRoleRepository,
+    val userGroupRepository: UserGroupRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -53,7 +57,10 @@ class UserService(
         ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
     when (jsonParams.get("operation").asString) {
       "add" -> user.userGroups.add(UserGroup(id = UserGroupId(user = user, group = group)))
-      "remove" -> user.userGroups.remove(UserGroup(id = UserGroupId(user = user, group = group)))
+      "remove" -> {
+        userGroupRepository.delete(UserGroup(id = UserGroupId(user = user, group = group)))
+        user.userGroups.remove(UserGroup(id = UserGroupId(user = user, group = group)))
+      }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
@@ -71,7 +78,10 @@ class UserService(
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
       "add" -> user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role)))
-      "remove" -> user.userRoles.remove(UserRole(id = UserRoleId(user = user, role = role)))
+      "remove" -> {
+        userRoleRepository.delete(UserRole(id = UserRoleId(user = user, role = role)))
+        user.userRoles.remove(UserRole(id = UserRoleId(user = user, role = role)))
+      }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
