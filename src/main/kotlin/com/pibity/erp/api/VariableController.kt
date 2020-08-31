@@ -12,8 +12,8 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.serializers.mappings.serialize
 import com.pibity.erp.serializers.serialize
+import com.pibity.erp.services.QueryService
 import com.pibity.erp.services.VariableService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin
 @RestController
 @RequestMapping(path = ["/api/variable"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-class VariableController(val variableService: VariableService) {
+class VariableController(val variableService: VariableService, val queryService: QueryService) {
 
   private val logger by Logger()
 
@@ -60,7 +60,7 @@ class VariableController(val variableService: VariableService) {
   @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(variableService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
+      ResponseEntity(serialize(queryService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
           ?: JsonObject()))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
