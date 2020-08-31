@@ -12,26 +12,26 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.entities.Type
 
-fun serialize(src: Type): JsonObject {
+fun serialize(type: Type): JsonObject {
   val json = JsonObject()
-  if (src.id.superTypeName == "Any")
-    json.addProperty("organizationId", src.id.organization.id)
+  if (type.id.superTypeName == "Any")
+    json.addProperty("organizationId", type.id.organization.id)
   else
-    json.addProperty("superTypeName", src.id.superTypeName)
-  json.addProperty("typeName", src.id.name)
-  json.addProperty("displayName", src.displayName)
+    json.addProperty("superTypeName", type.id.superTypeName)
+  json.addProperty("typeName", type.id.name)
+  json.addProperty("displayName", type.displayName)
   val jsonKeys = JsonObject()
-  for (key in src.keys)
+  for (key in type.keys)
     jsonKeys.add(key.id.name, serialize(key))
   json.add("keys", jsonKeys)
-  if (src.id.superTypeName == "Any")
-    json.add("permissions", serialize(src.permissions))
+  if (type.id.superTypeName == "Any")
+    json.add("permissions", serialize(type.permissions))
   return json
 }
 
-fun serialize(src: Set<Type>): JsonArray {
+fun serialize(entities: Set<Type>): JsonArray {
   val json = JsonArray()
-  for (entity in src)
+  for (entity in entities)
     json.add(serialize(entity))
   return json
 }

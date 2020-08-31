@@ -14,50 +14,50 @@ import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.entities.Key
 
-fun serialize(src: Key): JsonObject {
+fun serialize(key: Key): JsonObject {
   val json = JsonObject()
-  json.addProperty(KeyConstants.DISPLAY_NAME, src.displayName)
-  json.addProperty(KeyConstants.ORDER, src.keyOrder)
-  when (src.type.id.name) {
+  json.addProperty(KeyConstants.DISPLAY_NAME, key.displayName)
+  json.addProperty(KeyConstants.ORDER, key.keyOrder)
+  when (key.type.id.name) {
     TypeConstants.TEXT -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.addProperty(KeyConstants.DEFAULT, src.defaultStringValue)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultStringValue)
     }
     TypeConstants.NUMBER -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.addProperty(KeyConstants.DEFAULT, src.defaultLongValue)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultLongValue)
     }
     TypeConstants.DECIMAL -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.addProperty(KeyConstants.DEFAULT, src.defaultDoubleValue)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultDoubleValue)
     }
     TypeConstants.BOOLEAN -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.addProperty(KeyConstants.DEFAULT, src.defaultBooleanValue)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue)
     }
     TypeConstants.FORMULA -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.addProperty(KeyConstants.FORMULA_EXPRESSION, src.formula?.expression)
-      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, src.formula?.returnType?.id?.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.FORMULA_EXPRESSION, key.formula?.expression)
+      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.id?.name)
     }
     TypeConstants.LIST -> {
-      json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-      json.add(KeyConstants.LIST_TYPE, serialize(src.list!!.type))
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.add(KeyConstants.LIST_TYPE, serialize(key.list!!.type))
     }
     else -> {
-      if (src.type.id.superTypeName == "Any") {
-        json.addProperty(KeyConstants.KEY_TYPE, src.type.id.name)
-        if (src.referencedVariable != null)
-          json.add(KeyConstants.DEFAULT, serialize(src.referencedVariable!!))
-      } else json.add(KeyConstants.KEY_TYPE, serialize(src.type))
+      if (key.type.id.superTypeName == "Any") {
+        json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+        if (key.referencedVariable != null)
+          json.add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))
+      } else json.add(KeyConstants.KEY_TYPE, serialize(key.type))
     }
   }
   return json
 }
 
-fun serialize(src: Set<Key>): JsonArray {
+fun serialize(entities: Set<Key>): JsonArray {
   val json = JsonArray()
-  for (entity in src)
+  for (entity in entities)
     json.add(serialize(entity))
   return json
 }

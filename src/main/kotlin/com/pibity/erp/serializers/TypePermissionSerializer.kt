@@ -14,31 +14,31 @@ import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.entities.TypePermission
 
-fun serialize(src: TypePermission): JsonObject {
+fun serialize(typePermission: TypePermission): JsonObject {
   val json = JsonObject()
-  if (src.id.type.id.superTypeName == "Any") {
-    json.addProperty("organization", src.id.type.id.organization.id)
-    json.addProperty("typeName", src.id.type.id.name)
-    json.addProperty("permissionName", src.id.name)
-    json.addProperty("creatable", src.creatable)
-    json.addProperty("deletable", src.deletable)
+  if (typePermission.id.type.id.superTypeName == "Any") {
+    json.addProperty("organization", typePermission.id.type.id.organization.id)
+    json.addProperty("typeName", typePermission.id.type.id.name)
+    json.addProperty("permissionName", typePermission.id.name)
+    json.addProperty("creatable", typePermission.creatable)
+    json.addProperty("deletable", typePermission.deletable)
   }
   json.addProperty(
       "maxAccessLevel",
-      when (src.maxAccessLevel) {
+      when (typePermission.maxAccessLevel) {
         PermissionConstants.READ_ACCESS -> "READ"
         PermissionConstants.WRITE_ACCESS -> "WRITE"
         else -> "NONE"
       })
   json.addProperty(
       "minAccessLevel",
-      when (src.minAccessLevel) {
+      when (typePermission.minAccessLevel) {
         PermissionConstants.READ_ACCESS -> "READ"
         PermissionConstants.WRITE_ACCESS -> "WRITE"
         else -> "NONE"
       })
   val jsonKeyPermissions = JsonObject()
-  for (keyPermission in src.keyPermissions) {
+  for (keyPermission in typePermission.keyPermissions) {
     when (keyPermission.id.key.type.id.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
         jsonKeyPermissions.addProperty(
@@ -103,9 +103,9 @@ fun serialize(src: TypePermission): JsonObject {
   return json
 }
 
-fun serialize(src: Set<TypePermission>): JsonArray {
+fun serialize(entities: Set<TypePermission>): JsonArray {
   val json = JsonArray()
-  for (entity in src)
+  for (entity in entities)
     json.add(serialize(entity))
   return json
 }

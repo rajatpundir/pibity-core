@@ -13,17 +13,17 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.entities.Variable
 
-fun serialize(src: Variable): JsonObject {
+fun serialize(variable: Variable): JsonObject {
   val json = JsonObject()
-  if (src.id.type.id.superTypeName == "Any") {
-    json.addProperty("organization", src.id.type.id.organization.id)
-    json.addProperty("active", src.active)
+  if (variable.id.type.id.superTypeName == "Any") {
+    json.addProperty("organization", variable.id.type.id.organization.id)
+    json.addProperty("active", variable.active)
   } else
-    json.addProperty("context", src.id.superList.id)
-  json.addProperty("typeName", src.id.type.id.name)
-  json.addProperty("variableName", src.id.name)
+    json.addProperty("context", variable.id.superList.id)
+  json.addProperty("typeName", variable.id.type.id.name)
+  json.addProperty("variableName", variable.id.name)
   val jsonValues = JsonObject()
-  for (value in src.values) {
+  for (value in variable.values) {
     when (value.id.key.type.id.name) {
       TypeConstants.TEXT -> jsonValues.addProperty(value.id.key.id.name, value.stringValue!!)
       TypeConstants.NUMBER -> jsonValues.addProperty(value.id.key.id.name, value.longValue!!)
@@ -57,9 +57,9 @@ fun serialize(src: Set<Variable>): JsonArray {
   return json
 }
 
-fun serialize(src: List<Variable>): JsonArray {
+fun serialize(entities: List<Variable>): JsonArray {
   val json = JsonArray()
-  for (entity in src)
+  for (entity in entities)
     json.add(serialize(entity))
   return json
 }
