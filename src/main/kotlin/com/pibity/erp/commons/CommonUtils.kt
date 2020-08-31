@@ -13,32 +13,9 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.*
-import com.pibity.erp.entities.mappings.GroupRole
-import com.pibity.erp.entities.mappings.RolePermission
-import com.pibity.erp.entities.mappings.UserGroup
-import com.pibity.erp.entities.mappings.UserRole
-import com.pibity.erp.entities.mappings.serializers.GroupRoleSerializer
-import com.pibity.erp.entities.mappings.serializers.RolePermissionSerializer
-import com.pibity.erp.entities.mappings.serializers.UserGroupSerializer
-import com.pibity.erp.entities.mappings.serializers.UserRoleSerializer
-import com.pibity.erp.entities.serializers.*
 import java.io.FileReader
 
-val gson: Gson = GsonBuilder()
-    .excludeFieldsWithoutExposeAnnotation()
-    .registerTypeAdapter(Type::class.java, TypeSerializer())
-    .registerTypeAdapter(Key::class.java, KeySerializer())
-    .registerTypeAdapter(Variable::class.java, VariableSerializer())
-    .registerTypeAdapter(TypePermission::class.java, TypePermissionSerializer())
-    .registerTypeAdapter(Role::class.java, RoleSerializer())
-    .registerTypeAdapter(RolePermission::class.java, RolePermissionSerializer())
-    .registerTypeAdapter(Group::class.java, GroupSerializer())
-    .registerTypeAdapter(GroupRole::class.java, GroupRoleSerializer())
-    .registerTypeAdapter(User::class.java, UserSerializer())
-    .registerTypeAdapter(UserGroup::class.java, UserGroupSerializer())
-    .registerTypeAdapter(UserRole::class.java, UserRoleSerializer())
-    .create()
+val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
 fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)
 

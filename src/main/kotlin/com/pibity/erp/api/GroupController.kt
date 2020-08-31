@@ -11,8 +11,8 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.GroupService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,8 +35,8 @@ class GroupController(val groupService: GroupService) {
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(groupService.createGroup(jsonParams = (getJsonParams(request, expectedParams["createGroup"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.createGroup(jsonParams = (getJsonParams(request, expectedParams["createGroup"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -47,8 +47,8 @@ class GroupController(val groupService: GroupService) {
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun updateGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -59,8 +59,8 @@ class GroupController(val groupService: GroupService) {
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun getGroupDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

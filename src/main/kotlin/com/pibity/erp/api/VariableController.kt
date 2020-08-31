@@ -11,8 +11,9 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.serializers.mappings.serialize
+import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.VariableService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,8 +36,8 @@ class VariableController(val variableService: VariableService) {
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createVariable(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(variableService.createVariable(jsonParams = getJsonParams(request, expectedParams["createVariable"]
-          ?: JsonObject()))), HttpStatus.OK)
+      ResponseEntity(serialize(variableService.createVariable(jsonParams = getJsonParams(request, expectedParams["createVariable"]
+          ?: JsonObject()))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -47,8 +48,8 @@ class VariableController(val variableService: VariableService) {
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun updateVariable(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(variableService.updateVariable(jsonParams = getJsonParams(request, expectedParams["updateVariable"]
-          ?: JsonObject()))), HttpStatus.OK)
+      ResponseEntity(serialize(variableService.updateVariable(jsonParams = getJsonParams(request, expectedParams["updateVariable"]
+          ?: JsonObject()))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -59,8 +60,8 @@ class VariableController(val variableService: VariableService) {
   @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(variableService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
-          ?: JsonObject()))), HttpStatus.OK)
+      ResponseEntity(serialize(variableService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
+          ?: JsonObject()))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

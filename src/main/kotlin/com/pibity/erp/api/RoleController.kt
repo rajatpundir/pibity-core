@@ -11,8 +11,8 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.RoleService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,8 +35,8 @@ class RoleController(val roleService: RoleService) {
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(roleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -47,8 +47,8 @@ class RoleController(val roleService: RoleService) {
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun updateRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(roleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -59,8 +59,8 @@ class RoleController(val roleService: RoleService) {
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun getRoleDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
