@@ -153,6 +153,38 @@ class QueryService(
                       throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
                     }
                   }
+                  keyQueryJson.has("greaterThanEquals") -> {
+                    keyQuery += " AND ${valueAlias}.longValue >= :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("greaterThanEquals").asLong
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("lessThanEquals") -> {
+                    keyQuery += " AND ${valueAlias}.longValue <= :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("lessThanEquals").asLong
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("greaterThan") -> {
+                    keyQuery += " AND ${valueAlias}.longValue > :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("greaterThan").asLong
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("lessThan") -> {
+                    keyQuery += " AND ${valueAlias}.longValue < :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("lessThan").asLong
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
                   keyQueryJson.has("between") -> {
                     keyQuery += " AND ${valueAlias}.longValue BETWEEN :v${variableCount} AND :v${variableCount + 1}"
                     if (!keyQueryJson.get("between").isJsonArray)
@@ -215,6 +247,38 @@ class QueryService(
                       keyQueryJson.get("equals").asDouble
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.id.name}: {equals:'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("greaterThanEquals") -> {
+                    keyQuery += " AND ${valueAlias}.doubleValue >= :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("greaterThanEquals").asDouble
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("lessThanEquals") -> {
+                    keyQuery += " AND ${valueAlias}.doubleValue <= :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("lessThanEquals").asDouble
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("greaterThan") -> {
+                    keyQuery += " AND ${valueAlias}.doubleValue > :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("greaterThan").asDouble
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
+                    }
+                  }
+                  keyQueryJson.has("lessThan") -> {
+                    keyQuery += " AND ${valueAlias}.doubleValue < :v${variableCount}"
+                    injectedValues["v${variableCount++}"] = try {
+                      keyQueryJson.get("lessThan").asDouble
+                    } catch (exception: Exception) {
+                      throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}}")
                     }
                   }
                   keyQueryJson.has("between") -> {
