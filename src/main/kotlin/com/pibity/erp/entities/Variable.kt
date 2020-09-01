@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.VariableId
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable

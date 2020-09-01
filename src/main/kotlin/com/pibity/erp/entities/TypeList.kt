@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.exceptions.CustomJsonException
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*

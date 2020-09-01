@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.RoleId
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.RolePermission
