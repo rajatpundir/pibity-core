@@ -51,7 +51,7 @@ class OrganizationService(
     try {
       val anyType = typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, name = TypeConstants.TEXT)
           ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
-      val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = -1))
+      val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = 0))
       val vl = variableListRepository.save(VariableList(listType = tl))
       organization.superList = vl
       organizationRepository.save(organization)

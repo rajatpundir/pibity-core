@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.TypePermissionId
 import com.pibity.erp.entities.mappings.RolePermission
 import com.pibity.erp.serializers.serialize
@@ -20,37 +19,37 @@ import javax.persistence.*
 @Table(name = "type_permission", schema = "inventory")
 data class TypePermission(
 
-        @EmbeddedId
-        val id: TypePermissionId,
+    @EmbeddedId
+    val id: TypePermissionId,
 
-        @Column(name = "create_permission", nullable = false)
-        var creatable: Boolean,
+    @Column(name = "create_permission", nullable = false)
+    var creatable: Boolean,
 
-        @Column(name = "deletion_permission", nullable = false)
-        var deletable: Boolean,
+    @Column(name = "deletion_permission", nullable = false)
+    var deletable: Boolean,
 
-        @Column(name = "max_access_level", nullable = false)
-        var maxAccessLevel: Int = 0,
+    @Column(name = "max_access_level", nullable = false)
+    var maxAccessLevel: Int = 0,
 
-        @Column(name = "min_access_level", nullable = false)
-        var minAccessLevel: Int = 0,
+    @Column(name = "min_access_level", nullable = false)
+    var minAccessLevel: Int = 0,
 
-        @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
-        var keyPermissions: MutableSet<KeyPermission> = HashSet(),
+    @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
+    var keyPermissions: MutableSet<KeyPermission> = HashSet(),
 
-        @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
-        val permissionRoles: MutableSet<RolePermission> = HashSet()
+    @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
+    val permissionRoles: MutableSet<RolePermission> = HashSet()
 
 ) : Serializable {
 
-    override fun equals(other: Any?): Boolean {
-        other ?: return false
-        if (this === other) return true
-        other as TypePermission
-        return this.id == other.id
-    }
+  override fun equals(other: Any?): Boolean {
+    other ?: return false
+    if (this === other) return true
+    other as TypePermission
+    return this.id == other.id
+  }
 
-    override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = Objects.hash(id)
 
-    override fun toString(): String = serialize(this).toString()
+  override fun toString(): String = serialize(this).toString()
 }
