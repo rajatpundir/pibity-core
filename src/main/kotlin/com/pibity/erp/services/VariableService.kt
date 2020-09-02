@@ -10,14 +10,11 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.FormulaUtils
+import com.pibity.erp.commons.*
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.getLeafNameTypeValues
-import com.pibity.erp.commons.validateUpdatedVariableValues
-import com.pibity.erp.commons.validateVariableValues
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
@@ -43,7 +40,7 @@ class VariableService(
           addProperty("username", jsonParams.get("username").asString)
           addProperty("typeName", jsonParams.get("typeName").asString)
         })
-    if (!typePermission.creatable)
+    if (typePermission.id.type.id.superTypeName == GLOBAL_TYPE && !typePermission.creatable)
       throw CustomJsonException("{error: 'Unauthorized Access'}")
     val variableName: String = jsonParams.get("variableName").asString
     val type: Type = typePermission.id.type
@@ -53,97 +50,98 @@ class VariableService(
     variable.id.type.autoIncrementId += 1
     variable.id.type.variableCount += 1
     // Process non-formula type values
-    typePermission.keyPermissions.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach {
-      when (it.id.key.type.id.name) {
-        TypeConstants.TEXT -> variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), stringValue = values.get(it.id.key.id.name).asString))
-        TypeConstants.NUMBER -> variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), longValue = values.get(it.id.key.id.name).asLong))
-        TypeConstants.DECIMAL -> variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), doubleValue = values.get(it.id.key.id.name).asDouble))
-        TypeConstants.BOOLEAN -> variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), booleanValue = values.get(it.id.key.id.name).asBoolean))
+    typePermission.keyPermissions.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach { keyPermission ->
+      val key = keyPermission.id.key
+      when (key.type.id.name) {
+        TypeConstants.TEXT -> variable.values.add(Value(id = ValueId(variable = variable, key = key), stringValue = values.get(key.id.name).asString))
+        TypeConstants.NUMBER -> variable.values.add(Value(id = ValueId(variable = variable, key = key), longValue = values.get(key.id.name).asLong))
+        TypeConstants.DECIMAL -> variable.values.add(Value(id = ValueId(variable = variable, key = key), doubleValue = values.get(key.id.name).asDouble))
+        TypeConstants.BOOLEAN -> variable.values.add(Value(id = ValueId(variable = variable, key = key), booleanValue = values.get(key.id.name).asBoolean))
         TypeConstants.FORMULA -> {/* Formulas may depend on provided values, so they will be computed separately */
         }
         TypeConstants.LIST -> {
-          val jsonArray: JsonArray = values.get(it.id.key.id.name).asJsonArray
+          val jsonArray: JsonArray = values.get(key.id.name).asJsonArray
           val list: VariableList = try {
-            variableListRepository.save(VariableList(listType = it.id.key.list!!))
+            variableListRepository.save(VariableList(listType = key.list!!))
           } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Unable to create List'}")
+            throw CustomJsonException("{${key.id.name}: 'Unable to create List'}")
           }
           for (ref in jsonArray.iterator()) {
-            if (it.id.key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
-              val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.id.organization.superList!!, type = it.id.key.list!!.type, name = ref.asString)
-                  ?: throw CustomJsonException("{${it.id.key.id.name}: 'Unable to find referenced global variable'}")
+            if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
+              val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.id.organization.superList!!, type = key.list!!.type, name = ref.asString)
+                  ?: throw CustomJsonException("{${key.id.name}: 'Unable to find referenced global variable'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
+                throw CustomJsonException("{${key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
               if (!referencedVariable.active)
-                throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
+                throw CustomJsonException("{${key.id.name}: 'Unable to reference variable as it is inactive'}")
               list.variables.add(referencedVariable)
               list.size += 1
             } else {
-              if ((it.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && it.id.key.id.parentType.id.name == it.id.key.list!!.type.id.superTypeName)
-                  || (it.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && it.id.key.id.parentType.id.superTypeName == it.id.key.list!!.type.id.superTypeName)) {
+              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
                 val referencedVariable: Variable = try {
                   createVariable(JsonObject().apply {
                     addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                     add("values", ref.asJsonObject.get("values").asJsonObject)
-                  }, variableTypePermission = it.referencedTypePermission!!, variableSuperList = list)
+                  }, variableTypePermission = keyPermission.referencedTypePermission!!, variableSuperList = list)
                 } catch (exception: CustomJsonException) {
-                  throw CustomJsonException("{${it.id.key.id.name}: ${exception.message}}")
+                  throw CustomJsonException("{${key.id.name}: ${exception.message}}")
                 }
                 referencedVariable.referenceCount += 1
                 list.variables.add(referencedVariable)
                 list.size += 1
               } else {
-                val referencedVariable: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = it.id.key.list!!.type.id.superTypeName, typeName = it.id.key.list!!.type.id.name, superList = ref.asJsonObject.get("context").asLong, name = ref.asJsonObject.get("variableName").asString)
-                    ?: throw CustomJsonException("{${it.id.key.id.name}: 'Unable to find referenced local field of global variable'}")
+                val referencedVariable: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = key.list!!.type.id.superTypeName, typeName = key.list!!.type.id.name, superList = ref.asJsonObject.get("context").asLong, name = ref.asJsonObject.get("variableName").asString)
+                    ?: throw CustomJsonException("{${key.id.name}: 'Unable to find referenced local field of global variable'}")
                 referencedVariable.referenceCount += 1
                 if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                  throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
+                  throw CustomJsonException("{${key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
                 if (!referencedVariable.active)
-                  throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
+                  throw CustomJsonException("{${key.id.name}: 'Unable to reference variable as it is inactive'}")
                 list.variables.add(referencedVariable)
                 list.size += 1
               }
             }
           }
           if (list.size < list.listType.min)
-            throw CustomJsonException("{${it.id.key.id.name}: 'List cannot contain less than ${list.listType.min} variables'}")
+            throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${list.listType.min} variables'}")
           if (list.listType.max != 0 && list.size > list.listType.max)
-            throw CustomJsonException("{${it.id.key.id.name}: 'List cannot contain more than ${list.listType.max} variables'}")
-          variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), list = list))
+            throw CustomJsonException("{${key.id.name}: 'List cannot contain more than ${list.listType.max} variables'}")
+          variable.values.add(Value(id = ValueId(variable = variable, key = key), list = list))
         }
         else -> {
-          if (it.id.key.type.id.superTypeName == GLOBAL_TYPE) {
-            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.id.organization.superList!!, type = it.id.key.type, name = values.get(it.id.key.id.name).asString)
-                ?: throw CustomJsonException("{${it.id.key.id.name}: 'Unable to find referenced global variable'}")
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
+            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.id.organization.superList!!, type = key.type, name = values.get(key.id.name).asString)
+                ?: throw CustomJsonException("{${key.id.name}: 'Unable to find referenced global variable'}")
             referencedVariable.referenceCount += 1
             if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-              throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
+              throw CustomJsonException("{${key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
             if (!referencedVariable.active)
-              throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
-            variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), referencedVariable = referencedVariable))
+              throw CustomJsonException("{${key.id.name}: 'Unable to reference variable as it is inactive'}")
+            variable.values.add(Value(id = ValueId(variable = variable, key = key), referencedVariable = referencedVariable))
           } else {
-            if ((it.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && it.id.key.id.parentType.id.name == it.id.key.type.id.superTypeName)
-                || (it.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && it.id.key.id.parentType.id.superTypeName == it.id.key.type.id.superTypeName)) {
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               val referencedVariable: Variable = try {
                 createVariable(JsonObject().apply {
                   addProperty("variableName", "")
-                  add("values", values.get(it.id.key.id.name).asJsonObject.get("values").asJsonObject)
-                }, variableTypePermission = it.referencedTypePermission!!, variableSuperList = variable.subList)
+                  add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
+                }, variableTypePermission = keyPermission.referencedTypePermission!!, variableSuperList = variable.subList)
               } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{${it.id.key.id.name}: ${exception.message}}")
+                throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
               referencedVariable.referenceCount += 1
-              variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), referencedVariable = referencedVariable))
+              variable.values.add(Value(id = ValueId(variable = variable, key = key), referencedVariable = referencedVariable))
             } else {
-              val referencedVariable: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = it.id.key.type.id.superTypeName, typeName = it.id.key.type.id.name, superList = values.get(it.id.key.id.name).asJsonObject.get("context").asLong, name = values.get(it.id.key.id.name).asJsonObject.get("variableName").asString)
-                  ?: throw CustomJsonException("{${it.id.key.id.name}: 'Unable to find referenced local field of global variable'}")
+              val referencedVariable: Variable = variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = key.type.id.superTypeName, typeName = key.type.id.name, superList = values.get(key.id.name).asJsonObject.get("context").asLong, name = values.get(key.id.name).asJsonObject.get("variableName").asString)
+                  ?: throw CustomJsonException("{${key.id.name}: 'Unable to find referenced local field of global variable'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.id.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.id.type.multiplicity)
-                throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
+                throw CustomJsonException("{${key.id.name}: 'Unable to reference variable due to variable's reference limit'}")
               if (!referencedVariable.active)
-                throw CustomJsonException("{${it.id.key.id.name}: 'Unable to reference variable as it is inactive'}")
-              variable.values.add(Value(id = ValueId(variable = variable, key = it.id.key), referencedVariable = referencedVariable))
+                throw CustomJsonException("{${key.id.name}: 'Unable to reference variable as it is inactive'}")
+              variable.values.add(Value(id = ValueId(variable = variable, key = key), referencedVariable = referencedVariable))
             }
           }
         }
@@ -430,7 +428,7 @@ class VariableService(
     // Process formula type values
     // Recompute formula values
     // TODO: To be optimized in future so that formula is computed only upon change in dependent fields
-    variable.values.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach {
+    variable.values.filter { key.type.id.name == TypeConstants.FORMULA }.forEach {
       val expression: String = it.id.key.formula!!.expression
       val returnTypeName: String = it.id.key.formula!!.returnType.id.name
       val leafKeyTypeAndValues: Map<String, Map<String, String>> = getLeafNameTypeValues(prefix = null, keys = mutableMapOf(), variable = variable, depth = 0)
