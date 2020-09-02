@@ -102,7 +102,9 @@ class OrganizationService(
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/${filename.asString}.json"), JsonArray::class.java)
       for (json in types) {
         val typeRequest = json.asJsonObject.apply { addProperty("organization", organization.id) }
-        typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
+        typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")).apply {
+          addProperty("username", "system")
+        })
       }
     }
   }

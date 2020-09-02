@@ -31,7 +31,8 @@ class TypeService(
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
     val variableService: VariableService,
-    val permissionService: PermissionService
+    val permissionService: PermissionService,
+    val roleService: RoleService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -159,6 +160,8 @@ class TypeService(
     }
     if (type.id.superTypeName == GLOBAL_TYPE) {
       createDefaultPermissionsForType(type = createdType)
+      createPermissionsForType(jsonParams = jsonParams)
+      assignPermissionsToRoles(jsonParams = jsonParams)
       if (jsonParams.has("variables?"))
         createVariablesForType(jsonParams = jsonParams)
     }
@@ -185,11 +188,65 @@ class TypeService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
+  fun createPermissionsForType(jsonParams: JsonObject) {
+    for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
+      if (jsonPermission.isJsonObject) {
+        permissionService.createPermission(jsonParams = JsonObject().apply {
+          addProperty("organization", jsonParams.get("organization").asString)
+          addProperty("typeName", jsonParams.get("typeName").asString)
+          try {
+            addProperty("permissionName", jsonParams.get("permissionName").asString)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {permissionName: 'Unexpected value for parameter'}}")
+          }
+          try {
+            addProperty("creatable", jsonParams.get("creatable").asBoolean)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {creatable: 'Unexpected value for parameter'}}")
+          }
+          try {
+            addProperty("deletable", jsonParams.get("deletable").asBoolean)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {deletable: 'Unexpected value for parameter'}}")
+          }
+          try {
+            add("permissions", jsonParams.get("permissions").asJsonArray)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {permissions: 'Unexpected value for parameter'}}")
+          }
+        })
+      } else throw CustomJsonException("{permissions: 'Unexpected value for parameter'}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun assignPermissionsToRoles(jsonParams: JsonObject) {
+    for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
+      if (permissionNames.isJsonArray) {
+        for (permissionName in permissionNames.asJsonArray) {
+          roleService.updateRole(jsonParams = JsonObject().apply {
+            addProperty("organization", jsonParams.get("organization").asString)
+            addProperty("typeName", jsonParams.get("typeName").asString)
+            addProperty("roleName", roleName)
+            try {
+              addProperty("permissionName", permissionName.asString)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}")
+            }
+            addProperty("operation", "add")
+          })
+        }
+      } else throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
   fun createVariablesForType(jsonParams: JsonObject) {
     for ((variableName, values) in jsonParams.get("variables?").asJsonObject.entrySet()) {
       val jsonVariableParams = JsonObject()
       jsonVariableParams.apply {
         addProperty("organization", jsonParams.get("organization").asString)
+        addProperty("username", jsonParams.get("username").asString)
         addProperty("typeName", jsonParams.get("typeName").asString)
         addProperty("variableName", variableName)
         try {
