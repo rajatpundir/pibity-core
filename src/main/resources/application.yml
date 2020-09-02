@@ -18,7 +18,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
       database-platform: "org.hibernate.dialect.PostgreSQLDialect"
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         use_sql_comments: true
@@ -36,15 +36,15 @@ spring:
     user: pibity
     password: password
     default-schema: liquibase
-logging:
-  level:
-    org.hibernate:
-      SQL: debug
-      type:
-        descriptor:
-          sql: trace
-    liquibase: INFO
-    org.keycloak: DEBUG
+#logging:
+#  level:
+#    org.hibernate:
+#      SQL: debug
+#      type:
+#        descriptor:
+#          sql: trace
+#    liquibase: INFO
+#    org.keycloak: DEBUG
 
 ---
 

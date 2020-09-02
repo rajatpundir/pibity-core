@@ -22,6 +22,7 @@ import com.pibity.erp.entities.embeddables.TypeId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
+import com.pibity.erp.serializers.serialize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -159,7 +160,6 @@ class TypeService(
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
     }
     if (type.id.superTypeName == GLOBAL_TYPE) {
-      createDefaultPermissionsForType(type = createdType)
       createPermissionsForType(jsonParams = jsonParams)
       assignPermissionsToRoles(jsonParams = jsonParams)
       if (jsonParams.has("variables?"))
@@ -224,7 +224,7 @@ class TypeService(
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
-          roleService.updateRole(jsonParams = JsonObject().apply {
+          val x=roleService.updateRole(jsonParams = JsonObject().apply {
             addProperty("organization", jsonParams.get("organization").asString)
             addProperty("typeName", jsonParams.get("typeName").asString)
             addProperty("roleName", roleName)
