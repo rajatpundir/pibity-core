@@ -5,6 +5,11 @@
     "keys": {},
     "variables": {
       "No Discount": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -19,6 +24,11 @@
       "Special-Serial Number": {},
       "FEFO-Batch": {},
       "FEFO-Serial Number": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -35,6 +45,11 @@
       "other": {},
       "Sack": {},
       "Xero": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -45,6 +60,11 @@
       "No BOM": {},
       "Assembly BOM": {},
       "Production BOM": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -55,6 +75,11 @@
       "Active": {},
       "Deprecated": {},
       "Setup Required": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -66,6 +91,11 @@
       "Tax Exempt": {},
       "Sales Tax on Imports": {},
       "Tax on Purchase": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -78,6 +108,11 @@
       "Gift Card": {},
       "Non-Inventory": {},
       "Fixed Asset": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -86,6 +121,11 @@
     "keys": {},
     "variables": {
       "Nike": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -96,6 +136,11 @@
       "No Drop Ship": {},
       "Optional Drop Ship": {},
       "Always Drop Ship": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -111,6 +156,11 @@
       "meter": {},
       "centimeter": {},
       "kilometer": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -123,6 +173,11 @@
       "milligram": {},
       "gram": {},
       "kilogram": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -563,6 +618,11 @@
         "displayName": "Supplier Location",
         "order": "14"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

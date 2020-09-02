@@ -243,6 +243,11 @@
       "Yemen": {},
       "Zambia": {},
       "Zimbabwe": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

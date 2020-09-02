@@ -168,6 +168,11 @@
       "ZAR - South Africa Rand": {},
       "ZMK - Zambia Kwacha": {},
       "ZWD - Zimbabwe Dollar": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

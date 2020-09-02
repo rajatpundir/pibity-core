@@ -131,6 +131,11 @@
         "displayName": "phone",
         "order": "3"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -164,6 +169,11 @@
         "order": "3",
         "default": "Pending"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

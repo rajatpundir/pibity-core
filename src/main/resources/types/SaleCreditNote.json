@@ -43,6 +43,11 @@
         "displayName": "Total",
         "order": "7"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -119,6 +124,11 @@
         "displayName": "Credit Note",
         "order": "13"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

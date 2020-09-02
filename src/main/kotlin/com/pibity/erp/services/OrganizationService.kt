@@ -36,7 +36,9 @@ class OrganizationService(
     val typeRepository: TypeRepository,
     val typeListRepository: TypeListRepository,
     val variableListRepository: VariableListRepository,
-    val typeService: TypeService
+    val typeService: TypeService,
+    val userService: UserService,
+    val roleService: RoleService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -47,6 +49,17 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
+    createDefaultRoles(organization = organization)
+    userService.createUser(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("username", "system")
+    })
+    userService.updateUserRoles(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("username", "system")
+      addProperty("roleName", "ADMIN")
+      addProperty("operation", "add")
+    })
     createPrimitiveTypes(organization = organization)
     try {
       val anyType = typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, name = TypeConstants.TEXT)
@@ -60,6 +73,16 @@ class OrganizationService(
     }
     createCustomTypes(organization = organization)
     return organization
+  }
+
+  fun createDefaultRoles(organization: Organization) {
+    val jsonRoles: JsonArray = gson.fromJson(FileReader("src/main/resources/roles/index.json"), JsonArray::class.java)
+    for (jsonRole in jsonRoles) {
+      roleService.createRole(JsonObject().apply {
+        addProperty("organization", organization.id)
+        addProperty("roleName", jsonRole.asString)
+      })
+    }
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])

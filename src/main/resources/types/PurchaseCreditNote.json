@@ -108,6 +108,11 @@
         "displayName": " purchase Credit Note",
         "order": "9"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]
