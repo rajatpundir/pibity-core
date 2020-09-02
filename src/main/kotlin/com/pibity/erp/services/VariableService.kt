@@ -308,7 +308,7 @@ class VariableService(
                   || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.list!!.type.id.superTypeName)) {
                 if (listValues.has("add")) {
                   listValues.get("add").asJsonArray.forEach {
-                    val referencedVariable = try {//TODO : add typePermission in create variable
+                    val referencedVariable = try {
                       createVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key == value.id.key }.referencedTypePermission!!, variableSuperList = value.list!!)
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${value.id.key.id.name}: {${it.asJsonObject.get("variableName").asString}: {add: 'Unable to add variable to list'}}}")
@@ -344,7 +344,6 @@ class VariableService(
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {update: 'Unable to find referenced variable in list'}}")
                     value.list!!.variables.remove(variableToUpdate)
                     val updatedVariable: Variable = try {
-                      // TODO: RECHECK BELOW
                       updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.list!!)
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${value.id.key.id.name}: {update: ${exception.message}}}")
