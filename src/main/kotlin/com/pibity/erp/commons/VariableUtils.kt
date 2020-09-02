@@ -285,11 +285,12 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
           }
         }
         TypeConstants.LIST -> {
-            if (!values.get(key.id.name).isJsonObject)
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
-            else {
-              val listParams = JsonObject()
-              if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
+          if (!values.get(key.id.name).isJsonObject)
+            throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+          else {
+            val listParams = JsonObject()
+            if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
+              if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
                 if (values.get(key.id.name).asJsonObject.has("add")) {
                   if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                     throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
@@ -320,10 +321,13 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                     listParams.add("remove", params)
                   }
                 }
-              } else {
-                if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                    || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
-                  if (values.get(key.id.name).asJsonObject.has("add")) {
+                expectedValues.add(key.id.name, listParams)
+              }
+            } else {
+              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+                if (values.get(key.id.name).asJsonObject.has("add")) {
+                  if (keyPermission.referencedTypePermission!!.creatable) {
                     if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                       throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
                     else {
@@ -343,7 +347,7 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                           throw CustomJsonException("{${key.id.name}: {add: {values: 'Field is missing in request body'}}}")
                         else {
                           try {
-                            jsonObject.add("values", validateVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission!!)) //pass typePermission
+                            jsonObject.add("values", validateVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission))
                           } catch (exception: CustomJsonException) {
                             throw CustomJsonException("{${key.id.name}: {add: {values: ${exception.message}}}}")
                           }
@@ -353,52 +357,57 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                       listParams.add("add", params)
                     }
                   }
-                  if (values.get(key.id.name).asJsonObject.has("remove")) {
-                    if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
-                    else {
-                      val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                }
+                if (values.get(key.id.name).asJsonObject.has("remove")) {
+                  if (keyPermission.referencedTypePermission!!.deletable) {
+                  if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
+                    throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                  else {
+                    val params = JsonArray()
+                    values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                      try {
+                        params.add(it.asString)
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                      }
+                    }
+                    listParams.add("remove", params)
+                  }
+                }
+              }
+                if (values.get(key.id.name).asJsonObject.has("update")) {
+                  if (!values.get(key.id.name).asJsonObject.get("update").isJsonArray)
+                    throw CustomJsonException("{${key.id.name}: {update: 'Unexpected value for parameter'}}")
+                  else {
+                    val params = JsonArray()
+                    values.get(key.id.name).asJsonObject.get("update").asJsonArray.toSet().forEach {
+                      val jsonObject = JsonObject()
+                      if (!it.asJsonObject.has("variableName"))
+                        throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Field is missing in request body'}}}")
+                      else {
                         try {
-                          params.add(it.asString)
+                          jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
                         }
                       }
-                      listParams.add("remove", params)
-                    }
-                  }
-                  if (values.get(key.id.name).asJsonObject.has("update")) {
-                    if (!values.get(key.id.name).asJsonObject.get("update").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {update: 'Unexpected value for parameter'}}")
-                    else {
-                      val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("update").asJsonArray.toSet().forEach {
-                        val jsonObject = JsonObject()
-                        if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
-                          } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
-                          }
+                      if (!it.asJsonObject.has("values"))
+                        throw CustomJsonException("{${key.id.name}: {update: {values: 'Field is missing in request body'}}}")
+                      else {
+                        try {
+                          jsonObject.add("values", validateUpdatedVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission!!))
+                        } catch (exception: CustomJsonException) {
+                          throw CustomJsonException("{${key.id.name}: {update: {values: ${exception.message}}}")
                         }
-                        if (!it.asJsonObject.has("values"))
-                          throw CustomJsonException("{${key.id.name}: {update: {values: 'Field is missing in request body'}}}")
-                        else {
-                          try {
-                            jsonObject.add("values", validateUpdatedVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission!!))
-                          } catch (exception: CustomJsonException) {
-                            throw CustomJsonException("{${key.id.name}: {update: {values: ${exception.message}}}")
-                          }
-                        }
-                        params.add(jsonObject)
                       }
-                      listParams.add("update", params)
+                      params.add(jsonObject)
                     }
+                    listParams.add("update", params)
                   }
-                } else {
+                }
+                expectedValues.add(key.id.name, listParams)
+              } else {
+                if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
                   if (values.get(key.id.name).asJsonObject.has("add")) {
                     if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
                       throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
@@ -459,11 +468,11 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                       listParams.add("remove", params)
                     }
                   }
+                  expectedValues.add(key.id.name, listParams)
                 }
               }
-              expectedValues.add(key.id.name, listParams)
             }
-
+          }
         }
         TypeConstants.FORMULA -> {
         }

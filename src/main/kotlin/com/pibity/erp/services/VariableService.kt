@@ -257,13 +257,12 @@ class VariableService(
         })
     val type: Type = typePermission.id.type
     val superList: VariableList = variableSuperList ?: type.id.organization.superList!!
-    // Note. May not need to query for local variables here, use referenced variable that can be passed.
     val variable: Variable = referencedKeyVariable
         ?: variableRepository.findVariable(organizationName = type.id.organization.id, superTypeName = type.id.superTypeName, typeName = type.id.name, superList = superList.id, name = jsonParams.get("variableName").asString)
         ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
     if (jsonParams.has("active?"))
       variable.active = jsonParams.get("active?").asBoolean
-    val values: JsonObject = if (jsonParams.has("values")) validateUpdatedVariableValues(values = jsonParams.get("values").asJsonObject, type = variable.id.type) else JsonObject()
+    val values: JsonObject = if (jsonParams.has("values")) validateUpdatedVariableValues(values = jsonParams.get("values").asJsonObject, typePermission = typePermission) else JsonObject()
     // Process non-formula type values
     variable.values.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach { value ->
       if (values.has(value.id.key.id.name)) {
@@ -428,7 +427,7 @@ class VariableService(
     // Process formula type values
     // Recompute formula values
     // TODO: To be optimized in future so that formula is computed only upon change in dependent fields
-    variable.values.filter { key.type.id.name == TypeConstants.FORMULA }.forEach {
+    variable.values.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach {
       val expression: String = it.id.key.formula!!.expression
       val returnTypeName: String = it.id.key.formula!!.returnType.id.name
       val leafKeyTypeAndValues: Map<String, Map<String, String>> = getLeafNameTypeValues(prefix = null, keys = mutableMapOf(), variable = variable, depth = 0)
