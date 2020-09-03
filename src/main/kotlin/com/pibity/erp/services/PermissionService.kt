@@ -163,7 +163,7 @@ class PermissionService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultPermission(type: Type, permissionName: String, accessLevel: Int): TypePermission {
-    val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName), creatable = type.id.superTypeName== GLOBAL_TYPE && accessLevel==PermissionConstants.WRITE_ACCESS, deletable = type.id.superTypeName== GLOBAL_TYPE && accessLevel==PermissionConstants.WRITE_ACCESS)
+    val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName), creatable = type.id.superTypeName == GLOBAL_TYPE && accessLevel == PermissionConstants.WRITE_ACCESS, deletable = type.id.superTypeName == GLOBAL_TYPE && accessLevel == PermissionConstants.WRITE_ACCESS)
     for (key in type.keys) {
       when (key.type.id.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))

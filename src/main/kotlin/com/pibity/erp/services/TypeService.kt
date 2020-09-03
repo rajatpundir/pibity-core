@@ -22,7 +22,6 @@ import com.pibity.erp.entities.embeddables.TypeId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
-import com.pibity.erp.serializers.serialize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -224,7 +223,7 @@ class TypeService(
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
-          val x=roleService.updateRole(jsonParams = JsonObject().apply {
+          val x = roleService.updateRole(jsonParams = JsonObject().apply {
             addProperty("organization", jsonParams.get("organization").asString)
             addProperty("typeName", jsonParams.get("typeName").asString)
             addProperty("roleName", roleName)
