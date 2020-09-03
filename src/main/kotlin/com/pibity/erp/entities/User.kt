@@ -8,8 +8,10 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.UserId
+import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.entities.mappings.UserRole
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -22,21 +24,14 @@ data class User(
     @EmbeddedId
     val id: UserId,
 
+    @Column(name = "active", nullable = false)
     var active: Boolean = true,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_user_roles", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "username")],
-        inverseJoinColumns = [JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "role_name", referencedColumnName = "role_name")])
-    val roles: MutableSet<Role> = HashSet(),
+    @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL])
+    val userRoles: MutableSet<UserRole> = HashSet(),
 
-    @ManyToMany
-    @JoinTable(name = "mapping_user_groups", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "username")],
-        inverseJoinColumns = [JoinColumn(name = "group_organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "group_name", referencedColumnName = "group_name")])
-    val groups: MutableSet<Group> = HashSet()
+    @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL])
+    val userGroups: MutableSet<UserGroup> = HashSet()
 
 ) : Serializable {
 
@@ -49,5 +44,5 @@ data class User(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

@@ -8,8 +8,9 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.TypePermissionId
+import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -21,12 +22,23 @@ data class TypePermission(
     @EmbeddedId
     val id: TypePermissionId,
 
-    var highestAccessLevel: Int = 0,
+    @Column(name = "create_permission", nullable = false)
+    var creatable: Boolean,
 
-    var lowestAccessLevel: Int = 0,
+    @Column(name = "deletion_permission", nullable = false)
+    var deletable: Boolean,
+
+    @Column(name = "max_access_level", nullable = false)
+    var maxAccessLevel: Int = 0,
+
+    @Column(name = "min_access_level", nullable = false)
+    var minAccessLevel: Int = 0,
 
     @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
-    var keyPermissions: MutableSet<KeyPermission> = HashSet()
+    var keyPermissions: MutableSet<KeyPermission> = HashSet(),
+
+    @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
+    val permissionRoles: MutableSet<RolePermission> = HashSet()
 
 ) : Serializable {
 
@@ -39,5 +51,5 @@ data class TypePermission(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

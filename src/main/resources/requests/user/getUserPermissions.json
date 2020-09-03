@@ -2,7 +2,7 @@
   "organization": {
     "type": "String"
   },
-  "roleName": {
+  "username": {
     "type": "String"
   },
   "typeName": {

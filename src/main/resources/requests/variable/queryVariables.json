@@ -2,10 +2,10 @@
   "organization": {
     "type": "String"
   },
-  "typeName": {
+  "username": {
     "type": "String"
   },
-  "variableName?": {
+  "typeName": {
     "type": "String"
   },
   "query": {

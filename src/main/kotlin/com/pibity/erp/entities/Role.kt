@@ -8,8 +8,11 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.RoleId
+import com.pibity.erp.entities.mappings.GroupRole
+import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.entities.mappings.UserRole
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -22,20 +25,14 @@ data class Role(
     @EmbeddedId
     val id: RoleId,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_role_permissions", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "role_name")],
-        inverseJoinColumns = [JoinColumn(name = "permission_organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "permission_super_type_name", referencedColumnName = "super_type_name"),
-          JoinColumn(name = "permission_type_name", referencedColumnName = "type_name"),
-          JoinColumn(name = "permission_name", referencedColumnName = "permission_name")])
-    val permissions: MutableSet<TypePermission> = HashSet(),
+    @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
+    val rolePermissions: MutableSet<RolePermission> = HashSet(),
 
-    @ManyToMany(mappedBy = "roles")
-    val groups: Set<Group> = HashSet(),
+    @OneToMany(mappedBy = "id.role")
+    val roleGroups: Set<GroupRole> = HashSet(),
 
-    @ManyToMany(mappedBy = "roles")
-    val users: Set<User> = HashSet()
+    @OneToMany(mappedBy = "id.role")
+    val roleUsers: Set<UserRole> = HashSet()
 
 ) : Serializable {
 
@@ -48,5 +45,5 @@ data class Role(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

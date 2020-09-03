@@ -10,6 +10,7 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
@@ -35,7 +36,9 @@ class OrganizationService(
     val typeRepository: TypeRepository,
     val typeListRepository: TypeListRepository,
     val variableListRepository: VariableListRepository,
-    val typeService: TypeService
+    val typeService: TypeService,
+    val userService: UserService,
+    val roleService: RoleService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -46,11 +49,22 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
+    createDefaultRoles(organization = organization)
+    userService.createUser(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("username", "system")
+    })
+    userService.updateUserRoles(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("username", "system")
+      addProperty("roleName", "ADMIN")
+      addProperty("operation", "add")
+    })
     createPrimitiveTypes(organization = organization)
     try {
-      val anyType = typeRepository.findType(organization = organization, superTypeName = "Any", name = TypeConstants.TEXT)
+      val anyType = typeRepository.findType(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, name = TypeConstants.TEXT)
           ?: throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
-      val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = -1))
+      val tl = typeListRepository.save(TypeList(type = anyType, min = 0, max = 0))
       val vl = variableListRepository.save(VariableList(listType = tl))
       organization.superList = vl
       organizationRepository.save(organization)
@@ -61,11 +75,21 @@ class OrganizationService(
     return organization
   }
 
+  fun createDefaultRoles(organization: Organization) {
+    val jsonRoles: JsonArray = gson.fromJson(FileReader("src/main/resources/roles/index.json"), JsonArray::class.java)
+    for (jsonRole in jsonRoles) {
+      roleService.createRole(JsonObject().apply {
+        addProperty("organization", organization.id)
+        addProperty("roleName", jsonRole.asString)
+      })
+    }
+  }
+
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createPrimitiveTypes(organization: Organization) {
     try {
       for (primitiveType in primitiveTypes)
-        typeRepository.save(Type(id = TypeId(organization = organization, superTypeName = "Any", name = primitiveType), displayName = primitiveType, primitiveType = true, multiplicity = 0))
+        typeRepository.save(Type(id = TypeId(organization = organization, superTypeName = GLOBAL_TYPE, name = primitiveType), displayName = primitiveType, primitiveType = true, multiplicity = 0))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
     }
@@ -77,7 +101,10 @@ class OrganizationService(
     for (filename in customTypeFilenames) {
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/${filename.asString}.json"), JsonArray::class.java)
       for (json in types) {
-        val typeRequest = json.asJsonObject.apply { addProperty("organization", organization.id) }
+        val typeRequest = json.asJsonObject.apply {
+          addProperty("organization", organization.id)
+          addProperty("username", "system")
+        }
         typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
       }
     }

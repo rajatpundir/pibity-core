@@ -178,6 +178,11 @@
         "displayName": "Supplier Contacts",
         "order": "11"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

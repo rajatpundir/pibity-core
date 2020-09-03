@@ -8,8 +8,10 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.GroupId
+import com.pibity.erp.entities.mappings.GroupRole
+import com.pibity.erp.entities.mappings.UserGroup
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -22,15 +24,11 @@ data class Group(
     @EmbeddedId
     val id: GroupId,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_group_roles", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id"), JoinColumn(name = "group_name")],
-        inverseJoinColumns = [JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "role_name", referencedColumnName = "role_name")])
-    val roles: MutableSet<Role> = HashSet(),
+    @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL])
+    val groupRoles: MutableSet<GroupRole> = HashSet(),
 
-    @ManyToMany(mappedBy = "groups")
-    val users: Set<User> = HashSet()
+    @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL])
+    val groupUsers: MutableSet<UserGroup> = HashSet()
 
 ) : Serializable {
 
@@ -43,5 +41,5 @@ data class Group(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

@@ -8,8 +8,8 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.TypeId
+import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -50,7 +50,7 @@ data class Type(
     val referencingKeys: Set<Key> = HashSet(),
 
     @OneToMany(mappedBy = "id.type", cascade = [CascadeType.ALL])
-    val permissions: Set<TypePermission> = HashSet()
+    val permissions: MutableSet<TypePermission> = HashSet()
 
 ) : Serializable {
 
@@ -63,5 +63,5 @@ data class Type(
 
   override fun hashCode(): Int = Objects.hash(id)
 
-  override fun toString(): String = gson.toJson(this)
+  override fun toString(): String = serialize(this).toString()
 }

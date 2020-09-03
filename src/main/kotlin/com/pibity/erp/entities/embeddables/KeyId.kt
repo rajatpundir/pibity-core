@@ -18,8 +18,8 @@ data class KeyId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "parent_type_organization_id", referencedColumnName = "organization_id"),
-        JoinColumn(name = "parent_super_type_name", referencedColumnName = "super_type_name"),
-        JoinColumn(name = "parent_type_name", referencedColumnName = "type_name")])
+      JoinColumn(name = "parent_super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "parent_type_name", referencedColumnName = "type_name")])
     val parentType: Type,
 
     @Column(name = "key_name", nullable = false)

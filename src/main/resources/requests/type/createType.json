@@ -2,6 +2,9 @@
   "organization": {
     "type": "String"
   },
+  "username": {
+    "type": "String"
+  },
   "typeName": {
     "type": "String"
   },
@@ -18,6 +21,12 @@
     "type": "Object"
   },
   "variables?": {
+    "type": "Object"
+  },
+  "permissions": {
+    "type": "Array"
+  },
+  "roles": {
     "type": "Object"
   }
 }

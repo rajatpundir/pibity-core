@@ -9,6 +9,11 @@
       "Reflow Oven": {},
       "Conveyor": {},
       "Automatic Loader": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -17,6 +22,11 @@
     "keys": {},
     "variables": {
       "Unit": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -29,6 +39,11 @@
       "SAMSUNG": {},
       "PANASONIC": {},
       "FUJI": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -39,6 +54,11 @@
       "Approved": {},
       "Declined": {},
       "Pending": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -105,6 +125,11 @@
         "order": "11",
         "default": "Unit"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -131,6 +156,11 @@
         "displayName": "phone",
         "order": "3"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -164,6 +194,11 @@
         "order": "3",
         "default": "Pending"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

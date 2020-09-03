@@ -13,6 +13,42 @@ spring:
 ---
 
 spring:
+  profiles: pg
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+      database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+    show-sql: false
+    properties:
+      hibernate:
+        use_sql_comments: true
+        format_sql: true
+  datasource:
+    name: postgres
+    driver-class-name: "org.postgresql.Driver"
+    url: "jdbc:postgresql://localhost:5432/erp"
+    username: pibity
+    password: password
+  liquibase:
+    enabled: false
+    change-log: "classpath:/db/changelog/inventory-master.json"
+    url: "jdbc:postgresql://localhost:5432/erp"
+    user: pibity
+    password: password
+    default-schema: liquibase
+#logging:
+#  level:
+#    org.hibernate:
+#      SQL: debug
+#      type:
+#        descriptor:
+#          sql: trace
+#    liquibase: INFO
+#    org.keycloak: DEBUG
+
+---
+
+spring:
   profiles: h2
   h2:
     console:
@@ -42,39 +78,3 @@ spring:
     user: sa
     password: sa
     default-schema: liquibase
-
----
-
-spring:
-  profiles: pg
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-      database-platform: "org.hibernate.dialect.PostgreSQLDialect"
-    show-sql: true
-    properties:
-      hibernate:
-        use_sql_comments: true
-        format_sql: true
-  datasource:
-    name: postgres
-    driver-class-name: "org.postgresql.Driver"
-    url: "jdbc:postgresql://localhost:5432/erp"
-    username: pibity
-    password: password
-  liquibase:
-    enabled: false
-    change-log: "classpath:/db/changelog/inventory-master.json"
-    url: "jdbc:postgresql://localhost:5432/erp"
-    user: pibity
-    password: password
-    default-schema: liquibase
-logging:
-  level:
-    org.hibernate:
-        SQL: debug
-        type:
-          descriptor:
-            sql: trace
-    liquibase: INFO
-    org.keycloak: DEBUG

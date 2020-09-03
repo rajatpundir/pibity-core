@@ -5,6 +5,11 @@
     "keys": {},
     "variables": {
      "Main Warehouse": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -22,6 +27,11 @@
       "Tier 8": {},
       "Tier 9": {},
       "Tier 10": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -31,6 +41,11 @@
     "variables": {
       "Append": {},
       "Markup %": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -42,6 +57,11 @@
       "Fixed Price": {},
       "Latest Price": {},
       "Price Tier Value": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -89,6 +109,11 @@
       "Tier 8": {},
       "Tier 9": {},
       "Tier 10": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -99,6 +124,11 @@
       "Tax on Sale": {},
       "Auto Lookup": {},
       "Tax Exempt": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -108,6 +138,11 @@
     "variables": {
       "Post": {},
       "Ups": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -118,6 +153,11 @@
       "Billing": {},
       "Business": {},
       "Shipping": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -127,6 +167,11 @@
     "variables": {
       "Active": {},
       "Deprecated": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -136,6 +181,11 @@
     "variables": {
       "15 Days": {},
       "30 Days": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -145,6 +195,11 @@
     "variables": {
       "Not Defined": {},
       "Additional_Properties": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -154,6 +209,11 @@
     "variables": {
       "Local": {},
       "Imported": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -356,6 +416,11 @@
         "displayName": "Customer Contacts",
         "order": "3"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]

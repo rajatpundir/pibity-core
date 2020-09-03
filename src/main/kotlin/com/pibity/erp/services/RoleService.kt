@@ -9,16 +9,18 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
+import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.entities.mappings.embeddables.RolePermissionId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.TypePermissionRepository
-import com.pibity.erp.repositories.TypeRepository
+import com.pibity.erp.repositories.mappings.RolePermissionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -27,8 +29,7 @@ class RoleService(
     val organizationRepository: OrganizationRepository,
     val typePermissionRepository: TypePermissionRepository,
     val roleRepository: RoleRepository,
-    val typeRepository: TypeRepository,
-    val typePermissionService: PermissionService
+    val rolePermissionRepository: RolePermissionRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -49,13 +50,16 @@ class RoleService(
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(
         organizationName = jsonParams.get("organization").asString,
-        superTypeName = "Any",
+        superTypeName = GLOBAL_TYPE,
         typeName = jsonParams.get("typeName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> role.permissions.add(typePermission)
-      "remove" -> role.permissions.remove(typePermission)
+      "add" -> role.rolePermissions.add(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      "remove" -> {
+        rolePermissionRepository.delete(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+        role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
@@ -69,18 +73,5 @@ class RoleService(
   fun getRoleDetails(jsonParams: JsonObject): Role {
     return (roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}"))
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun getSuperimposedPermission(jsonParams: JsonObject): Set<TypePermission> {
-//    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
-//        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-//    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-//        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-//    val type: Type = typeRepository.findType(organization = organization, superTypeName = "Any", name = jsonParams.get("typeName").asString)
-//        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
-    // Not correct
-    return roleRepository.getTypePermissionsForRole(organizationName = jsonParams.get("organization").asString, typeName = jsonParams.get("typeName").asString, roleName = jsonParams.get("roleName").asString)
-//    return typePermissionService.superimposePermissions(role.permissions, type)
   }
 }

@@ -8,6 +8,8 @@
 
 package com.pibity.erp.commons.constants
 
+const val GLOBAL_TYPE = "Any"
+
 val primitiveTypes = listOf(
     TypeConstants.TEXT,
     TypeConstants.NUMBER,

@@ -11,8 +11,8 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
-import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.TypeService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -34,8 +34,8 @@ class TypeController(val typeService: TypeService) {
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun createType(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(typeService.createType(jsonParams = (getJsonParams(request, expectedParams["createType"]
-          ?: JsonObject())))), HttpStatus.OK)
+      ResponseEntity(serialize(typeService.createType(jsonParams = (getJsonParams(request, expectedParams["createType"]
+          ?: JsonObject())))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -46,8 +46,8 @@ class TypeController(val typeService: TypeService) {
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
   fun getTypeDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(typeService.getTypeDetails(jsonParams = getJsonParams(request, expectedParams["getTypeDetails"]
-          ?: JsonObject()))), HttpStatus.OK)
+      ResponseEntity(serialize(typeService.getTypeDetails(jsonParams = getJsonParams(request, expectedParams["getTypeDetails"]
+          ?: JsonObject()))).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

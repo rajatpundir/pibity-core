@@ -9,97 +9,122 @@
 package com.pibity.erp.commons
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
 
 fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
-  val keyPermissions: JsonObject = try {
-    jsonParams.get("permissions").asJsonObject
-  } catch (exception: Exception) {
-    throw CustomJsonException("{permissions: 'Unexpected value for parameter'}")
-  }
   val expectedKeyPermissions = JsonObject()
   for (key in type.keys) {
-    if (keyPermissions.has(key.id.name)) {
+    if (jsonParams.has(key.id.name)) {
       when (key.type.id.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
           val accessLevel: Int = try {
-            keyPermissions.get(key.id.name).asInt
+            jsonParams.get(key.id.name).asInt
           } catch (exception: Exception) {
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           }
-          if (accessLevel < 0 || accessLevel > 2)
+          if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
           expectedKeyPermissions.addProperty(key.id.name, accessLevel)
         }
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (key.list!!.type.id.superTypeName == "Any") {
+          if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             val accessLevel: Int = try {
-              keyPermissions.get(key.id.name).asInt
+              jsonParams.get(key.id.name).asInt
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            if (accessLevel < 0 || accessLevel > 2)
+            if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
-              val keyPermission: JsonObject = try {
-                keyPermissions.get(key.id.name).asJsonObject
-              } catch (exception: Exception) {
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
-              }
-              try {
-                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(jsonParams = keyPermission, type = key.list!!.type))
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{${key.id.name}: ${exception.message}}")
-              }
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+              if (jsonParams.get(key.id.name).isJsonObject) {
+                val creatable: Boolean = if (jsonParams.get(key.id.name).asJsonObject.has("creatable")) {
+                  try {
+                    jsonParams.get(key.id.name).asJsonObject.get("creatable").asBoolean
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{permissions: {${key.id.name}: {creatable: 'Unexpected value for parameter'}}}")
+                  }
+                } else throw CustomJsonException("{permissions: {${key.id.name}: {creatable: 'Field is missing in request body'}}}")
+                val deletable: Boolean = if (jsonParams.get(key.id.name).asJsonObject.has("creatable")) {
+                  try {
+                    jsonParams.get(key.id.name).asJsonObject.get("deletable").asBoolean
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{permissions: {${key.id.name}: {deletable: 'Unexpected value for parameter'}}}")
+                  }
+                } else throw CustomJsonException("{permissions: {${key.id.name}: {deletable: 'Field is missing in request body'}}}")
+                val keyPermission: JsonObject = if (jsonParams.get(key.id.name).asJsonObject.has("permissions")) {
+                  try {
+                    jsonParams.get(key.id.name).asJsonObject.get("permissions").asJsonObject
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{permissions: {${key.id.name}: {permissions: 'Unexpected value for parameter'}}}")
+                  }
+                } else throw CustomJsonException("{permissions: {${key.id.name}: {permissions: 'Field is missing in request body'}}}")
+                try {
+                  expectedKeyPermissions.add(key.id.name, JsonObject().apply {
+                    addProperty("creatable", creatable)
+                    addProperty("deletable", deletable)
+                    add("permissions", validateKeyPermissions(jsonParams = keyPermission, type = key.list!!.type))
+                  })
+                } catch (exception: CustomJsonException) {
+                  throw CustomJsonException("{${key.id.name}: ${exception.message}}")
+                }
+              } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             } else {
               val accessLevel: Int = try {
-                keyPermissions.get(key.id.name).asInt
+                jsonParams.get(key.id.name).asInt
               } catch (exception: Exception) {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
-              if (accessLevel < 0 || accessLevel > 2)
+              if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               expectedKeyPermissions.addProperty(key.id.name, accessLevel)
             }
           }
         }
         else -> {
-          if (key.type.id.superTypeName == "Any") {
+          if (key.type.id.superTypeName == GLOBAL_TYPE) {
             val accessLevel: Int = try {
-              keyPermissions.get(key.id.name).asInt
+              jsonParams.get(key.id.name).asInt
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             }
-            if (accessLevel < 0 || accessLevel > 2)
+            if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
               throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             expectedKeyPermissions.addProperty(key.id.name, accessLevel)
           } else {
-            if ((key.id.parentType.id.superTypeName == "Any" && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != "Any" && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-              val keyPermission: JsonObject = try {
-                keyPermissions.get(key.id.name).asJsonObject
-              } catch (exception: Exception) {
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
-              }
-              try {
-                expectedKeyPermissions.add(key.id.name, validateKeyPermissions(jsonParams = keyPermission, type = key.type))
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{${key.id.name}: ${exception.message}}")
-              }
+            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+              if (jsonParams.get(key.id.name).isJsonObject) {
+                val keyPermission: JsonObject = if (jsonParams.get(key.id.name).asJsonObject.has("permissions")) {
+                  try {
+                    jsonParams.get(key.id.name).asJsonObject.get("permissions").asJsonObject
+                  } catch (exception: Exception) {
+                    throw CustomJsonException("{permissions: {${key.id.name}: {permissions: 'Unexpected value for parameter'}}}")
+                  }
+                } else throw CustomJsonException("{permissions: {${key.id.name}: {permissions: 'Field is missing in request body'}}}")
+                try {
+                  expectedKeyPermissions.add(key.id.name, JsonObject().apply {
+                    add("permissions", validateKeyPermissions(jsonParams = keyPermission, type = key.type))
+                  })
+                } catch (exception: CustomJsonException) {
+                  throw CustomJsonException("{${key.id.name}: ${exception.message}}")
+                }
+              } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
             } else {
               val accessLevel: Int = try {
-                keyPermissions.get(key.id.name).asInt
+                jsonParams.get(key.id.name).asInt
               } catch (exception: Exception) {
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               }
-              if (accessLevel < 0 || accessLevel > 2)
+              if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
                 throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
               expectedKeyPermissions.addProperty(key.id.name, accessLevel)
             }
@@ -108,5 +133,5 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
       }
     } else throw CustomJsonException("{${key.id.name}: 'Field is missing in request body'}")
   }
-  return JsonObject().apply { add("permissions", expectedKeyPermissions)}
+  return expectedKeyPermissions
 }

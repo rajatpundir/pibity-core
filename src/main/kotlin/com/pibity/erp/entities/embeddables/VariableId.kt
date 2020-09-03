@@ -22,8 +22,8 @@ data class VariableId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-        JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-        JoinColumn(name = "type_name", referencedColumnName = "type_name")])
+      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "type_name", referencedColumnName = "type_name")])
     val type: Type,
 
     @Column(name = "variable_name", nullable = false)

@@ -13,20 +13,9 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.*
-import com.pibity.erp.entities.serializers.*
 import java.io.FileReader
 
-val gson: Gson = GsonBuilder()
-    .excludeFieldsWithoutExposeAnnotation()
-    .registerTypeAdapter(Type::class.java, TypeSerializer())
-    .registerTypeAdapter(Key::class.java, KeySerializer())
-    .registerTypeAdapter(Variable::class.java, VariableSerializer())
-    .registerTypeAdapter(TypePermission::class.java, TypePermissionSerializer())
-    .registerTypeAdapter(Role::class.java, RoleSerializer())
-    .registerTypeAdapter(Group::class.java, GroupSerializer())
-    .registerTypeAdapter(User::class.java, UserSerializer())
-    .create()
+val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
 fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)
 

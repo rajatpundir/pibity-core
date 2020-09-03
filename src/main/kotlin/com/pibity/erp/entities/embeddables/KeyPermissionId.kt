@@ -12,7 +12,10 @@ import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.TypePermission
 import java.io.Serializable
 import java.util.*
-import javax.persistence.*
+import javax.persistence.Embeddable
+import javax.persistence.JoinColumn
+import javax.persistence.JoinColumns
+import javax.persistence.ManyToOne
 
 @Embeddable
 data class KeyPermissionId(

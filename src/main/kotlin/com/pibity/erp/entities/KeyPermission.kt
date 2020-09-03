@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.gson
 import com.pibity.erp.entities.embeddables.KeyPermissionId
 import java.io.Serializable
 import java.util.*
@@ -21,6 +20,7 @@ data class KeyPermission(
     @EmbeddedId
     val id: KeyPermissionId,
 
+    @Column(name = "access_level", nullable = false)
     var accessLevel: Int = 0,
 
     @OneToOne
@@ -36,6 +36,4 @@ data class KeyPermission(
   }
 
   override fun hashCode(): Int = Objects.hash(id)
-
-  override fun toString(): String = gson.toJson(this)
 }

@@ -14,17 +14,21 @@ import com.pibity.erp.entities.Group
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
 import com.pibity.erp.entities.embeddables.GroupId
+import com.pibity.erp.entities.mappings.GroupRole
+import com.pibity.erp.entities.mappings.embeddables.GroupRoleId
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
+import com.pibity.erp.repositories.mappings.GroupRoleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GroupService(
     val organizationRepository: OrganizationRepository,
+    val groupRepository: GroupRepository,
     val roleRepository: RoleRepository,
-    val groupRepository: GroupRepository
+    val groupRoleRepository: GroupRoleRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -46,8 +50,11 @@ class GroupService(
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> group.roles.add(role)
-      "remove" -> group.roles.remove(role)
+      "add" -> group.groupRoles.add(GroupRole(id = GroupRoleId(group = group, role = role)))
+      "remove" -> {
+        groupRoleRepository.delete(GroupRole(id = GroupRoleId(group = group, role = role)))
+        group.groupRoles.remove(GroupRole(id = GroupRoleId(group = group, role = role)))
+      }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {

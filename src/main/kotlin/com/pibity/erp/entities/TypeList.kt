@@ -8,7 +8,6 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.commons.exceptions.CustomJsonException
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
@@ -21,8 +20,10 @@ data class TypeList(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = -1,
 
+    @Column(name = "min", nullable = false)
     val min: Int,
 
+    @Column(name = "max", nullable = false)
     val max: Int,
 
     @ManyToOne

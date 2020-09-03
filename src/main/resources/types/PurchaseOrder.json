@@ -6,6 +6,11 @@
     "variables": {
       "Stock First": {},
       "Invoice First": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   },
   {
@@ -495,6 +500,11 @@
         "displayName": "Stock Received",
         "order": "20"
       }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": ["WRITE_ALL"],
+      "USER": ["READ_ALL"]
     }
   }
 ]
