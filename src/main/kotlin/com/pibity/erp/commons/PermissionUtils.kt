@@ -16,8 +16,6 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Type
 
 fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
-  println("-----------------------------")
-  println(jsonParams)
   val expectedKeyPermissions = JsonObject()
   for (key in type.keys) {
     if (jsonParams.has(key.id.name)) {
