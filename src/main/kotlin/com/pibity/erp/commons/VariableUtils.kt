@@ -58,7 +58,19 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
         }
       }
     } else {
-      if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
+      if (key.type.id.name in listOf(TypeConstants.TEXT,TypeConstants.NUMBER ,TypeConstants.DECIMAL,TypeConstants.BOOLEAN) && keyPermission.accessLevel != PermissionConstants.WRITE_ACCESS) {
+        // Default value is used as Write permission is not present
+        when (key.type.id.name) {
+          TypeConstants.TEXT -> expectedValues.addProperty(key.id.name, key.defaultStringValue
+              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
+          TypeConstants.NUMBER -> expectedValues.addProperty(key.id.name, key.defaultLongValue
+              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
+          TypeConstants.DECIMAL -> expectedValues.addProperty(key.id.name, key.defaultDoubleValue
+              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
+          TypeConstants.BOOLEAN -> expectedValues.addProperty(key.id.name, key.defaultBooleanValue
+              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
+        }
+      } else {
         if (values.get(key.id.name).isJsonObject) {
           when (key.type.id.name) {
             TypeConstants.TEXT,
@@ -200,41 +212,6 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
             }
           }
         }
-      } else {
-        // Default value is used as Write permission is not present
-        when (key.type.id.name) {
-          TypeConstants.TEXT -> expectedValues.addProperty(key.id.name, key.defaultStringValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.NUMBER -> expectedValues.addProperty(key.id.name, key.defaultLongValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.DECIMAL -> expectedValues.addProperty(key.id.name, key.defaultDoubleValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.BOOLEAN -> expectedValues.addProperty(key.id.name, key.defaultBooleanValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.LIST -> expectedValues.add(key.id.name, JsonArray())
-          TypeConstants.FORMULA -> {
-          }
-          else -> {
-            if (key.referencedVariable == null)
-              throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}")
-            else {
-              if (key.type.id.superTypeName == GLOBAL_TYPE) {
-                expectedValues.addProperty(key.id.name, key.referencedVariable!!.id.name)
-              } else {
-                if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                    || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-                  throw CustomJsonException("{${key.id.name}: 'Internal local values cannot have a default'}")
-
-                } else {
-                  expectedValues.add(key.id.name, JsonObject().apply {
-                    addProperty("context", key.referencedVariable!!.id.superList.id)
-                    addProperty("variableName", key.referencedVariable!!.id.name)
-                  })
-                }
-              }
-            }
-          }
-        }
       }
     }
   }
@@ -360,21 +337,21 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                 }
                 if (values.get(key.id.name).asJsonObject.has("remove")) {
                   if (keyPermission.referencedTypePermission!!.deletable) {
-                  if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
-                    throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
-                  else {
-                    val params = JsonArray()
-                    values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
-                      try {
-                        params.add(it.asString)
-                      } catch (exception: Exception) {
-                        throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                    if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
+                      throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                    else {
+                      val params = JsonArray()
+                      values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                        try {
+                          params.add(it.asString)
+                        } catch (exception: Exception) {
+                          throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                        }
                       }
+                      listParams.add("remove", params)
                     }
-                    listParams.add("remove", params)
                   }
                 }
-              }
                 if (values.get(key.id.name).asJsonObject.has("update")) {
                   if (!values.get(key.id.name).asJsonObject.get("update").isJsonArray)
                     throw CustomJsonException("{${key.id.name}: {update: 'Unexpected value for parameter'}}")

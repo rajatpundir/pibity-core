@@ -23,6 +23,7 @@ import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
 import com.pibity.erp.repositories.VariableListRepository
 import com.pibity.erp.repositories.VariableRepository
+import com.pibity.erp.serializers.serialize
 import org.codehaus.janino.ExpressionEvaluator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
