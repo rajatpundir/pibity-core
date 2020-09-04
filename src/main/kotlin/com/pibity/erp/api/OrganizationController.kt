@@ -48,9 +48,13 @@ class OrganizationController(val organizationService: OrganizationService) {
 
   @PostMapping(path = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed("USER")
-  fun test(request: HttpServletRequest) {
-    println("----------------START HERE------------------------")
-    ResponseEntity(getJWTToken(request), HttpStatus.OK)
+  fun test(request: HttpServletRequest): ResponseEntity<String> {
+    return try {
+      println("----------------START HERE------------------------")
+      ResponseEntity(getJWTToken(request), HttpStatus.OK)
+    } catch (exception: Exception) {
+      ResponseEntity("unable to access", HttpStatus.BAD_REQUEST)
+    }
   }
 
   fun getJWTToken(request: HttpServletRequest): String? {
