@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -34,7 +35,7 @@ class GroupController(val groupService: GroupService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed("SUPERUSER", "OWNER" )
+  @RolesAllowed(RoleConstants.OWNER)
   fun createGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.createGroup(jsonParams = (getJsonParams(request, expectedParams["createGroup"]
@@ -47,7 +48,7 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed("SUPERUSER", "OWNER" )
+  @RolesAllowed(RoleConstants.OWNER)
   fun updateGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
@@ -60,7 +61,7 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed("SUPERUSER", "OWNER" )
+  @RolesAllowed(RoleConstants.OWNER)
   fun getGroupDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]

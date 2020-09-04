@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -32,6 +34,7 @@ class TypeController(val typeService: TypeService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.USER)
   fun createType(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(typeService.createType(jsonParams = (getJsonParams(request, expectedParams["createType"]
@@ -44,6 +47,7 @@ class TypeController(val typeService: TypeService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.USER)
   fun getTypeDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(typeService.getTypeDetails(jsonParams = getJsonParams(request, expectedParams["getTypeDetails"]

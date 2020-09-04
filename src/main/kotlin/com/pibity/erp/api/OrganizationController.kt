@@ -8,19 +8,18 @@
 
 package com.pibity.erp.api
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.getKeycloakSecurityContext
 import com.pibity.erp.services.OrganizationService
-import org.keycloak.KeycloakSecurityContext
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.admin.client.resource.UsersResource
 import org.keycloak.representations.idm.CredentialRepresentation
-import org.keycloak.representations.idm.UserRepresentation
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -41,7 +40,7 @@ class OrganizationController(val organizationService: OrganizationService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed("SUPERUSER")
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun createOrganization(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = getJsonParams(request, expectedParams["createOrganization"]
@@ -85,16 +84,16 @@ class OrganizationController(val organizationService: OrganizationService) {
       val realmResource = keycloak.realm(realm)
 //      realmResource.users().create(user)
 
-      val usersResource : UsersResource= realmResource.users()!!
+      val usersResource: UsersResource = realmResource.users()!!
 
       val passwordCred = CredentialRepresentation()
       passwordCred.isTemporary = false
       passwordCred.type = CredentialRepresentation.PASSWORD
       passwordCred.value = "test"
 
-      val userRepresentation=usersResource.search("user4").single()
+      val userRepresentation = usersResource.search("user4").single()
 
-      val userResource: UserResource = usersResource?.get(userRepresentation.id)
+      val userResource: UserResource = usersResource.get(userRepresentation.id)
 //      userResource.resetPassword(passwordCred)
 
 
@@ -110,28 +109,17 @@ class OrganizationController(val organizationService: OrganizationService) {
   }
 
   fun getJWTToken(request: HttpServletRequest): String? {
-//    val keycloakPrincipal = (SecurityContextHolder.getContext().authentication as KeycloakAuthenticationToken).principal as KeycloakPrincipal<KeycloakSecurityContext>
-    val securityContext = getKeycloakSecurityContext(request)
-    if (securityContext != null) {
-      println(securityContext.realm)
-      println(securityContext.token.allowedOrigins.toString())
-//      println(securityContext.token.realmAccess.roles.toString())
-//      println(securityContext.token.realmAccess.isUserInRole("ADMIN"))
-//      println(securityContext.token.realmAccess.addRole("ADMIN"))
-      println("---")
-      for (r in securityContext.token.resourceAccess.entries) {
-        println(r.key)
-        println(r.value.roles.toString())
-      }
-      println("---")
-      println(securityContext.token.resourceAccess.entries.toString())
-      println(securityContext.token.toString())
+    val securityContext = request.getKeycloakSecurityContext()
+    println(securityContext.realm)
+    println(securityContext.token.allowedOrigins.toString())
+    println("---")
+    for (r in securityContext.token.resourceAccess.entries) {
+      println(r.key)
+      println(r.value.roles.toString())
     }
-    return securityContext?.token?.email ?: "Whatever"
+    println("---")
+    println(securityContext.token.resourceAccess.entries.toString())
+    println(securityContext.token.toString())
+    return securityContext.token?.email ?: "Whatever"
   }
-
-  private fun getKeycloakSecurityContext(request: HttpServletRequest): KeycloakSecurityContext? {
-    return request.getAttribute(KeycloakSecurityContext::class.java.name) as KeycloakSecurityContext
-  }
-
 }

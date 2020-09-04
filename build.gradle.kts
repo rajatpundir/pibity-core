@@ -27,8 +27,8 @@ dependencies {
   implementation("org.liquibase:liquibase-core")
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("org.codehaus.janino:janino:3.1.2")
-  implementation("org.keycloak:keycloak-spring-security-adapter:10.0.2")
-  implementation("org.keycloak:keycloak-admin-client:10.0.2")
+  implementation("org.keycloak:keycloak-spring-security-adapter:11.0.2")
+  implementation("org.keycloak:keycloak-admin-client:11.0.2")
 
   runtimeOnly("com.h2database:h2")
   runtimeOnly("org.postgresql:postgresql")

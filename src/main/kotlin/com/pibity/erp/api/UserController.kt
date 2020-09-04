@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -36,6 +38,7 @@ class UserController(val userService: UserService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.OWNER)
   fun createUser(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.createUser(jsonParams = (getJsonParams(request, expectedParams["createUser"]
@@ -48,6 +51,7 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/update/groups"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.OWNER)
   fun updateUserGroups(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.updateUserGroups(jsonParams = (getJsonParams(request, expectedParams["updateUserGroups"]
@@ -60,6 +64,7 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/update/roles"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.OWNER)
   fun updateUserRoles(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.updateUserRoles(jsonParams = (getJsonParams(request, expectedParams["updateUserRoles"]
@@ -72,6 +77,7 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.OWNER)
   fun getUserDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.getUserDetails(jsonParams = (getJsonParams(request, expectedParams["getUserDetails"]
@@ -84,6 +90,7 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/permissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun getUserPermissions(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.getUserPermissions(jsonParams = (getJsonParams(request, expectedParams["getUserPermissions"]
@@ -96,6 +103,7 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/superimpose"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun superimposeUserPermissions(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(userService.superimposeUserPermissions(jsonParams = (getJsonParams(request, expectedParams["superimposeUserPermissions"]

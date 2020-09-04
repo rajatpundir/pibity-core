@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -19,6 +20,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -34,6 +36,7 @@ class VariableController(val variableService: VariableService, val queryService:
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.USER)
   fun createVariable(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(variableService.createVariable(jsonParams = getJsonParams(request, expectedParams["createVariable"]
@@ -46,6 +49,7 @@ class VariableController(val variableService: VariableService, val queryService:
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.USER)
   fun updateVariable(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(variableService.updateVariable(jsonParams = getJsonParams(request, expectedParams["updateVariable"]
@@ -58,6 +62,7 @@ class VariableController(val variableService: VariableService, val queryService:
   }
 
   @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.USER)
   fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(queryService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
