@@ -8,17 +8,19 @@
 
 package com.pibity.erp.api
 
-//import org.keycloak.KeycloakSecurityContext
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.services.OrganizationService
+import org.keycloak.KeycloakSecurityContext
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
+import javax.servlet.http.HttpServletRequest
 
 @CrossOrigin
 @RestController
@@ -32,6 +34,7 @@ class OrganizationController(val organizationService: OrganizationService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed("SUPERUSER")
   fun createOrganization(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = getJsonParams(request, expectedParams["createOrganization"]
@@ -43,34 +46,36 @@ class OrganizationController(val organizationService: OrganizationService) {
     }
   }
 
-//  @PostMapping(path = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
-//  fun test(request: HttpServletRequest) {
-//    ResponseEntity(getJWTToken(request), HttpStatus.OK)
-//  }
-//
-//  fun getJWTToken(request: HttpServletRequest): String? {
-////    val keycloakPrincipal = (SecurityContextHolder.getContext().authentication as KeycloakAuthenticationToken).principal as KeycloakPrincipal<KeycloakSecurityContext>
-//    val securityContext = getKeycloakSecurityContext(request)
-//    if (securityContext != null) {
-//      println(securityContext.realm)
-//      println(securityContext.token.allowedOrigins.toString())
-////      println(securityContext.token.realmAccess.roles.toString())
-////      println(securityContext.token.realmAccess.isUserInRole("ADMIN"))
-////      println(securityContext.token.realmAccess.addRole("ADMIN"))
-//      println("---")
-//      for (r in securityContext.token.resourceAccess.entries) {
-//        println(r.key)
-//        println(r.value.roles.toString())
-//      }
-//      println("---")
-//      println(securityContext.token.resourceAccess.entries.toString())
-//      println(securityContext.token.toString())
-//    }
-//    return securityContext?.token?.email ?: "Whatever"
-//  }
-//
-//  private fun getKeycloakSecurityContext(request: HttpServletRequest): KeycloakSecurityContext? {
-//    return request.getAttribute(KeycloakSecurityContext::class.java.name) as KeycloakSecurityContext
-//  }
+  @PostMapping(path = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed("USER")
+  fun test(request: HttpServletRequest) {
+    println("----------------START HERE------------------------")
+    ResponseEntity(getJWTToken(request), HttpStatus.OK)
+  }
+
+  fun getJWTToken(request: HttpServletRequest): String? {
+//    val keycloakPrincipal = (SecurityContextHolder.getContext().authentication as KeycloakAuthenticationToken).principal as KeycloakPrincipal<KeycloakSecurityContext>
+    val securityContext = getKeycloakSecurityContext(request)
+    if (securityContext != null) {
+      println(securityContext.realm)
+      println(securityContext.token.allowedOrigins.toString())
+//      println(securityContext.token.realmAccess.roles.toString())
+//      println(securityContext.token.realmAccess.isUserInRole("ADMIN"))
+//      println(securityContext.token.realmAccess.addRole("ADMIN"))
+      println("---")
+      for (r in securityContext.token.resourceAccess.entries) {
+        println(r.key)
+        println(r.value.roles.toString())
+      }
+      println("---")
+      println(securityContext.token.resourceAccess.entries.toString())
+      println(securityContext.token.toString())
+    }
+    return securityContext?.token?.email ?: "Whatever"
+  }
+
+  private fun getKeycloakSecurityContext(request: HttpServletRequest): KeycloakSecurityContext? {
+    return request.getAttribute(KeycloakSecurityContext::class.java.name) as KeycloakSecurityContext
+  }
 
 }

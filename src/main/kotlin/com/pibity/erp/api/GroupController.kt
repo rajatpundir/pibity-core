@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -33,6 +34,7 @@ class GroupController(val groupService: GroupService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed("SUPERUSER", "OWNER" )
   fun createGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.createGroup(jsonParams = (getJsonParams(request, expectedParams["createGroup"]
@@ -45,6 +47,7 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed("SUPERUSER", "OWNER" )
   fun updateGroup(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
@@ -57,6 +60,7 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed("SUPERUSER", "OWNER" )
   fun getGroupDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]
