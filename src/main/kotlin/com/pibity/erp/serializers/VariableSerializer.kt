@@ -10,17 +10,19 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
+import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.Variable
 
 fun serialize(variable: Variable): JsonObject {
   val json = JsonObject()
   if (variable.id.type.id.superTypeName == "Any") {
     json.addProperty("organization", variable.id.type.id.organization.id)
+    json.addProperty("typeName", variable.id.type.id.name)
     json.addProperty("active", variable.active)
   } else
     json.addProperty("context", variable.id.superList.id)
-  json.addProperty("typeName", variable.id.type.id.name)
   json.addProperty("variableName", variable.id.name)
   val jsonValues = JsonObject()
   for (value in variable.values) {
@@ -61,5 +63,66 @@ fun serialize(entities: List<Variable>): JsonArray {
   val json = JsonArray()
   for (entity in entities)
     json.add(serialize(entity))
+  return json
+}
+
+fun serialize(variable: Variable, typePermission: TypePermission): JsonObject {
+  val json = JsonObject()
+  if (variable.id.type.id.superTypeName == "Any") {
+    json.addProperty("organization", variable.id.type.id.organization.id)
+    json.addProperty("typeName", variable.id.type.id.name)
+    json.addProperty("active", variable.active)
+  } else
+    json.addProperty("context", variable.id.superList.id)
+  json.addProperty("variableName", variable.id.name)
+  val jsonValues = JsonObject()
+  for (value in variable.values) {
+    when (value.id.key.type.id.name) {
+      TypeConstants.TEXT -> {
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS)
+          jsonValues.addProperty(value.id.key.id.name, value.stringValue!!)
+      }
+      TypeConstants.NUMBER -> {
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS)
+          jsonValues.addProperty(value.id.key.id.name, value.longValue!!)
+      }
+      TypeConstants.DECIMAL -> {
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS)
+          jsonValues.addProperty(value.id.key.id.name, value.doubleValue!!)
+      }
+      TypeConstants.BOOLEAN -> {
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS)
+          jsonValues.addProperty(value.id.key.id.name, value.booleanValue!!)
+      }
+      TypeConstants.FORMULA -> {
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS) {
+          when (value.id.key.formula!!.returnType.id.name) {
+            TypeConstants.TEXT -> jsonValues.addProperty(value.id.key.id.name, value.stringValue!!)
+            TypeConstants.NUMBER -> jsonValues.addProperty(value.id.key.id.name, value.longValue!!)
+            TypeConstants.DECIMAL -> jsonValues.addProperty(value.id.key.id.name, value.doubleValue!!)
+            TypeConstants.BOOLEAN -> jsonValues.addProperty(value.id.key.id.name, value.booleanValue!!)
+          }
+        }
+      }
+      // START HERE
+      TypeConstants.LIST -> {
+        jsonValues.add(value.id.key.id.name, serialize(value.list!!.variables, typePermission.keyPermissions.single { it.id.key == value.id.key }.referencedTypePermission!!))
+      }
+      else -> {
+        if (value.referencedVariable!!.id.type.id.superTypeName == "Any")
+          jsonValues.addProperty(value.id.key.id.name, value.referencedVariable!!.id.name)
+        else
+          jsonValues.add(value.id.key.id.name, serialize(value.referencedVariable!!))
+      }
+    }
+  }
+  json.add("values", jsonValues)
+  return json
+}
+
+fun serialize(variables: Set<Variable>, typePermission: TypePermission): JsonArray {
+  val json = JsonArray()
+  for (variable in variables)
+    json.add(serialize(variable = variable, typePermission = typePermission))
   return json
 }
