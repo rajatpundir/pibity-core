@@ -92,14 +92,15 @@ class OrganizationController(val organizationService: OrganizationService) {
       passwordCred.type = CredentialRepresentation.PASSWORD
       passwordCred.value = "test"
 
+      val userRepresentation=usersResource.search("user4").single()
 
-      val userResource: UserResource = usersResource?.get("a9dd7287-428d-44ee-99be-ab2364150dba")
+      val userResource: UserResource = usersResource?.get(userRepresentation.id)
 //      userResource.resetPassword(passwordCred)
 
 
-      val updatedUser = userResource.toRepresentation()
-      updatedUser.email = "A56161616bc@gamil.com"
-      userResource.update(updatedUser)
+//      val updatedUser = userResource.toRepresentation()
+      userRepresentation.email = "Accccccc96496196@gamil.com"
+      userResource.update(userRepresentation)
 
 
       ResponseEntity("s", HttpStatus.OK)
