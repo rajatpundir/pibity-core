@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -33,6 +35,7 @@ class RoleController(val roleService: RoleService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun createRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(roleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
@@ -45,6 +48,7 @@ class RoleController(val roleService: RoleService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun updateRole(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(roleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
@@ -57,6 +61,7 @@ class RoleController(val roleService: RoleService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun getRoleDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]

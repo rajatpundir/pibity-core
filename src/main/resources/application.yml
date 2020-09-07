@@ -36,15 +36,15 @@ spring:
     user: pibity
     password: password
     default-schema: liquibase
-#logging:
-#  level:
-#    org.hibernate:
-#      SQL: debug
-#      type:
-#        descriptor:
-#          sql: trace
-#    liquibase: INFO
-#    org.keycloak: DEBUG
+logging:
+  level:
+    org.hibernate:
+      SQL: debug
+      type:
+        descriptor:
+          sql: trace
+    liquibase: INFO
+    org.keycloak: DEBUG
 
 ---
 
