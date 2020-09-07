@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
@@ -33,6 +35,7 @@ class PermissionController(val permissionService: PermissionService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun createPermission(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(permissionService.createPermission(jsonParams = (getJsonParams(request, expectedParams["createPermission"]
@@ -45,6 +48,7 @@ class PermissionController(val permissionService: PermissionService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun updatePermission(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(permissionService.updatePermission(jsonParams = (getJsonParams(request, expectedParams["updatePermission"]
@@ -57,6 +61,7 @@ class PermissionController(val permissionService: PermissionService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(RoleConstants.SUPERUSER)
   fun getPermissionDetails(@RequestBody request: String): ResponseEntity<String> {
     return try {
       ResponseEntity(serialize(permissionService.getPermissionDetails(jsonParams = (getJsonParams(request, expectedParams["getPermissionDetails"]

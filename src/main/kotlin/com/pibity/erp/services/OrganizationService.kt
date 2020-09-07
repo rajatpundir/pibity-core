@@ -11,6 +11,7 @@ package com.pibity.erp.services
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
@@ -56,8 +57,8 @@ class OrganizationService(
     })
     userService.updateUserRoles(JsonObject().apply {
       addProperty("organization", organization.id)
-      addProperty("username", "system")
-      addProperty("roleName", "ADMIN")
+      addProperty("username", "superuser@pibity.com")
+      addProperty("roleName", RoleConstants.ADMIN)
       addProperty("operation", "add")
     })
     createPrimitiveTypes(organization = organization)

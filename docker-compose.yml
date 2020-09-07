@@ -28,7 +28,7 @@ services:
       depends_on:
         - postgres
   keycloak:
-      image: jboss/keycloak:latest
+      image: jboss/keycloak
       restart: always
       environment:
         DB_VENDOR: POSTGRES

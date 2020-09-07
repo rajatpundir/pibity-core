@@ -153,7 +153,7 @@ class TypeService(
     if (type.depth > 12)
       throw CustomJsonException("{$typeName: 'Type could not be saved due to high nestedness'}")
     type.permissions.addAll(createDefaultPermissionsForType(type = type))
-    val createdType = try {
+    try {
       typeRepository.save(type)
     } catch (exception: Exception) {
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
@@ -223,7 +223,7 @@ class TypeService(
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
-          val x = roleService.updateRole(jsonParams = JsonObject().apply {
+          roleService.updateRole(jsonParams = JsonObject().apply {
             addProperty("organization", jsonParams.get("organization").asString)
             addProperty("typeName", jsonParams.get("typeName").asString)
             addProperty("roleName", roleName)
