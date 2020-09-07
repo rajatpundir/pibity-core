@@ -9,12 +9,14 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.commons.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.GroupService
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -35,11 +37,12 @@ class GroupController(val groupService: GroupService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.OWNER)
-  fun createGroup(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  fun createGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(groupService.createGroup(jsonParams = (getJsonParams(request, expectedParams["createGroup"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -48,11 +51,12 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.OWNER)
-  fun updateGroup(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  fun updateGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(groupService.updateGroup(jsonParams = (getJsonParams(request, expectedParams["updateGroup"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -61,11 +65,12 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.OWNER)
-  fun getGroupDetails(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  fun getGroupDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = (getJsonParams(request, expectedParams["getGroupDetails"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getGroupDetails"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

@@ -8,7 +8,9 @@
 
 package com.pibity.erp.commons.constants
 
-object RoleConstants {
-  const val ADMIN = "ADMIN"
-  const val USER = "USER"
+object KeycloakConstants {
+  const val SUPERUSER_USERNAME = "superuser@pibity.com"
+  const val ROLE_SUPERUSER = "SUPERUSER"
+  const val ROLE_OWNER = "OWNER"
+  const val ROLE_USER = "USER"
 }

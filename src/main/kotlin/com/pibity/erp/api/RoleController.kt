@@ -9,12 +9,14 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.commons.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.RoleService
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -35,11 +37,12 @@ class RoleController(val roleService: RoleService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun createRole(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun createRole(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(roleService.createRole(jsonParams = (getJsonParams(request, expectedParams["createRole"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createRole"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(roleService.createRole(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -48,11 +51,12 @@ class RoleController(val roleService: RoleService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun updateRole(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun updateRole(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(roleService.updateRole(jsonParams = (getJsonParams(request, expectedParams["updateRole"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRole"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(roleService.updateRole(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -61,11 +65,12 @@ class RoleController(val roleService: RoleService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun getRoleDetails(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun getRoleDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = (getJsonParams(request, expectedParams["getRoleDetails"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getRoleDetails"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

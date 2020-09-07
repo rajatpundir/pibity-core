@@ -9,13 +9,14 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.gson
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.getKeycloakSecurityContext
 import com.pibity.erp.services.OrganizationService
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.UserResource
 import org.keycloak.admin.client.resource.UsersResource
@@ -26,7 +27,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import javax.annotation.security.RolesAllowed
 import javax.servlet.http.HttpServletRequest
-
 
 @CrossOrigin
 @RestController
@@ -40,11 +40,11 @@ class OrganizationController(val organizationService: OrganizationService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun createOrganization(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun createOrganization(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = getJsonParams(request, expectedParams["createOrganization"]
-          ?: JsonObject()))), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createOrganization"] ?: JsonObject())
+      ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = jsonParams)), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -53,7 +53,7 @@ class OrganizationController(val organizationService: OrganizationService) {
   }
 
   @PostMapping(path = ["/test"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed("USER")
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun test(request: HttpServletRequest): ResponseEntity<String> {
     return try {
       println("----------------START HERE------------------------")
@@ -63,10 +63,10 @@ class OrganizationController(val organizationService: OrganizationService) {
       val keycloak = Keycloak.getInstance(
           serverUrl,
           "inventory",
-          "testuser",//realm admin
-          "12345678",
-          "test-client",
-          "13823722-e981-41fa-9088-59fe309b83d3")
+          "superuser@pibity.com",//realm admin
+          "1234",
+          "pibity-erp-admin",
+          "2c9e3906-5a03-44e5-96e3-e1e7d514e6b4")
 
 //      val x=JsonArray()
 //      x.add("zs")
