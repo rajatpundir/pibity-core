@@ -18,7 +18,7 @@ import javax.persistence.*
 import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "group", schema = "inventory")
+@Table(name = "group_names", schema = "inventory")
 data class Group(
 
     @EmbeddedId

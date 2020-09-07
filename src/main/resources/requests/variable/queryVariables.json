@@ -2,9 +2,6 @@
   "organization": {
     "type": "String"
   },
-  "username": {
-    "type": "String"
-  },
   "typeName": {
     "type": "String"
   },

@@ -8,11 +8,11 @@
 
 package com.pibity.erp.commons
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import com.google.gson.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
+import org.keycloak.representations.AccessToken
 import java.io.FileReader
 
 val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
@@ -70,4 +70,15 @@ fun getJsonParams(request: String, expectedParams: JsonObject): JsonObject {
     }
   }
   return jsonParams
+}
+
+fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonParams: JsonObject) {
+  val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+  val claims: Map<String, String> = token.otherClaims as Map<String, String>
+  val organizations: Set<String> = if (!claims.containsKey("organization"))
+    throw CustomJsonException("{organization: 'Organization cannot be determined'}")
+  else
+    gson.fromJson(gson.toJson(claims["organization"]), JsonArray::class.java).map { it.asString }.toSet()
+  if (!organizations.contains(jsonParams.get("organization").asString))
+    throw CustomJsonException("{organization: 'Organization could not be found'}")
 }

@@ -10,10 +10,7 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
-import com.pibity.erp.commons.constants.RoleConstants
-import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.commons.constants.primitiveTypes
+import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
@@ -53,11 +50,11 @@ class OrganizationService(
     createDefaultRoles(organization = organization)
     userService.createUser(JsonObject().apply {
       addProperty("organization", organization.id)
-      addProperty("username", "system")
+      addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
     })
     userService.updateUserRoles(JsonObject().apply {
       addProperty("organization", organization.id)
-      addProperty("username", "superuser@pibity.com")
+      addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
       addProperty("roleName", RoleConstants.ADMIN)
       addProperty("operation", "add")
     })
@@ -104,7 +101,7 @@ class OrganizationService(
       for (json in types) {
         val typeRequest = json.asJsonObject.apply {
           addProperty("organization", organization.id)
-          addProperty("username", "system")
+          addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
         }
         typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
       }

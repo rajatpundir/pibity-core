@@ -9,13 +9,15 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.commons.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.QueryService
 import com.pibity.erp.services.VariableService
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -36,11 +38,13 @@ class VariableController(val variableService: VariableService, val queryService:
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.USER)
-  fun createVariable(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
+  fun createVariable(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(variableService.createVariable(jsonParams = getJsonParams(request, expectedParams["createVariable"]
-          ?: JsonObject()))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createVariable"]
+          ?: JsonObject()).apply { addProperty("username", authentication.principal.toString()) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(variableService.createVariable(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -49,11 +53,13 @@ class VariableController(val variableService: VariableService, val queryService:
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.USER)
-  fun updateVariable(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
+  fun updateVariable(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(variableService.updateVariable(jsonParams = getJsonParams(request, expectedParams["updateVariable"]
-          ?: JsonObject()))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateVariable"]
+          ?: JsonObject()).apply { addProperty("username", authentication.principal.toString()) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(variableService.updateVariable(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -62,11 +68,13 @@ class VariableController(val variableService: VariableService, val queryService:
   }
 
   @PostMapping(path = ["/query"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.USER)
-  fun queryVariables(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
+  fun queryVariables(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(queryService.queryVariables(jsonParams = getJsonParams(request, expectedParams["queryVariables"]
-          ?: JsonObject()))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryVariables"]
+          ?: JsonObject()).apply { addProperty("username", authentication.principal.toString()) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(queryService.queryVariables(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

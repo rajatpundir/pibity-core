@@ -9,12 +9,14 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.getExpectedParams
 import com.pibity.erp.commons.getJsonParams
 import com.pibity.erp.commons.logger.Logger
+import com.pibity.erp.commons.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.PermissionService
+import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -35,11 +37,12 @@ class PermissionController(val permissionService: PermissionService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun createPermission(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun createPermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(permissionService.createPermission(jsonParams = (getJsonParams(request, expectedParams["createPermission"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(permissionService.createPermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -48,11 +51,12 @@ class PermissionController(val permissionService: PermissionService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun updatePermission(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun updatePermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(permissionService.updatePermission(jsonParams = (getJsonParams(request, expectedParams["updatePermission"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(permissionService.updatePermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -61,11 +65,12 @@ class PermissionController(val permissionService: PermissionService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(RoleConstants.SUPERUSER)
-  fun getPermissionDetails(@RequestBody request: String): ResponseEntity<String> {
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun getPermissionDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      ResponseEntity(serialize(permissionService.getPermissionDetails(jsonParams = (getJsonParams(request, expectedParams["getPermissionDetails"]
-          ?: JsonObject())))).toString(), HttpStatus.OK)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getPermissionDetails"] ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      ResponseEntity(serialize(permissionService.getPermissionDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
