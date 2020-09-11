@@ -10,10 +10,11 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
+import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.commons.validateOrganizationClaim
+import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.RoleService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
@@ -41,7 +42,7 @@ class RoleController(val roleService: RoleService) {
   fun createRole(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createRole"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(roleService.createRole(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -55,7 +56,7 @@ class RoleController(val roleService: RoleService) {
   fun updateRole(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRole"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(roleService.updateRole(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -69,7 +70,7 @@ class RoleController(val roleService: RoleService) {
   fun getRoleDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getRoleDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

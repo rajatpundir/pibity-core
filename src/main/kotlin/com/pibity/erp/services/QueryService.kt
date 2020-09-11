@@ -15,6 +15,7 @@ import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.Variable
+import com.pibity.erp.repositories.TypePermissionRepository
 import com.pibity.erp.repositories.ValueRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,7 +23,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class QueryService(
     val valueRepository: ValueRepository,
-    val userService: UserService
+    val userService: UserService,
+    val typePermissionRepository: TypePermissionRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -34,6 +36,21 @@ class QueryService(
     })
     val (generatedQuery, _, injectedValues) = try {
       generateQuery(jsonParams.get("query").asJsonObject, username = jsonParams.get("username").asString, typePermission = typePermission)
+    } catch (exception: CustomJsonException) {
+      throw CustomJsonException("{query : ${exception.message}}")
+    }
+    return valueRepository.queryVariables(generatedQuery, injectedValues)
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun queryPublicVariables(jsonParams: JsonObject): List<Variable> {
+    val typePermission = typePermissionRepository.findTypePermission(organizationName = jsonParams.get("organization").asString,
+        superTypeName = GLOBAL_TYPE,
+        typeName = jsonParams.get("typeName").asString,
+        name = "PUBLIC")
+        ?: throw CustomJsonException("{typeName: 'Type cannot be determined'}")
+    val (generatedQuery, _, injectedValues) = try {
+      generateQuery(jsonParams.get("query").asJsonObject, username = "PUBLIC", typePermission = typePermission)
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{query : ${exception.message}}")
     }
@@ -364,11 +381,20 @@ class QueryService(
                     keyQueryJson.has("equals") -> {
                       if (keyQueryJson.get("equals").isJsonObject) {
                         val (generatedQuery, count, _) = try {
-                          generateQuery(queryJson = keyQueryJson.get("equals").asJsonObject, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
-                            addProperty("organization", key.id.parentType.id.organization.id)
-                            addProperty("username", username)
-                            addProperty("typeName", key.type.id.name)
-                          }))
+                          generateQuery(queryJson = keyQueryJson.get("equals").asJsonObject, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username,
+                              typePermission = if (username == "PUBLIC") {
+                                typePermissionRepository.findTypePermission(organizationName = key.id.parentType.id.organization.id,
+                                    superTypeName = key.type.id.superTypeName,
+                                    typeName = key.type.id.name,
+                                    name = "PUBLIC")
+                                    ?: throw CustomJsonException("{typeName: 'Type cannot be determined'}")
+                              } else {
+                                userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                                  addProperty("organization", key.id.parentType.id.organization.id)
+                                  addProperty("username", username)
+                                  addProperty("typeName", key.type.id.name)
+                                })
+                              })
                         } catch (exception: CustomJsonException) {
                           throw CustomJsonException("{${key.id.name}: {equals: ${exception.message}}}")
                         }
@@ -466,12 +492,21 @@ class QueryService(
                   else {
                     val keyQueryJson: JsonObject = valuesJson.get(key.id.name).asJsonObject
                     val (generatedQuery, count, _) = try {
-                      generateQuery(queryJson = keyQueryJson, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username, typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
-                        addProperty("organization", key.id.parentType.id.organization.id)
-                        addProperty("username", username)
-                        addProperty("suerTypeName", key.type.id.superTypeName)
-                        addProperty("typeName", key.type.id.name)
-                      }))
+                      generateQuery(queryJson = keyQueryJson, injectedVariableCount = variableCount, injectedValues = injectedValues, parentValueAlias = valueAlias, username = username,
+                          typePermission = if (username == "PUBLIC") {
+                            typePermissionRepository.findTypePermission(organizationName = key.id.parentType.id.organization.id,
+                                superTypeName = key.type.id.superTypeName,
+                                typeName = key.type.id.name,
+                                name = "PUBLIC")
+                                ?: throw CustomJsonException("{typeName: 'Type cannot be determined'}")
+                          } else {
+                            userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                              addProperty("organization", key.id.parentType.id.organization.id)
+                              addProperty("username", username)
+                              addProperty("suerTypeName", key.type.id.superTypeName)
+                              addProperty("typeName", key.type.id.name)
+                            })
+                          })
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${key.id.name}: ${exception.message}}")
                     }

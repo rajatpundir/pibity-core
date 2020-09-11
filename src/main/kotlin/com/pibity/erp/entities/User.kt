@@ -25,7 +25,16 @@ data class User(
     val id: UserId,
 
     @Column(name = "active", nullable = false)
-    var active: Boolean = true,
+    var active: Boolean,
+
+    @Column(name = "email", nullable = false)
+    var email: String,
+
+    @Column(name = "first_name", nullable = false)
+    var firstName: String,
+
+    @Column(name = "last_name", nullable = false)
+    var lastName: String,
 
     @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL])
     val userRoles: MutableSet<UserRole> = HashSet(),

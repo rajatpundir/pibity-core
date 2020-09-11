@@ -13,7 +13,7 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.validateKeyPermissions
+import com.pibity.erp.commons.utils.validateKeyPermissions
 import com.pibity.erp.entities.KeyPermission
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type

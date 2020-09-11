@@ -10,10 +10,11 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
+import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.commons.validateOrganizationClaim
+import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.PermissionService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
@@ -41,7 +42,7 @@ class PermissionController(val permissionService: PermissionService) {
   fun createPermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(permissionService.createPermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -55,7 +56,7 @@ class PermissionController(val permissionService: PermissionService) {
   fun updatePermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(permissionService.updatePermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -69,7 +70,7 @@ class PermissionController(val permissionService: PermissionService) {
   fun getPermissionDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getPermissionDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(permissionService.getPermissionDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

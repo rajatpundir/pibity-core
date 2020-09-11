@@ -1,5 +1,17 @@
 {
   "organization": {
     "type": "String"
+  },
+  "admin": {
+    "type": "String"
+  },
+  "firstName": {
+    "type": "String"
+  },
+  "lastName": {
+    "type": "String"
+  },
+  "password": {
+    "type": "String"
   }
 }
