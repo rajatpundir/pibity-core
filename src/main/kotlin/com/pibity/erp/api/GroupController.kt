@@ -10,12 +10,13 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.commons.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.GroupService
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
+import com.pibity.erp.commons.utils.validateOrganizationClaim
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,11 +38,11 @@ class GroupController(val groupService: GroupService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun createGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -51,11 +52,11 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun updateGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -65,11 +66,11 @@ class GroupController(val groupService: GroupService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun getGroupDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getGroupDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

@@ -23,6 +23,8 @@ import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.UserRepository
 import com.pibity.erp.repositories.mappings.UserGroupRepository
 import com.pibity.erp.repositories.mappings.UserRoleRepository
+import com.pibity.erp.commons.utils.createKeycloakUser
+import com.pibity.erp.commons.utils.getKeycloakId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -41,7 +43,16 @@ class UserService(
   fun createUser(jsonParams: JsonObject): User {
     val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
         ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val user = User(id = UserId(organization = organization, username = jsonParams.get("username").asString))
+    val keycloakId: String = try {
+      getKeycloakId(jsonParams.get("email").asString)
+    } catch (exception: Exception) {
+      createKeycloakUser(jsonParams = jsonParams)
+    }
+    val user = User(id = UserId(organization = organization, username = keycloakId),
+        active = jsonParams.get("active").asBoolean,
+        email = jsonParams.get("email").asString,
+        firstName = jsonParams.get("firstName").asString,
+        lastName = jsonParams.get("lastName").asString)
     return try {
       userRepository.save(user)
     } catch (exception: Exception) {
@@ -73,7 +84,7 @@ class UserService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateUserRoles(jsonParams: JsonObject): User {
     val user: User = userRepository.findUser(organizationName = jsonParams.get("organization").asString, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{username: 'user could not be determined'}")
+        ?: throw CustomJsonException("{username: 'User could not be determined'}")
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
@@ -88,6 +99,25 @@ class UserService(
       userRepository.save(user)
     } catch (exception: Exception) {
       throw CustomJsonException("{username: 'Unable to update role for user'}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun updateUserDetails(jsonParams: JsonObject): User {
+    val user: User = userRepository.findUser(organizationName = jsonParams.get("organization").asString, username = jsonParams.get("username").asString)
+        ?: throw CustomJsonException("{username: 'User could not be determined'}")
+    if (jsonParams.has("active?"))
+      user.active = jsonParams.get("active?").asBoolean
+    if (jsonParams.has("email?"))
+      user.email = jsonParams.get("email?").asString
+    if (jsonParams.has("fistName?"))
+      user.firstName = jsonParams.get("fistName?").asString
+    if (jsonParams.has("lastName?"))
+      user.lastName = jsonParams.get("fistName?").asString
+    return try {
+      userRepository.save(user)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{username: 'Unable to update user details'}")
     }
   }
 

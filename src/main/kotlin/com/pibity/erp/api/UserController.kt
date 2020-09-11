@@ -10,10 +10,11 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
+import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.commons.validateOrganizationClaim
+import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.UserService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
@@ -40,11 +41,11 @@ class UserController(val userService: UserService) {
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun createUser(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.createUser(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -54,11 +55,11 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/update/groups"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun updateUserGroups(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserGroups"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.updateUserGroups(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -68,11 +69,11 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/update/roles"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun updateUserRoles(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserRoles"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.updateUserRoles(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -82,11 +83,11 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun getUserDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.getUserDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -96,11 +97,11 @@ class UserController(val userService: UserService) {
   }
 
   @PostMapping(path = ["/permissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_OWNER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun getUserPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserPermissions"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.getUserPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -114,7 +115,7 @@ class UserController(val userService: UserService) {
   fun superimposeUserPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserPermissions"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.superimposeUserPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

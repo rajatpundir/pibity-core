@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.commons
+package com.pibity.erp.commons.utils
 
 import com.google.gson.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
@@ -69,16 +69,17 @@ fun getJsonParams(request: String, expectedParams: JsonObject): JsonObject {
       }
     }
   }
+  println(jsonParams)
   return jsonParams
 }
 
-fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonParams: JsonObject) {
+fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonParams: JsonObject, subGroupName: String) {
   val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
   val claims: Map<String, String> = token.otherClaims as Map<String, String>
-  val organizations: Set<String> = if (!claims.containsKey("organization"))
+  val groups: Set<String> = if (!claims.containsKey("groups"))
     throw CustomJsonException("{organization: 'Organization cannot be determined'}")
   else
-    gson.fromJson(gson.toJson(claims["organization"]), JsonArray::class.java).map { it.asString }.toSet()
-  if (!organizations.contains(jsonParams.get("organization").asString))
+    gson.fromJson(gson.toJson(claims["groups"]), JsonArray::class.java).map { it.asString }.toSet()
+  if (!groups.contains(listOf("", jsonParams.get("organization").asString, subGroupName).joinToString(separator = "/")))
     throw CustomJsonException("{organization: 'Organization could not be found'}")
 }

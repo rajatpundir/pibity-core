@@ -2,19 +2,19 @@
   "organization": {
     "type": "String"
   },
-  "email": {
+  "username": {
     "type": "String"
   },
-  "active": {
+  "active?": {
+    "type": "Boolean"
+  },
+  "email?": {
     "type": "String"
   },
-  "firstName": {
+  "fistName?": {
     "type": "String"
   },
-  "lastName": {
-    "type": "String"
-  },
-  "password": {
+  "lastName?": {
     "type": "String"
   }
 }

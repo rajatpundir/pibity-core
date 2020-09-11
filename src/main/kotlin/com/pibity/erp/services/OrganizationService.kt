@@ -12,18 +12,17 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
-import com.pibity.erp.commons.gson
-import com.pibity.erp.entities.Organization
-import com.pibity.erp.entities.Type
-import com.pibity.erp.entities.TypeList
-import com.pibity.erp.entities.VariableList
+import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.TypeId
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeListRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableListRepository
+import com.pibity.erp.commons.utils.createKeycloakGroup
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
+import com.pibity.erp.commons.utils.gson
+
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.FileReader
@@ -47,14 +46,20 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
+    createKeycloakGroup(jsonParams = JsonObject().apply { addProperty("organization", organization.id) })
     createDefaultRoles(organization = organization)
-    userService.createUser(JsonObject().apply {
+    val superuser: User = userService.createUser(JsonObject().apply {
       addProperty("organization", organization.id)
-      addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
+      addProperty("email", KeycloakConstants.SUPERUSER_USERNAME)
+      addProperty("active", true)
+      addProperty("firstName", "System")
+      addProperty("lastName", "Administrator")
+      addProperty("password", KeycloakConstants.SUPERUSER_PASSWORD)
+      addProperty("subGroupName", RoleConstants.ADMIN)
     })
     userService.updateUserRoles(JsonObject().apply {
       addProperty("organization", organization.id)
-      addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
+      addProperty("username", superuser.id.username)
       addProperty("roleName", RoleConstants.ADMIN)
       addProperty("operation", "add")
     })
@@ -69,7 +74,22 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
-    createCustomTypes(organization = organization)
+    createCustomTypes(organization = organization, username = superuser.id.username)
+    val admin: User = userService.createUser(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("email", jsonParams.get("admin").asString)
+      addProperty("active", true)
+      addProperty("firstName", jsonParams.get("firstName").asString)
+      addProperty("lastName", jsonParams.get("lastName").asString)
+      addProperty("password", jsonParams.get("password").asString)
+      addProperty("subGroupName", RoleConstants.ADMIN)
+    })
+    userService.updateUserRoles(JsonObject().apply {
+      addProperty("organization", organization.id)
+      addProperty("username", admin.id.username)
+      addProperty("roleName", RoleConstants.ADMIN)
+      addProperty("operation", "add")
+    })
     return organization
   }
 
@@ -94,16 +114,17 @@ class OrganizationService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createCustomTypes(organization: Organization) {
+  fun createCustomTypes(organization: Organization, username: String) {
     val customTypeFilenames: JsonArray = gson.fromJson(FileReader("src/main/resources/types/index.json"), JsonArray::class.java)
     for (filename in customTypeFilenames) {
       val types: JsonArray = gson.fromJson(FileReader("src/main/resources/types/${filename.asString}.json"), JsonArray::class.java)
       for (json in types) {
         val typeRequest = json.asJsonObject.apply {
           addProperty("organization", organization.id)
-          addProperty("username", KeycloakConstants.SUPERUSER_USERNAME)
         }
-        typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")))
+        typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")).apply {
+          addProperty("username", username)
+        })
       }
     }
   }

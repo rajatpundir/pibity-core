@@ -12,10 +12,10 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.validateFormulaTypeKeys
-import com.pibity.erp.commons.validateSuperTypeName
-import com.pibity.erp.commons.validateTypeKeys
-import com.pibity.erp.commons.validateTypeName
+import com.pibity.erp.commons.utils.validateFormulaTypeKeys
+import com.pibity.erp.commons.utils.validateSuperTypeName
+import com.pibity.erp.commons.utils.validateTypeKeys
+import com.pibity.erp.commons.utils.validateTypeName
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
 import com.pibity.erp.entities.embeddables.TypeId
@@ -37,6 +37,7 @@ class TypeService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createType(jsonParams: JsonObject, typeOrganization: Organization? = null, globalTypes: MutableSet<Type>? = null, localTypes: MutableSet<Type>? = null): Type {
+    println(jsonParams)
     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
     val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else GLOBAL_TYPE
     val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false

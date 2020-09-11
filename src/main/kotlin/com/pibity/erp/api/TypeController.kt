@@ -10,10 +10,11 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
-import com.pibity.erp.commons.getExpectedParams
-import com.pibity.erp.commons.getJsonParams
+import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.utils.getExpectedParams
+import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.commons.validateOrganizationClaim
+import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.TypeService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
@@ -39,9 +40,9 @@ class TypeController(val typeService: TypeService) {
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
   fun createType(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"]
-          ?: JsonObject()).apply { addProperty("username", authentication.principal.toString()) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createType"]
+          ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
@@ -54,9 +55,9 @@ class TypeController(val typeService: TypeService) {
   @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun getTypeDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"]
-          ?: JsonObject()).apply { addProperty("username", authentication.principal.toString()) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams)
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getTypeDetails"]
+          ?: JsonObject())
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
       ResponseEntity(serialize(typeService.getTypeDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"

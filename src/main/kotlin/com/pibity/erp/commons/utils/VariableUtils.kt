@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.commons
+package com.pibity.erp.commons.utils
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject

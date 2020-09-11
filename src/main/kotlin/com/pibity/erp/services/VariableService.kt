@@ -10,14 +10,14 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.FormulaUtils
+import com.pibity.erp.commons.utils.FormulaUtils
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.getLeafNameTypeValues
-import com.pibity.erp.commons.validateUpdatedVariableValues
-import com.pibity.erp.commons.validateVariableValues
+import com.pibity.erp.commons.utils.getLeafNameTypeValues
+import com.pibity.erp.commons.utils.validateUpdatedVariableValues
+import com.pibity.erp.commons.utils.validateVariableValues
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
