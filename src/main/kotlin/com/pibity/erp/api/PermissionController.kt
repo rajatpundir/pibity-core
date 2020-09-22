@@ -43,7 +43,7 @@ class PermissionController(val permissionService: PermissionService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(permissionService.createPermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(permissionService.createPermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -57,7 +57,7 @@ class PermissionController(val permissionService: PermissionService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(permissionService.updatePermission(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(permissionService.updatePermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

@@ -37,7 +37,6 @@ class TypeService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createType(jsonParams: JsonObject, typeOrganization: Organization? = null, globalTypes: MutableSet<Type>? = null, localTypes: MutableSet<Type>? = null): Type {
-    println(jsonParams)
     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
     val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else GLOBAL_TYPE
     val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false

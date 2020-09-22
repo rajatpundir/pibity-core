@@ -23,20 +23,7 @@ fun serialize(typePermission: TypePermission): JsonObject {
     json.addProperty("creatable", typePermission.creatable)
     json.addProperty("deletable", typePermission.deletable)
   }
-  json.addProperty(
-      "maxAccessLevel",
-      when (typePermission.maxAccessLevel) {
-        PermissionConstants.READ_ACCESS -> "READ"
-        PermissionConstants.WRITE_ACCESS -> "WRITE"
-        else -> "NONE"
-      })
-  json.addProperty(
-      "minAccessLevel",
-      when (typePermission.minAccessLevel) {
-        PermissionConstants.READ_ACCESS -> "READ"
-        PermissionConstants.WRITE_ACCESS -> "WRITE"
-        else -> "NONE"
-      })
+
   val jsonKeyPermissions = JsonObject()
   for (keyPermission in typePermission.keyPermissions) {
     when (keyPermission.id.key.type.id.name) {
