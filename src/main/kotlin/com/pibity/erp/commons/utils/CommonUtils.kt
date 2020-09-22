@@ -69,7 +69,6 @@ fun getJsonParams(request: String, expectedParams: JsonObject): JsonObject {
       }
     }
   }
-  println(jsonParams)
   return jsonParams
 }
 

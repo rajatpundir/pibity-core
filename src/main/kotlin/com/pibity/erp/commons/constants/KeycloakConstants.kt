@@ -19,7 +19,7 @@ object KeycloakConstants {
   const val SERVER_URL = "http://localhost:8081/auth"
   const val REALM = ApplicationConstants.SCHEMA
   const val CLIENT_ID = "pibity-erp-admin"
-  const val CLIENT_SECRET = "50064549-51bd-42aa-8bb4-c9e8e2f772fa"
+  const val CLIENT_SECRET = "0569523f-a551-4e92-b9e0-897ee6cba707"
 }
 
 val keycloak: Keycloak = Keycloak.getInstance(

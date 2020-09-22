@@ -1,0 +1,17 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "op": {
+    "type": "String"
+  },
+  "args": {
+    "type": "Array"
+  },
+  "types": {
+    "type": "Array"
+  },
+  "expectedReturnType": {
+    "type": "String"
+  }
+}

@@ -104,9 +104,9 @@ fun serialize(variable: Variable, typePermission: TypePermission): JsonObject {
           }
         }
       }
-      // START HERE
       TypeConstants.LIST -> {
-        jsonValues.add(value.id.key.id.name, serialize(value.list!!.variables, typePermission.keyPermissions.single { it.id.key == value.id.key }.referencedTypePermission!!))
+        if (typePermission.keyPermissions.single { it.id.key == value.id.key }.accessLevel > PermissionConstants.NO_ACCESS)
+          jsonValues.add(value.id.key.id.name, serialize(value.list!!.variables, typePermission.keyPermissions.single { it.id.key == value.id.key }.referencedTypePermission!!))
       }
       else -> {
         if (value.referencedVariable!!.id.type.id.superTypeName == "Any")

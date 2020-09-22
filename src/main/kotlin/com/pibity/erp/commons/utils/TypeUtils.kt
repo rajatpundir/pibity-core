@@ -39,7 +39,11 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
   val expectedKeys = JsonObject()
   for ((keyName, keyObject) in keys.entrySet()) {
     val expectedKey = JsonObject()
-    val key = keyObject.asJsonObject
+    val key: JsonObject = try {
+      keyObject.asJsonObject
+    } catch (exception: Exception) {
+      throw CustomJsonException("{keys: {$keyName: 'Unexpected value for parameter'}}")
+    }
     if (!keyIdentifierPattern.matcher(keyName).matches())
       throw CustomJsonException("{keys: {$keyName: 'Key name is not a valid identifier'}}")
     // validate type for key

@@ -28,12 +28,6 @@ data class TypePermission(
     @Column(name = "deletion_permission", nullable = false)
     var deletable: Boolean,
 
-    @Column(name = "max_access_level", nullable = false)
-    var maxAccessLevel: Int = 0,
-
-    @Column(name = "min_access_level", nullable = false)
-    var minAccessLevel: Int = 0,
-
     @OneToMany(mappedBy = "id.typePermission", cascade = [CascadeType.ALL])
     var keyPermissions: MutableSet<KeyPermission> = HashSet(),
 
