@@ -72,6 +72,7 @@ fun getJsonParams(request: String, expectedParams: JsonObject): JsonObject {
   return jsonParams
 }
 
+// TODO. If subGroupName is USER, then ADMIN will also suffice, but not vice versa.
 fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonParams: JsonObject, subGroupName: String) {
   val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
   val claims: Map<String, String> = token.otherClaims as Map<String, String>

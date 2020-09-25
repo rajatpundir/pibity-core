@@ -16,8 +16,23 @@
                     "type": "NVARCHAR(255)",
                     "constraints": {
                       "primaryKey": "true",
-                      "nullable": "false",
+                      "nullable": false,
                       "primaryKeyName": "inventory_organization_pk"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "super_list_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "display_name",
+                    "type": "NVARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
                     }
                   }
                 }
@@ -25,21 +40,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "changeSet": {
-        "id": "inventory_organization_2",
-        "author": "shubham.gupta",
-        "addUniqueConstraint": {
-          "constraintName": "inventory_organization_uk",
-          "schemaName": "inventory",
-          "tableName": "organization",
-          "columnNames": "id",
-          "deferrable": "false",
-          "initiallyDeferred": "false",
-          "validate": "true"
-        }
       }
     }
   ]

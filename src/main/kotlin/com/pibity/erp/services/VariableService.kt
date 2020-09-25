@@ -10,20 +10,16 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.utils.FormulaUtils
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
-import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.utils.getLeafNameTypeValues
-import com.pibity.erp.commons.utils.validateUpdatedVariableValues
-import com.pibity.erp.commons.utils.validateVariableValues
+import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
+import com.pibity.erp.repositories.ValueRepository
 import com.pibity.erp.repositories.VariableListRepository
 import com.pibity.erp.repositories.VariableRepository
-import org.codehaus.janino.ExpressionEvaluator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -31,7 +27,8 @@ import org.springframework.transaction.annotation.Transactional
 class VariableService(
     val variableRepository: VariableRepository,
     val variableListRepository: VariableListRepository,
-    val userService: UserService
+    val userService: UserService,
+    val valueRepository: ValueRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -60,8 +57,6 @@ class VariableService(
         TypeConstants.NUMBER -> variable.values.add(Value(id = ValueId(variable = variable, key = key), longValue = values.get(key.id.name).asLong))
         TypeConstants.DECIMAL -> variable.values.add(Value(id = ValueId(variable = variable, key = key), doubleValue = values.get(key.id.name).asDouble))
         TypeConstants.BOOLEAN -> variable.values.add(Value(id = ValueId(variable = variable, key = key), booleanValue = values.get(key.id.name).asBoolean))
-        TypeConstants.FORMULA -> {/* Formulas may depend on provided values, so they will be computed separately */
-        }
         TypeConstants.LIST -> {
           val jsonArray: JsonArray = values.get(key.id.name).asJsonArray
           val list: VariableList = try {
@@ -152,108 +147,43 @@ class VariableService(
         }
       }
     }
-    // Process formula type values
-    type.keys.filter { it.type.id.name == TypeConstants.FORMULA }.forEach {
-      val expression: String = it.formula?.expression
-          ?: throw CustomJsonException("{${it.id.name}: 'Unable to process formula'}")
-      val returnTypeName: String = it.formula!!.returnType.id.name
-      val leafKeyTypeAndValues: Map<String, Map<String, String>> = getLeafNameTypeValues(prefix = null, keys = mutableMapOf(), variable = variable, depth = 0)
-      val injectedVariables: Array<String?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      val injectedClasses: Array<Class<*>?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      val injectedObjects: Array<Any?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      var index = 0
-      for ((key, value) in leafKeyTypeAndValues) {
-        injectedVariables[index] = key
-        when (value[KeyConstants.KEY_TYPE]) {
-          TypeConstants.TEXT -> {
-            injectedClasses[index] = String::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]
-          }
-          TypeConstants.NUMBER -> {
-            injectedClasses[index] = Long::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toLong()
-          }
-          TypeConstants.DECIMAL -> {
-            injectedClasses[index] = Double::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toDouble()
-          }
-          TypeConstants.BOOLEAN -> {
-            injectedClasses[index] = Boolean::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toBoolean()
-          }
-        }
-        index += 1
+    val createdVariable: Variable = try {
+      variableRepository.save(variable)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{variableName: 'Variable could not be created'}")
+    }
+    typePermission.keyPermissions.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach { keyPermission ->
+      val key: Key = keyPermission.id.key
+      val valueDependencies = mutableSetOf<Value>()
+      val value: Value = when (key.formula!!.returnType.id.name) {
+        TypeConstants.TEXT -> Value(id = ValueId(variable = createdVariable, key = key),
+            stringValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.id.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = createdVariable, symbolPaths = gson.fromJson(key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies), mode = "evaluate") as String)
+        TypeConstants.NUMBER -> Value(id = ValueId(variable = createdVariable, key = key),
+            longValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.id.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = createdVariable, symbolPaths = gson.fromJson(key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies), mode = "evaluate") as Long)
+        TypeConstants.DECIMAL -> Value(id = ValueId(variable = createdVariable, key = key),
+            doubleValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.id.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = createdVariable, symbolPaths = gson.fromJson(key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies), mode = "evaluate") as Double)
+        TypeConstants.BOOLEAN -> Value(id = ValueId(variable = createdVariable, key = key),
+            booleanValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.id.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = createdVariable, symbolPaths = gson.fromJson(key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies), mode = "evaluate") as Boolean)
+        else -> throw CustomJsonException("{${key.id.name}: 'Unable to compute formula value'}")
       }
-      val evaluator = ExpressionEvaluator()
-      evaluator.setParameters(injectedVariables, injectedClasses)
-      when (returnTypeName) {
-        TypeConstants.TEXT -> {
-          evaluator.setExpressionType(String::class.javaObjectType)
-          // Check expression for any compilation errors
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Unable to parse formula expression'}")
-          }
-          // Evaluate expression and get back result
-          try {
-            variable.values.add(Value(id = ValueId(variable = variable, key = it), stringValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as String))
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.NUMBER -> {
-          evaluator.setExpressionType(Long::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            variable.values.add(Value(id = ValueId(variable = variable, key = it), longValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Long))
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.DECIMAL -> {
-          evaluator.setExpressionType(Double::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            variable.values.add(Value(id = ValueId(variable = variable, key = it), doubleValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Double))
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.BOOLEAN -> {
-          evaluator.setExpressionType(Boolean::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            variable.values.add(Value(id = ValueId(variable = variable, key = it), booleanValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Boolean))
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-      }
+      value.valueDependencies.addAll(valueDependencies)
+      createdVariable.values.add(value)
     }
     return try {
       // TODO: This should fail if variable is already present.
       // But that is not the case right now.
-      variableRepository.save(variable)
+      variableRepository.save(createdVariable)
     } catch (exception: Exception) {
       throw CustomJsonException("{variableName: 'Variable could not be created'}")
     }
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Variable {
+  fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Pair<Variable, MutableSet<Value>> {
     val typePermission: TypePermission = variableTypePermission
         ?: userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
           addProperty("organization", jsonParams.get("organization").asString)
@@ -268,14 +198,35 @@ class VariableService(
     if (jsonParams.has("active?"))
       variable.active = jsonParams.get("active?").asBoolean
     val values: JsonObject = if (jsonParams.has("values")) validateUpdatedVariableValues(values = jsonParams.get("values").asJsonObject, typePermission = typePermission) else JsonObject()
+    val dependentFormulaValues: MutableSet<Value> = mutableSetOf()
     // Process non-formula type values
     variable.values.filter { it.id.key.type.id.name != TypeConstants.FORMULA }.forEach { value ->
       if (values.has(value.id.key.id.name)) {
         when (value.id.key.type.id.name) {
-          TypeConstants.TEXT -> value.stringValue = values.get(value.id.key.id.name).asString
-          TypeConstants.NUMBER -> value.longValue = values.get(value.id.key.id.name).asLong
-          TypeConstants.DECIMAL -> value.doubleValue = values.get(value.id.key.id.name).asDouble
-          TypeConstants.BOOLEAN -> value.booleanValue = values.get(value.id.key.id.name).asBoolean
+          TypeConstants.TEXT -> {
+            if (value.stringValue != values.get(value.id.key.id.name).asString) {
+              value.stringValue = values.get(value.id.key.id.name).asString
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
+          }
+          TypeConstants.NUMBER -> {
+            if (value.longValue != values.get(value.id.key.id.name).asLong) {
+              value.longValue = values.get(value.id.key.id.name).asLong
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
+          }
+          TypeConstants.DECIMAL -> {
+            if (value.doubleValue != values.get(value.id.key.id.name).asDouble) {
+              value.doubleValue = values.get(value.id.key.id.name).asDouble
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
+          }
+          TypeConstants.BOOLEAN -> {
+            if (value.booleanValue != values.get(value.id.key.id.name).asBoolean) {
+              value.booleanValue = values.get(value.id.key.id.name).asBoolean
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
+          }
           TypeConstants.FORMULA -> {/* Formulas may depend on provided values, so they will be computed separately */
           }
           TypeConstants.LIST -> {
@@ -349,7 +300,9 @@ class VariableService(
                         ?: throw CustomJsonException("{${value.id.key.id.name}: {update: 'Unable to find referenced variable in list'}}")
                     value.list!!.variables.remove(variableToUpdate)
                     val updatedVariable: Variable = try {
-                      updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.list!!)
+                      val (subVariable, subDependentFormulaValues) = updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.list!!)
+                      dependentFormulaValues.addAll(subDependentFormulaValues)
+                      subVariable
                     } catch (exception: CustomJsonException) {
                       throw CustomJsonException("{${value.id.key.id.name}: {update: ${exception.message}}}")
                     }
@@ -407,7 +360,9 @@ class VariableService(
               if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
                   || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
                 value.referencedVariable = try {
-                  updateVariable(jsonParams = values.get(value.id.key.id.name).asJsonObject, referencedKeyVariable = value.referencedVariable!!, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.referencedVariable!!.id.superList)
+                  val (subVariable, subDependentFormulaValues) = updateVariable(jsonParams = values.get(value.id.key.id.name).asJsonObject, referencedKeyVariable = value.referencedVariable!!, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.id.key.id.name == value.id.key.id.name }.referencedTypePermission!!, variableSuperList = value.referencedVariable!!.id.superList)
+                  dependentFormulaValues.addAll(subDependentFormulaValues)
+                  subVariable
                 } catch (exception: CustomJsonException) {
                   throw CustomJsonException("{${value.id.key.id.name}: ${exception.message}}")
                 }
@@ -428,96 +383,44 @@ class VariableService(
         }
       }
     }
-    // Process formula type values
-    // Recompute formula values
-    // TODO: To be optimized in future so that formula is computed only upon change in dependent fields
-    variable.values.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach {
-      val expression: String = it.id.key.formula!!.expression
-      val returnTypeName: String = it.id.key.formula!!.returnType.id.name
-      val leafKeyTypeAndValues: Map<String, Map<String, String>> = getLeafNameTypeValues(prefix = null, keys = mutableMapOf(), variable = variable, depth = 0)
-      val injectedVariables: Array<String?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      val injectedClasses: Array<Class<*>?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      val injectedObjects: Array<Any?> = arrayOfNulls(leafKeyTypeAndValues.size)
-      var index = 0
-      for ((key, value) in leafKeyTypeAndValues) {
-        injectedVariables[index] = key
-        when (value[KeyConstants.KEY_TYPE]) {
+    variable.values.filter { it.id.key.type.id.name == TypeConstants.FORMULA }.forEach { value ->
+      if (dependentFormulaValues.contains(value)) {
+        when (value.id.key.formula!!.returnType.id.name) {
           TypeConstants.TEXT -> {
-            injectedClasses[index] = String::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]
+            val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as String
+            if (value.stringValue != evaluatedValue) {
+              value.stringValue = evaluatedValue
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
           }
           TypeConstants.NUMBER -> {
-            injectedClasses[index] = Long::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toLong()
+            val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Long
+            if (value.longValue != evaluatedValue) {
+              value.longValue = evaluatedValue
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
           }
           TypeConstants.DECIMAL -> {
-            injectedClasses[index] = Double::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toDouble()
+            val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Double
+            if (value.doubleValue != evaluatedValue) {
+              value.doubleValue = evaluatedValue
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
           }
           TypeConstants.BOOLEAN -> {
-            injectedClasses[index] = Boolean::class.javaObjectType
-            injectedObjects[index] = value[KeyConstants.VALUE]?.toBoolean()
+            val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Boolean
+            if (value.booleanValue != evaluatedValue) {
+              value.booleanValue = evaluatedValue
+              dependentFormulaValues.addAll(value.dependentValues)
+            }
           }
+          else -> throw CustomJsonException("{${value.id.key.id.name}: 'Unable to compute formula value'}")
         }
-        index += 1
-      }
-      val evaluator = ExpressionEvaluator()
-      evaluator.setParameters(injectedVariables, injectedClasses)
-      when (returnTypeName) {
-        TypeConstants.TEXT -> {
-          evaluator.setExpressionType(String::class.javaObjectType)
-          // Check expression for any compilation errors
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Unable to parse formula expression'}")
-          }
-          // Evaluate expression and get back result
-          try {
-            it.stringValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as String
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.NUMBER -> {
-          evaluator.setExpressionType(Long::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            it.longValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Long
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.DECIMAL -> {
-          evaluator.setExpressionType(Double::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            it.doubleValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Double
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
-        TypeConstants.BOOLEAN -> {
-          evaluator.setExpressionType(Boolean::class.javaObjectType)
-          try {
-            evaluator.cook(expression)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Unable to parse formula expression'}")
-          }
-          try {
-            it.booleanValue = FormulaUtils.evaluateExpression(evaluator, injectedObjects) as Boolean
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${it.id.key.id.name}: 'Formula expression resulted in error'}")
-          }
-        }
+        dependentFormulaValues.remove(value)
       }
     }
     if (jsonParams.has("updatedVariableName?"))
@@ -527,6 +430,52 @@ class VariableService(
     } catch (exception: Exception) {
       throw CustomJsonException("{variableName: 'Variable could not be updated'}")
     }
-    return variable
+    if (variable.id.type.id.superTypeName == GLOBAL_TYPE && dependentFormulaValues.size != 0)
+      recomputeDependentFormulaValues(dependentFormulaValues)
+    return Pair(variable, dependentFormulaValues)
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun recomputeDependentFormulaValues(dependentFormulaValues: MutableSet<Value>) {
+    val higherDependentFormulaValues: MutableSet<Value> = mutableSetOf()
+    dependentFormulaValues.forEach { value ->
+      when(value.id.key.formula!!.returnType.id.name) {
+        TypeConstants.TEXT -> {
+          val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+              symbols = getSymbolValues(variable = value.id.variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as String
+          if (value.stringValue != evaluatedValue) {
+            value.stringValue = evaluatedValue
+            higherDependentFormulaValues.addAll(value.dependentValues)
+          }
+        }
+        TypeConstants.NUMBER -> {
+          val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+              symbols = getSymbolValues(variable = value.id.variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Long
+          if (value.longValue != evaluatedValue) {
+            value.longValue = evaluatedValue
+            higherDependentFormulaValues.addAll(value.dependentValues)
+          }
+        }
+        TypeConstants.DECIMAL -> {
+          val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+              symbols = getSymbolValues(variable = value.id.variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Double
+          if (value.doubleValue != evaluatedValue) {
+            value.doubleValue = evaluatedValue
+            higherDependentFormulaValues.addAll(value.dependentValues)
+          }
+        }
+        TypeConstants.BOOLEAN -> {
+          val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.id.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.id.key.formula!!.returnType.id.name) },
+              symbols = getSymbolValues(variable = value.id.variable, symbolPaths = gson.fromJson(value.id.key.formula!!.symbols, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Boolean
+          if (value.booleanValue != evaluatedValue) {
+            value.booleanValue = evaluatedValue
+            higherDependentFormulaValues.addAll(value.dependentValues)
+          }
+        }
+      }
+    }
+    valueRepository.saveAll(dependentFormulaValues)
+    if (higherDependentFormulaValues.size != 0)
+      recomputeDependentFormulaValues(higherDependentFormulaValues)
   }
 }

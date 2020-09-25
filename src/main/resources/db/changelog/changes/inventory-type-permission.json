@@ -2,23 +2,20 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "inventory_category_1",
+        "id": "inventory_type_permission_1",
         "author": "shubham.gupta",
         "changes": [
           {
             "createTable": {
               "schemaName": "inventory",
-              "tableName": "category",
+              "tableName": "type_permission",
               "columns": [
                 {
                   "column": {
-                    "name": "id",
-                    "type": "BIGINT",
-                    "autoIncrement": true,
+                    "name": "permission_name",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
-                      "primaryKey": true,
-                      "nullable": false,
-                      "primaryKeyName": "inventory_category_pk"
+                      "nullable": false
                     }
                   }
                 },
@@ -33,24 +30,16 @@
                 },
                 {
                   "column": {
-                    "name": "parent_id",
-                    "type": "BIGINT"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "name",
+                    "name": "type_name",
                     "type": "NVARCHAR(255)",
-                    "defaultValue": "",
                     "constraints": {
-                      "nullable": false
+                      "nullable": "false"
                     }
                   }
                 },
                 {
                   "column": {
-                    "name": "next_label",
-                    "defaultValue": "",
+                    "name": "super_type_name",
                     "type": "NVARCHAR(255)",
                     "constraints": {
                       "nullable": false
@@ -59,9 +48,17 @@
                 },
                 {
                   "column": {
-                    "name": "code",
-                    "defaultValue": "",
-                    "type": "NVARCHAR(255)",
+                    "name": "create_permission",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "deletion_permission",
+                    "type": "BOOLEAN",
                     "constraints": {
                       "nullable": false
                     }
@@ -75,37 +72,30 @@
     },
     {
       "changeSet": {
-        "id": "inventory_category_2",
+        "id": "inventory_type_permission_2",
         "author": "shubham.gupta",
-        "addForeignKeyConstraint": {
-          "constraintName": "inventory_category_fk_1",
-          "baseTableSchemaName": "inventory",
-          "baseTableName": "category",
-          "baseColumnNames": "organization_id",
-          "onDelete": "CASCADE",
-          "onUpdate": "RESTRICT",
-          "referencedTableSchemaName": "inventory",
-          "referencedTableName": "organization",
-          "referencedColumnNames": "id",
-          "validate": "true"
+        "addPrimaryKey": {
+          "constraintName": "inventory_type_permission_pk",
+          "schemaName": "inventory",
+          "tableName": "type_permission",
+          "columnNames": "permission_name, type_name, organization_id, super_type_name"
         }
       }
     },
     {
       "changeSet": {
-        "id": "inventory_category_3",
+        "id": "inventory_type_permission_3",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_category_fk_2",
+          "constraintName": "inventory_type_permission_fk_1",
           "baseTableSchemaName": "inventory",
-          "baseTableName": "category",
-          "baseColumnNames": "parent_id",
+          "baseTableName": "type_permission",
+          "baseColumnNames": "type_name, organization_id, super_type_name",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "category",
-          "referencedColumnNames": "id",
-          "validate": "true"
+          "referencedTableName": "type",
+          "referencedColumnNames": "type_name, organization_id, super_type_name"
         }
       }
     }

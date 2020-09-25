@@ -8,20 +8,7 @@
 
 package com.pibity.erp.repositories
 
-import com.pibity.erp.entities.Variable
-import org.springframework.stereotype.Repository
-import org.springframework.transaction.annotation.Transactional
-import javax.persistence.EntityManager
-import javax.persistence.TypedQuery
+import com.pibity.erp.entities.Value
+import org.springframework.data.repository.CrudRepository
 
-@Repository
-class ValueRepository(val entityManager: EntityManager) {
-
-  @Transactional(readOnly = true)
-  fun queryVariables(hql: String, injectedValues: MutableMap<String, Any>): List<Variable> {
-    val query: TypedQuery<Variable> = entityManager.createQuery(hql, Variable::class.java)
-    for ((k, v) in injectedValues)
-      query.setParameter(k, v)
-    return (query.resultList)
-  }
-}
+interface ValueRepository : CrudRepository<Value, Long>

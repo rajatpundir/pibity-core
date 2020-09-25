@@ -13,7 +13,7 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "list_type", schema = "inventory")
+@Table(name = "type_list", schema = "inventory")
 data class TypeList(
 
     @Id

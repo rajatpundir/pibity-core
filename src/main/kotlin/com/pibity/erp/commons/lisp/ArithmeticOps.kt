@@ -45,6 +45,22 @@ fun add(args: List<JsonElement>, types: MutableList<String>, expectedReturnType:
       }
       expectedReturnType
     }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
+    }
     else -> {
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
@@ -104,6 +120,22 @@ fun multiply(args: List<JsonElement>, types: MutableList<String>, expectedReturn
       }
       expectedReturnType
     }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
+    }
     else -> {
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
@@ -162,6 +194,22 @@ fun subtract(args: List<JsonElement>, types: MutableList<String>, expectedReturn
         }
       }
       expectedReturnType
+    }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
     }
     else -> {
       if (args.size > types.size)
@@ -252,6 +300,22 @@ fun divide(args: List<JsonElement>, types: MutableList<String>, expectedReturnTy
       }
       expectedReturnType
     }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
+    }
     else -> {
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
@@ -317,6 +381,22 @@ fun power(args: List<JsonElement>, types: MutableList<String>, expectedReturnTyp
         }
       }
       expectedReturnType
+    }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
     }
     else -> {
       if (args.size > types.size)
@@ -386,6 +466,22 @@ fun modulus(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
         }
       }
       expectedReturnType
+    }
+    "collect" -> {
+      if (args.size > types.size)
+        repeat(args.size - types.size) { types.add(types.last()) }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      args.zip(types).forEach { (arg, type) ->
+        if (!acceptableTypes.contains(type))
+          throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+        else {
+          if (arg.isJsonObject)
+            collectedSymbols.addAll(validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", type) }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
     }
     else -> {
       if (args.size > types.size)

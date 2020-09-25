@@ -15,6 +15,7 @@ import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.Value
 import com.pibity.erp.entities.Variable
 
 fun validateVariableValues(values: JsonObject, typePermission: TypePermission): JsonObject {
@@ -258,6 +259,8 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
             }
           }
         }
+        TypeConstants.FORMULA -> {
+        }
         TypeConstants.LIST -> {
           if (!values.get(key.id.name).isJsonObject)
             throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
@@ -448,8 +451,6 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
             }
           }
         }
-        TypeConstants.FORMULA -> {
-        }
         else -> {
           if (key.type.id.superTypeName == GLOBAL_TYPE) {
             if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
@@ -511,31 +512,161 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
   return expectedValues
 }
 
-fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, String>>, variable: Variable, depth: Int): Map<String, Map<String, String>> {
+fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0): JsonObject {
+  val symbols = JsonObject()
   for (value in variable.values) {
-    val keyName: String = if (prefix != null) prefix + "_" + value.id.key.id.name else value.id.key.id.name
     when (value.id.key.type.id.name) {
-      TypeConstants.TEXT -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.stringValue.toString())
-      TypeConstants.NUMBER -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.longValue.toString())
-      TypeConstants.DECIMAL -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.doubleValue.toString())
-      TypeConstants.BOOLEAN -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.booleanValue.toString())
+      TypeConstants.TEXT -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.stringValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+        }
+      }
+      TypeConstants.NUMBER -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.longValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+        }
+      }
+      TypeConstants.DECIMAL -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.doubleValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+        }
+      }
+      TypeConstants.BOOLEAN -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.booleanValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+        }
+      }
       TypeConstants.LIST -> {
       }
       TypeConstants.FORMULA -> {
-        // Formulas at base level cannot be used inside other formulas at base level.
-        if (depth != 0) {
+        if (level != 0 && symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply { addProperty("type", value.id.key.formula!!.returnType.id.name) })
           when (value.id.key.formula!!.returnType.id.name) {
-            TypeConstants.TEXT -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.stringValue.toString())
-            TypeConstants.NUMBER -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.longValue.toString())
-            TypeConstants.DECIMAL -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.doubleValue.toString())
-            TypeConstants.BOOLEAN -> keys[keyName] = mapOf("type" to value.id.key.type.id.name, "value" to value.booleanValue.toString())
+            TypeConstants.TEXT -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.stringValue!!)
+            })
+            TypeConstants.NUMBER -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.longValue!!)
+            })
+            TypeConstants.DECIMAL -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.doubleValue!!)
+            })
+            TypeConstants.BOOLEAN -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.booleanValue!!)
+            })
+            else -> throw CustomJsonException("{${value.id.key.id.name}: 'Unable to compute formula value'}")
           }
+          symbolPaths.remove(prefix + value.id.key.id.name)
         }
       }
-      else -> if (value.referencedVariable != null) {
-        getLeafNameTypeValues(prefix = keyName, keys = keys, variable = value.referencedVariable!!, depth = 1 + depth)
+      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
+        val subSymbols: JsonObject = getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+        if (subSymbols.size() != 0)
+          symbols.add(value.id.key.id.name, subSymbols)
       }
     }
   }
-  return keys
+  return symbols
+}
+
+fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0, valueDependencies: MutableSet<Value>): JsonObject {
+  val symbols = JsonObject()
+  for (value in variable.values) {
+    when (value.id.key.type.id.name) {
+      TypeConstants.TEXT -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.stringValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+          valueDependencies.add(value)
+        }
+      }
+      TypeConstants.NUMBER -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.longValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+          valueDependencies.add(value)
+        }
+      }
+      TypeConstants.DECIMAL -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.doubleValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+          valueDependencies.add(value)
+        }
+      }
+      TypeConstants.BOOLEAN -> {
+        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", value.id.key.type.id.name)
+            addProperty("value", value.booleanValue!!)
+          })
+          symbolPaths.remove(prefix + value.id.key.id.name)
+          valueDependencies.add(value)
+        }
+      }
+      TypeConstants.LIST -> {
+      }
+      TypeConstants.FORMULA -> {
+        if (level != 0 && symbolPaths.contains(prefix + value.id.key.id.name)) {
+          symbols.add(value.id.key.id.name, JsonObject().apply { addProperty("type", value.id.key.formula!!.returnType.id.name) })
+          when (value.id.key.formula!!.returnType.id.name) {
+            TypeConstants.TEXT -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.stringValue!!)
+            })
+            TypeConstants.NUMBER -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.longValue!!)
+            })
+            TypeConstants.DECIMAL -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.doubleValue!!)
+            })
+            TypeConstants.BOOLEAN -> symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty("type", value.id.key.formula!!.returnType.id.name)
+              addProperty("value", value.booleanValue!!)
+            })
+            else -> throw CustomJsonException("{${value.id.key.id.name}: 'Unable to compute formula value'}")
+          }
+          symbolPaths.remove(prefix + value.id.key.id.name)
+          valueDependencies.add(value)
+        }
+      }
+      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
+        val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
+        if (subSymbols.size() != 0)
+          symbols.add(value.id.key.id.name, subSymbols)
+      }
+    }
+  }
+  return symbols
 }

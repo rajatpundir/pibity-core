@@ -12,6 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
+import com.pibity.erp.commons.utils.gson
 import com.pibity.erp.entities.Key
 
 fun serialize(key: Key): JsonObject {
@@ -37,8 +38,9 @@ fun serialize(key: Key): JsonObject {
     }
     TypeConstants.FORMULA -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
-      json.addProperty(KeyConstants.FORMULA_EXPRESSION, key.formula?.expression)
       json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.id?.name)
+      json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula?.expression, JsonObject::class.java))
+      json.add(KeyConstants.FORMULA_SYMBOLS, gson.fromJson(key.formula?.symbols, JsonArray::class.java))
     }
     TypeConstants.LIST -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)

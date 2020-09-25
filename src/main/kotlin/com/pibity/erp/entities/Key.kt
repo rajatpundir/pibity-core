@@ -57,12 +57,15 @@ data class Key(
     var referencedVariable: Variable? = null,
 
     @OneToOne(cascade = [CascadeType.ALL])
-    @JoinColumn(name = "formula_id")
+    @JoinColumns(*[JoinColumn(name = "formula_id", referencedColumnName = "id")])
     var formula: Formula? = null,
 
     @OneToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "list_id")
-    var list: TypeList? = null
+    var list: TypeList? = null,
+
+    @ManyToMany(mappedBy = "keyDependencies")
+    val dependentFormulas: Set<Formula> = HashSet()
 
 ) : Serializable {
 

@@ -34,19 +34,29 @@
                 },
                 {
                   "column": {
-                    "name": "organization_id",
+                    "name": "symbols",
+                    "type": "VARCHAR(255)",
+                    "defaultValue": "",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "return_type_organization_id",
                     "type": "NVARCHAR(255)"
                   }
                 },
                 {
                   "column": {
-                    "name": "super_type_name",
+                    "name": "return_type_name",
                     "type": "VARCHAR(255)"
                   }
                 },
                 {
                   "column": {
-                    "name": "type_name",
+                    "name": "return_type_super_type_name",
                     "type": "VARCHAR(255)"
                   }
                 }
@@ -64,7 +74,7 @@
           "constraintName": "inventory_formula_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "formula",
-          "baseColumnNames": "organization_id, super_type_name, type_name",
+          "baseColumnNames": "return_type_organization_id,return_type_super_type_name,return_type_name",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",

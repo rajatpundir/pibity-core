@@ -31,6 +31,14 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
           expectedKeyPermissions.addProperty(key.id.name, accessLevel)
         }
         TypeConstants.FORMULA -> {
+          val accessLevel: Int = try {
+            jsonParams.get(key.id.name).asInt
+          } catch (exception: Exception) {
+            throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+          }
+          if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.READ_ACCESS)
+            throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+          expectedKeyPermissions.addProperty(key.id.name, accessLevel)
         }
         TypeConstants.LIST -> {
           if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {

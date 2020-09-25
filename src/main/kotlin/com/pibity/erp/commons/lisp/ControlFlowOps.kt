@@ -61,6 +61,35 @@ fun ifThenElse(args: List<JsonElement>, types: MutableList<String>, expectedRetu
       }
       expectedReturnType
     }
+    "collect" -> {
+      if (args.size != 3)
+        throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+      if (types.size < 1)
+        throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+      val expressionTypes: List<String> = listOf(types.first(), types.first())
+      val expectedReturnTypes: List<String> = when (types.first()) {
+        TypeConstants.TEXT -> listOf(TypeConstants.TEXT)
+        TypeConstants.NUMBER, TypeConstants.DECIMAL -> listOf(TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.TEXT)
+        TypeConstants.BOOLEAN -> listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT)
+        else -> throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+      }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      val collectedSymbols = mutableSetOf<String>()
+      if (args.first().isJsonObject) {
+        collectedSymbols.addAll(validateOrEvaluateExpression(jsonParams = args.first().asJsonObject.apply {
+          addProperty("expectedReturnType", TypeConstants.BOOLEAN)
+        }, mode = mode, symbols = symbols) as Set<String>)
+      }
+      args.drop(1).zip(expressionTypes).forEach { (arg, type) ->
+        if (arg.isJsonObject) {
+          collectedSymbols.addAll(validateOrEvaluateExpression(jsonParams = arg.asJsonObject.apply {
+            addProperty("expectedReturnType", type)
+          }, mode = mode, symbols = symbols) as Set<String>)
+        }
+      }
+      collectedSymbols
+    }
     else -> {
       val condition: Boolean = if (args.first().isJsonObject) {
         validateOrEvaluateExpression(jsonParams = args.first().asJsonObject.apply {

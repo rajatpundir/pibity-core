@@ -64,7 +64,8 @@ class VariableController(val variableService: VariableService, val queryService:
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateVariable"]
           ?: JsonObject()).apply { addProperty("username",  token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(serialize(variableService.updateVariable(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (variable, _) = variableService.updateVariable(jsonParams = jsonParams)
+      ResponseEntity(serialize(variable).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

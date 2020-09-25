@@ -77,6 +77,18 @@ fun updateSymbols(prevSymbols: JsonObject, nextSymbols: JsonObject): JsonObject 
   return updatedSymbols
 }
 
+fun getSymbolPaths(jsonParams: JsonObject, prefix: String = ""): Set<String> {
+  val symbolPaths = mutableSetOf<String>()
+  for ((symbolName, symbolObject) in jsonParams.entrySet()) {
+    val symbol = symbolObject.asJsonObject
+    if (symbol.has(KeyConstants.KEY_TYPE))
+      symbolPaths.add(prefix + symbolName)
+    else
+      symbolPaths.addAll(getSymbolPaths(jsonParams = symbol, prefix = prefix + symbolName + "."))
+  }
+  return symbolPaths
+}
+
 fun let(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
   return when (mode) {
     "validate" -> {
@@ -86,6 +98,17 @@ fun let(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
       validateOrEvaluateExpression(jsonParams = args[1].asJsonObject.apply {
         addProperty("expectedReturnType", expectedReturnType)
       }, mode = mode, symbols = updatedSymbols) as String
+    }
+    "collect" -> {
+      if (args.size < 2 || !args.first().isJsonObject)
+        throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+      val updatedSymbols: JsonObject = updateSymbols(prevSymbols = symbols, nextSymbols = validateSymbols(jsonParams = args.first().asJsonObject))
+      val collectedSymbols = mutableSetOf<String>()
+      collectedSymbols.addAll(validateOrEvaluateExpression(jsonParams = args[1].asJsonObject.apply {
+        addProperty("expectedReturnType", expectedReturnType)
+      }, mode = mode, symbols = updatedSymbols) as Set<String>)
+      collectedSymbols.removeAll(getSymbolPaths(jsonParams = updatedSymbols))
+      collectedSymbols
     }
     else -> {
       val updatedSymbols: JsonObject = updateSymbols(prevSymbols = symbols, nextSymbols = validateSymbols(jsonParams = args.first().asJsonObject))
@@ -98,21 +121,21 @@ fun let(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
 
 // TODO. This function needs a rewrite for improved elegance.
 fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
+  println("----HERE--ARE--SYMBOLS----")
+  println(symbols)
   when (mode) {
     "validate" -> {
       if (args.isEmpty())
         throw CustomJsonException("{args: 'Unexpected value for parameter'}")
       var symbolsJson: JsonObject = symbols
-      val symbolPath: List<String> = args.map {
+      val symbolPaths: List<String> = args.map {
         try {
-          if (it.isJsonObject) validateOrEvaluateExpression(jsonParams = it.asJsonObject.apply {
-            addProperty("expectedReturnType", TypeConstants.TEXT)
-          }, mode = "evaluate", symbols = symbols) as String else it.asString
+          it.asString
         } catch (exception: Exception) {
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
       }
-      for ((index, symbolName) in symbolPath.withIndex()) {
+      for ((index, symbolName) in symbolPaths.withIndex()) {
         if (symbolsJson.has(symbolName)) {
           if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
             return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
@@ -145,9 +168,21 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
       }
     }
+    "collect" -> {
+      if (args.isEmpty())
+        throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+      val symbolPaths: List<String> = args.map {
+        try {
+          it.asString
+        } catch (exception: Exception) {
+          throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+        }
+      }
+      return setOf(symbolPaths.joinToString(separator = "."))
+    }
     else -> {
       var symbolsJson: JsonObject = symbols
-      val symbolPath: List<String> = args.map {
+      val symbolPaths: List<String> = args.map {
         try {
           if (it.isJsonObject)
             validateOrEvaluateExpression(jsonParams = it.asJsonObject.apply {
@@ -158,7 +193,7 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
       }
-      for ((index, symbolName) in symbolPath.withIndex()) {
+      for ((index, symbolName) in symbolPaths.withIndex()) {
         if (symbolsJson.has(symbolName)) {
           if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
             return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {

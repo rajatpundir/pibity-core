@@ -15,6 +15,7 @@ object KeyConstants {
   const val DEFAULT = "default"
   const val FORMULA_EXPRESSION = "expression"
   const val FORMULA_RETURN_TYPE = "returnType"
+  const val FORMULA_SYMBOLS = "symbols"
   const val LIST_TYPE = "listType"
   const val VALUE = "value"
   const val LIST_MAX_SIZE = "max"
