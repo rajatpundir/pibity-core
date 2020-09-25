@@ -20,7 +20,6 @@ import org.keycloak.representations.idm.UserRepresentation
 fun createKeycloakGroup(jsonParams: JsonObject) {
   realmResource.groups().add(GroupRepresentation().apply { name = jsonParams.get("organization").asString }).use { response ->
     val parentGroupId: String = CreatedResponseUtil.getCreatedId(response)
-    println(parentGroupId)
     setOf(RoleConstants.ADMIN, RoleConstants.USER).forEach { subGroupName ->
       realmResource.groups().group(parentGroupId).subGroup(GroupRepresentation().apply { name = subGroupName })
     }

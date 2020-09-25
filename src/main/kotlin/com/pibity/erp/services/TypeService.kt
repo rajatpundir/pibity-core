@@ -12,10 +12,8 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.utils.validateFormulaTypeKeys
-import com.pibity.erp.commons.utils.validateSuperTypeName
-import com.pibity.erp.commons.utils.validateTypeKeys
-import com.pibity.erp.commons.utils.validateTypeName
+import com.pibity.erp.commons.lisp.validateSymbols
+import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
 import com.pibity.erp.entities.embeddables.TypeId
@@ -81,90 +79,114 @@ class TypeService(
               }
             }
           }
-      val keyOrder: Int = keyJson.get(KeyConstants.ORDER).asInt
-      val key = Key(id = KeyId(parentType = type, name = keyName), keyOrder = keyOrder, type = keyType)
-      if (keyJson.has(KeyConstants.DISPLAY_NAME))
-        key.displayName = keyJson.get(KeyConstants.DISPLAY_NAME).asString
-      when (keyType.id.name) {
-        TypeConstants.LIST -> {
-          val listType: Type =
-              if (keyJson.get(KeyConstants.LIST_TYPE).isJsonObject) {
-                val nestedType: Type = try {
-                  createType(keyJson.get(KeyConstants.LIST_TYPE).asJsonObject.apply {
-                    addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
-                  }, typeOrganization = organization, globalTypes = validGlobalTypes, localTypes = validLocalTypes)
-                } catch (exception: CustomJsonException) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: '${exception.message}'}}}")
-                }
-                validLocalTypes.add(nestedType)
-                nestedType
-              } else {
-                if (keyJson.get(KeyConstants.LIST_TYPE).asString.contains("::")) {
-                  val keySuperTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").first()
-                  val keyTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").last()
-                  if (keySuperTypeName == "") {
-                    // key refers to some local type
+      if (keyType.id.name != TypeConstants.FORMULA) {
+        val keyOrder: Int = keyJson.get(KeyConstants.ORDER).asInt
+        val key = Key(id = KeyId(parentType = type, name = keyName), keyOrder = keyOrder, type = keyType)
+        if (keyJson.has(KeyConstants.DISPLAY_NAME))
+          key.displayName = keyJson.get(KeyConstants.DISPLAY_NAME).asString
+        when (keyType.id.name) {
+          TypeConstants.LIST -> {
+            val listType: Type =
+                if (keyJson.get(KeyConstants.LIST_TYPE).isJsonObject) {
+                  val nestedType: Type = try {
+                    createType(keyJson.get(KeyConstants.LIST_TYPE).asJsonObject.apply {
+                      addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
+                    }, typeOrganization = organization, globalTypes = validGlobalTypes, localTypes = validLocalTypes)
+                  } catch (exception: CustomJsonException) {
+                    throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: '${exception.message}'}}}")
+                  }
+                  validLocalTypes.add(nestedType)
+                  nestedType
+                } else {
+                  if (keyJson.get(KeyConstants.LIST_TYPE).asString.contains("::")) {
+                    val keySuperTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").first()
+                    val keyTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").last()
+                    if (keySuperTypeName == "") {
+                      // key refers to some local type
+                      try {
+                        validLocalTypes.first { it.id.name == keyTypeName }
+                      } catch (exception: Exception) {
+                        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
+                      }
+                    } else {
+                      // key refers to local type inside some other global type
+                      val referentialLocalType: Type = typeRepository.findType(organizationName = type.id.organization.id, superTypeName = keySuperTypeName, name = keyTypeName)
+                          ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
+                      referentialLocalType
+                    }
+                  } else {
+                    // key refers to global type
                     try {
-                      validLocalTypes.first { it.id.name == keyTypeName }
+                      validGlobalTypes.first { it.id.name == keyJson.get(KeyConstants.LIST_TYPE).asString }
                     } catch (exception: Exception) {
                       throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
                     }
-                  } else {
-                    // key refers to local type inside some other global type
-                    val referentialLocalType: Type = typeRepository.findType(organizationName = type.id.organization.id, superTypeName = keySuperTypeName, name = keyTypeName)
-                        ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
-                    referentialLocalType
-                  }
-                } else {
-                  // key refers to global type
-                  try {
-                    validGlobalTypes.first { it.id.name == keyJson.get(KeyConstants.LIST_TYPE).asString }
-                  } catch (exception: Exception) {
-                    throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
                   }
                 }
-              }
-          if (!primitiveTypes.contains(listType.id.name))
-            key.list = TypeList(type = listType, min = keyJson.get(KeyConstants.LIST_MIN_SIZE).asInt, max = keyJson.get(KeyConstants.LIST_MAX_SIZE).asInt)
-          else
-            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type cannot be a primitive type'}}}")
-        }
-        TypeConstants.FORMULA -> {
-          val expression: String = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asString
-          when (keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) {
-            in formulaReturnTypes -> {
-              val returnType: Type = try {
-                validGlobalTypes.first { it.id.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString }
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
-              }
-              key.formula = Formula(expression = expression, returnType = returnType)
-            }
-            else -> throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
+            if (!primitiveTypes.contains(listType.id.name))
+              key.list = TypeList(type = listType, min = keyJson.get(KeyConstants.LIST_MIN_SIZE).asInt, max = keyJson.get(KeyConstants.LIST_MAX_SIZE).asInt)
+            else
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type cannot be a primitive type'}}}")
           }
+          else -> setValueForKey(key = key, keyJson = keyJson)
         }
-        else -> setValueForKey(key = key, keyJson = keyJson)
+        type.keys.add(key)
       }
-      type.keys.add(key)
     }
-    // Validate expressions for keys of Formula type
-    validateFormulaTypeKeys(type)
-    type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
-    if (type.depth > 12)
-      throw CustomJsonException("{$typeName: 'Type could not be saved due to high nestedness'}")
-    type.permissions.addAll(createDefaultPermissionsForType(type = type))
     try {
       typeRepository.save(type)
     } catch (exception: Exception) {
       throw CustomJsonException("{$typeName: 'Type could not be saved'}")
     }
+    for ((keyName, json) in keys.entrySet()) {
+      val keyJson = json.asJsonObject
+      if (!keyJson.get(KeyConstants.KEY_TYPE).isJsonObject && keyJson.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
+        val key = Key(id = KeyId(parentType = type, name = keyName), keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validGlobalTypes.first { it.id.name == TypeConstants.FORMULA})
+        if (keyJson.has(KeyConstants.DISPLAY_NAME))
+          key.displayName = keyJson.get(KeyConstants.DISPLAY_NAME).asString
+        when (keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) {
+          in formulaReturnTypes -> {
+            val returnType: Type = try {
+              validGlobalTypes.first { it.id.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString }
+            } catch (exception: Exception) {
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
+            }
+            val keyDependencies: MutableSet<Key> = mutableSetOf()
+            val symbolPaths = validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.apply {
+              addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
+            }, mode = "collect", symbols = JsonObject()) as Set<String>
+            val symbols: JsonObject = validateSymbols(jsonParams = getSymbols(type = type, prefix = "", symbolPaths = symbolPaths.toMutableSet(), level = 0, keyDependencies = keyDependencies))
+            try {
+              validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.apply {
+                addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
+              }, mode = "validate", symbols = symbols) as String
+            } catch (exception: CustomJsonException) {
+              throw CustomJsonException("{keys: {$keyName: {expression: ${exception.message}}}}")
+            }
+            val formula = Formula(returnType = returnType, expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.toString(), symbols = gson.toJson(symbolPaths), keyDependencies = keyDependencies)
+            key.formula = formula
+          }
+          else -> throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
+        }
+        type.keys.add(key)
+      }
+    }
+    type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
+    if (type.depth > 12)
+      throw CustomJsonException("{$typeName: 'Type is highly nested'}")
+    val createdType: Type = try {
+      typeRepository.save(type)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{$typeName: 'Type could not be saved'}")
+    }
     if (type.id.superTypeName == GLOBAL_TYPE) {
+      createdType.permissions.addAll(createDefaultPermissionsForType(createdType))
       createPermissionsForType(jsonParams = jsonParams)
       assignPermissionsToRoles(jsonParams = jsonParams)
       if (jsonParams.has("variables?"))
         createVariablesForType(jsonParams = jsonParams)
     }
-    return type
+    return createdType
   }
 
   private fun setValueForKey(key: Key, keyJson: JsonObject) {

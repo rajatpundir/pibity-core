@@ -46,7 +46,7 @@ data class Value(
     var list: VariableList? = null,
 
     @ManyToMany
-    @JoinTable(name = "mapping_value_formula", schema = "inventory"
+    @JoinTable(name = "mapping_value_dependencies", schema = "inventory"
         , joinColumns = [JoinColumn(name = "value_variable_organization_id", referencedColumnName = "variable_organization_id"),
       JoinColumn(name = "value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
       JoinColumn(name = "value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
@@ -56,19 +56,19 @@ data class Value(
       JoinColumn(name = "value_key_super_type_name", referencedColumnName = "key_super_type_name"),
       JoinColumn(name = "value_key_type_name", referencedColumnName = "key_type_name"),
       JoinColumn(name = "value_key_name", referencedColumnName = "key_name")]
-        , inverseJoinColumns = [JoinColumn(name = "dependent_value_variable_organization_id", referencedColumnName = "variable_organization_id"),
-      JoinColumn(name = "dependent_value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
-      JoinColumn(name = "dependent_value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
-      JoinColumn(name = "dependent_value_variable_type_name", referencedColumnName = "variable_type_name"),
-      JoinColumn(name = "dependent_value_variable_name", referencedColumnName = "variable_name"),
-      JoinColumn(name = "dependent_value_key_organization_id", referencedColumnName = "key_organization_id"),
-      JoinColumn(name = "dependent_value_key_super_type_name", referencedColumnName = "key_super_type_name"),
-      JoinColumn(name = "dependent_value_key_type_name", referencedColumnName = "key_type_name"),
-      JoinColumn(name = "dependent_value_key_name", referencedColumnName = "key_name")])
-    var dependentFormulaValues: MutableSet<Value> = HashSet(),
+        , inverseJoinColumns = [JoinColumn(name = "dependency_value_variable_organization_id", referencedColumnName = "variable_organization_id"),
+      JoinColumn(name = "dependency_value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
+      JoinColumn(name = "dependency_value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
+      JoinColumn(name = "dependency_value_variable_type_name", referencedColumnName = "variable_type_name"),
+      JoinColumn(name = "dependency_value_variable_name", referencedColumnName = "variable_name"),
+      JoinColumn(name = "dependency_value_key_organization_id", referencedColumnName = "key_organization_id"),
+      JoinColumn(name = "dependency_value_key_super_type_name", referencedColumnName = "key_super_type_name"),
+      JoinColumn(name = "dependency_value_key_type_name", referencedColumnName = "key_type_name"),
+      JoinColumn(name = "dependency_value_key_name", referencedColumnName = "key_name")])
+    val valueDependencies: MutableSet<Value> = HashSet(),
 
-    @ManyToMany(mappedBy = "dependentFormulaValues")
-    var formulaDependencies: MutableSet<Value> = HashSet()
+    @ManyToMany(mappedBy = "valueDependencies")
+    val dependentValues: MutableSet<Value> = HashSet()
 
 ) : Serializable {
 

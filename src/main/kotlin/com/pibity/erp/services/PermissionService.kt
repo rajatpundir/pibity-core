@@ -25,6 +25,7 @@ import com.pibity.erp.repositories.TypePermissionRepository
 import com.pibity.erp.repositories.TypeRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.min
 
 @Service
 class PermissionService(
@@ -48,11 +49,10 @@ class PermissionService(
         deletable = if (jsonParams.has("deletable")) jsonParams.get("deletable").asBoolean else false)
     for (key in type.keys) {
       when (key.type.id.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
           typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
-        }
-        TypeConstants.FORMULA -> {
-        }
+        TypeConstants.FORMULA ->
+          typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = min(keyPermissions.get(key.id.name).asInt, PermissionConstants.READ_ACCESS)))
         TypeConstants.LIST -> {
           if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = keyPermissions.get(key.id.name).asInt))
@@ -103,11 +103,10 @@ class PermissionService(
     val updatedPermissions = mutableSetOf<KeyPermission>()
     for (keyPermission in typePermission.keyPermissions) {
       when (keyPermission.id.key.type.id.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
           updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
-        }
-        TypeConstants.FORMULA -> {
-        }
+        TypeConstants.FORMULA ->
+          updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = min(keyPermissions.get(keyPermission.id.key.id.name).asInt, PermissionConstants.READ_ACCESS)))
         TypeConstants.LIST -> {
           if (keyPermission.id.key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             updatedPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = keyPermission.id.key), accessLevel = keyPermissions.get(keyPermission.id.key.id.name).asInt))
@@ -150,16 +149,17 @@ class PermissionService(
     val typePermission = TypePermission(id = TypePermissionId(type = type, name = permissionName), creatable = type.id.superTypeName == GLOBAL_TYPE && accessLevel == PermissionConstants.WRITE_ACCESS, deletable = type.id.superTypeName == GLOBAL_TYPE && accessLevel == PermissionConstants.WRITE_ACCESS)
     for (key in type.keys) {
       when (key.type.id.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
-        TypeConstants.FORMULA -> {
-        }
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+          typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
+        TypeConstants.FORMULA ->
+          typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = min(accessLevel, PermissionConstants.READ_ACCESS)))
         TypeConstants.LIST -> {
           if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
           } else {
             if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
-              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createDefaultPermission(key.list!!.type, permissionName, accessLevel), accessLevel = accessLevel))
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel, referencedTypePermission = createDefaultPermission(key.list!!.type, permissionName, accessLevel)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
             }
@@ -171,7 +171,7 @@ class PermissionService(
           } else {
             if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), referencedTypePermission = createDefaultPermission(key.type, permissionName, accessLevel), accessLevel = accessLevel))
+              typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel, referencedTypePermission = createDefaultPermission(key.type, permissionName, accessLevel)))
             } else {
               typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = accessLevel))
             }
@@ -179,7 +179,7 @@ class PermissionService(
         }
       }
     }
-    return typePermission
+    return typePermissionRepository.save(typePermission)
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -198,11 +198,8 @@ class PermissionService(
         deletable = typePermissions.fold(false) { acc, it -> acc || it.deletable })
     for (key in type.keys) {
       when (key.type.id.name) {
-        TypeConstants.TEXT, TypeConstants.DECIMAL, TypeConstants.NUMBER, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.DECIMAL, TypeConstants.NUMBER, TypeConstants.BOOLEAN, TypeConstants.FORMULA ->
           typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { tp -> tp.keyPermissions.single { it.id.key == key }.accessLevel }.max()!!))
-        }
-        TypeConstants.FORMULA -> {
-        }
         TypeConstants.LIST -> {
           if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
             typePermission.keyPermissions.add(KeyPermission(id = KeyPermissionId(typePermission = typePermission, key = key), accessLevel = typePermissions.map { tp -> tp.keyPermissions.single { it.id.key == key }.accessLevel }.max()!!))

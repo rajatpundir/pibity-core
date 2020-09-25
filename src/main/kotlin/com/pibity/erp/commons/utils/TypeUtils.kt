@@ -11,10 +11,9 @@ package com.pibity.erp.commons.utils
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.commons.constants.formulaReturnTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
-import org.codehaus.janino.ExpressionEvaluator
 import java.util.regex.Pattern
 
 val typeIdentifierPattern: Pattern = Pattern.compile("^[A-Z][a-zA-Z0-9]*$")
@@ -216,15 +215,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             }
           }
           TypeConstants.FORMULA -> {
-            if (!key.has(KeyConstants.FORMULA_EXPRESSION))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not provided'}}}")
-            else {
-              try {
-                expectedKey.addProperty(KeyConstants.FORMULA_EXPRESSION, key.get(KeyConstants.FORMULA_EXPRESSION).asString)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not valid'}}}")
-              }
-            }
             if (!key.has(KeyConstants.FORMULA_RETURN_TYPE))
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not provided'}}}")
             else {
@@ -232,6 +222,15 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 expectedKey.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
               } catch (exception: Exception) {
                 throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not valid'}}}")
+              }
+            }
+            if (!key.has(KeyConstants.FORMULA_EXPRESSION))
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not provided'}}}")
+            else {
+              try {
+                expectedKey.add(KeyConstants.FORMULA_EXPRESSION, key.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject)
+              } catch (exception: Exception) {
+                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not valid'}}}")
               }
             }
           }
@@ -261,64 +260,29 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
   return expectedKeys
 }
 
-fun validateFormulaTypeKeys(type: Type) {
-  // Construct injectable keys with appropriate classes
-  val leafKeyTypeAndValues: Map<String, Map<String, String>> = getLeafNameTypeValues(prefix = null, keys = mutableMapOf(), type = type, depth = 0)
-  val injectedKeys: Array<String?> = arrayOfNulls(leafKeyTypeAndValues.size)
-  val injectedClasses: Array<Class<*>?> = arrayOfNulls(leafKeyTypeAndValues.size)
-  var index = 0
-  for ((key, value) in leafKeyTypeAndValues) {
-    injectedKeys[index] = key
-    when (value[KeyConstants.KEY_TYPE]) {
-      TypeConstants.TEXT -> injectedClasses[index] = String::class.javaObjectType
-      TypeConstants.NUMBER -> injectedClasses[index] = Long::class.javaObjectType
-      TypeConstants.DECIMAL -> injectedClasses[index] = Double::class.javaObjectType
-      TypeConstants.BOOLEAN -> injectedClasses[index] = Boolean::class.javaObjectType
-    }
-    index += 1
-  }
-  // Validate all formula type keys
-  type.keys.filter { it.type.id.name == TypeConstants.FORMULA }.forEach {
-    try {
-      val evaluator = ExpressionEvaluator()
-      evaluator.setParameters(injectedKeys, injectedClasses)
-      when (it.formula!!.returnType.id.name) {
-        TypeConstants.TEXT -> evaluator.setExpressionType(String::class.javaObjectType)
-        TypeConstants.NUMBER -> evaluator.setExpressionType(Long::class.javaObjectType)
-        TypeConstants.DECIMAL -> evaluator.setExpressionType(Double::class.javaObjectType)
-        TypeConstants.BOOLEAN -> evaluator.setExpressionType(Boolean::class.javaObjectType)
-      }
-      evaluator.cook(it.formula!!.expression)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{keys:{${it.id.name}: {${KeyConstants.FORMULA_EXPRESSION}: 'Expression for formula is not valid'}}}")
-    }
-  }
-}
-
-fun getLeafNameTypeValues(prefix: String?, keys: MutableMap<String, Map<String, String>>, type: Type, depth: Int): Map<String, Map<String, String>> {
+fun getSymbols(type: Type, symbolPaths: MutableSet<String>, prefix: String = "", level: Int, keyDependencies: MutableSet<Key>): JsonObject {
+  val symbols = JsonObject()
   for (key in type.keys) {
-    val keyName: String = if (prefix != null) prefix + "_" + key.id.name else key.id.name
-    val keyTypeAndValue: MutableMap<String, String> = HashMap()
     when (key.type.id.name) {
-      in formulaReturnTypes -> {
-        keyTypeAndValue[KeyConstants.KEY_TYPE] = key.type.id.name
-        keys[keyName] = keyTypeAndValue
+      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> if (symbolPaths.contains(prefix + key.id.name)) {
+        symbols.add(key.id.name, JsonObject().apply { addProperty("type", key.type.id.name) })
+        symbolPaths.remove(prefix + key.id.name)
+        keyDependencies.add(key)
       }
-      TypeConstants.LIST -> {
-      }
+      TypeConstants.LIST -> {}
       TypeConstants.FORMULA -> {
-        // Formulas at base level cannot be used inside other formulas at base level.
-        if (depth != 0) {
-          when (key.formula!!.returnType.id.name) {
-            in formulaReturnTypes -> {
-              keyTypeAndValue[KeyConstants.KEY_TYPE] = key.formula!!.returnType.id.name
-              keys[keyName] = keyTypeAndValue
-            }
-          }
+        if (level != 0 && symbolPaths.contains(prefix + key.id.name)) {
+          symbols.add(key.id.name, JsonObject().apply { addProperty("type", key.formula!!.returnType.id.name) })
+          symbolPaths.remove(prefix + key.id.name)
+          keyDependencies.add(key)
         }
       }
-      else -> getLeafNameTypeValues(prefix = keyName, keys = keys, type = key.type, depth = 1 + depth)
+      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + key.id.name) }) {
+        val subSymbols: JsonObject = getSymbols(prefix = prefix + key.id.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies)
+        if (subSymbols.size() != 0)
+          symbols.add(key.id.name, subSymbols)
+      }
     }
   }
-  return keys
+  return symbols
 }

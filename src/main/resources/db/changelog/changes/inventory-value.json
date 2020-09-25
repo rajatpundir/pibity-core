@@ -12,10 +12,10 @@
               "columns": [
                 {
                   "column": {
-                    "name": "super_variable_name",
-                    "type": "NVARCHAR(511)",
+                    "name": "variable_super_list_id",
+                    "type": "BIGINT",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -25,7 +25,7 @@
                     "name": "variable_name",
                     "type": "NVARCHAR(511)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -34,7 +34,7 @@
                     "name": "variable_organization_id",
                     "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -43,7 +43,7 @@
                     "name": "variable_super_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -52,7 +52,7 @@
                     "name": "variable_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -61,7 +61,7 @@
                     "name": "key_organization_id",
                     "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -70,7 +70,7 @@
                     "name": "key_super_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -79,7 +79,7 @@
                     "name": "key_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -88,14 +88,14 @@
                     "name": "key_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
                 {
                   "column": {
                     "name": "string_value",
-                    "type": "NVARCHAR(511)"
+                    "type": "NVARCHAR(1024)"
                   }
                 },
                 {
@@ -136,8 +136,8 @@
                 },
                 {
                   "column": {
-                    "name": "referenced_super_variable_name",
-                    "type": "NVARCHAR(511)"
+                    "name": "referenced_variable_super_list_id",
+                    "type": "BIGINT"
                   }
                 },
                 {
@@ -166,7 +166,7 @@
           "constraintName": "inventory_value_pk",
           "schemaName": "inventory",
           "tableName": "value",
-          "columnNames": "key_organization_id, key_super_type_name, key_type_name, key_name, variable_organization_id, variable_super_type_name, variable_type_name, super_variable_name, variable_name"
+          "columnNames": "key_name,key_type_name,key_organization_id,key_super_type_name,variable_name,variable_super_list_id,variable_type_name,variable_organization_id,variable_super_type_name"
         }
       }
     },
@@ -195,12 +195,12 @@
           "constraintName": "inventory_value_fk_2",
           "baseTableSchemaName": "inventory",
           "baseTableName": "value",
-          "baseColumnNames": "variable_organization_id, variable_super_type_name, variable_type_name, super_variable_name, variable_name",
+          "baseColumnNames": "variable_organization_id, variable_super_type_name, variable_type_name, variable_super_list_id, variable_name",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_variable_name, variable_name"
+          "referencedColumnNames": "organization_id, super_type_name, type_name, super_list_id, variable_name"
         }
       }
     },
@@ -216,7 +216,7 @@
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "list_variable",
+          "referencedTableName": "variable_list",
           "referencedColumnNames": "id"
         }
       }
@@ -229,12 +229,12 @@
           "constraintName": "inventory_value_fk_4",
           "baseTableSchemaName": "inventory",
           "baseTableName": "value",
-          "baseColumnNames": "referenced_variable_organization_id, referenced_variable_super_type_name, referenced_variable_type_name, referenced_super_variable_name, referenced_variable_name",
+          "baseColumnNames": "referenced_variable_name,referenced_variable_super_list_id,referenced_variable_type_name,referenced_variable_organization_id,referenced_variable_super_type_name",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_variable_name, variable_name,"
+          "referencedColumnNames": "variable_name, super_list_id, type_name, organization_id, super_type_name"
         }
       }
     }

@@ -26,7 +26,6 @@ dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
   implementation("org.liquibase:liquibase-core")
   implementation("com.google.code.gson:gson:2.8.6")
-  implementation("org.codehaus.janino:janino:3.1.2")
   implementation("org.keycloak:keycloak-spring-security-adapter:11.0.2")
   implementation("org.keycloak:keycloak-admin-client:11.0.2")
 

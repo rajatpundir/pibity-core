@@ -16,13 +16,13 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.repositories.TypePermissionRepository
-import com.pibity.erp.repositories.ValueRepository
+import com.pibity.erp.repositories.QueryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class QueryService(
-    val valueRepository: ValueRepository,
+    val queryRepository: QueryRepository,
     val userService: UserService,
     val typePermissionRepository: TypePermissionRepository
 ) {
@@ -39,7 +39,7 @@ class QueryService(
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{query : ${exception.message}}")
     }
-    return valueRepository.queryVariables(generatedQuery, injectedValues)
+    return queryRepository.queryVariables(generatedQuery, injectedValues)
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -54,7 +54,7 @@ class QueryService(
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{query : ${exception.message}}")
     }
-    return valueRepository.queryVariables(generatedQuery, injectedValues)
+    return queryRepository.queryVariables(generatedQuery, injectedValues)
   }
 
   fun generateQuery(queryJson: JsonObject, username: String, typePermission: TypePermission, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {

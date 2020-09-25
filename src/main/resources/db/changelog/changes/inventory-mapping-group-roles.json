@@ -2,26 +2,26 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "inventory_mapping_type_category_1",
+        "id": "inventory_mapping_group_roles_1",
         "author": "shubham.gupta",
         "changes": [
           {
             "createTable": {
               "schemaName": "inventory",
-              "tableName": "mapping_type_category",
+              "tableName": "mapping_group_roles",
               "columns": [
                 {
                   "column": {
-                    "name": "organization_id",
+                    "name": "role_organization_id",
                     "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
                 {
                   "column": {
-                    "name": "super_type_name",
+                    "name": "role_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": "false"
@@ -30,19 +30,19 @@
                 },
                 {
                   "column": {
-                    "name": "type_name",
-                    "type": "VARCHAR(255)",
+                    "name": "group_organization_id",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
                 {
                   "column": {
-                    "name": "category_id",
-                    "type": "BIGINT",
+                    "name": "group_name",
+                    "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 }
@@ -54,47 +54,47 @@
     },
     {
       "changeSet": {
-        "id": "inventory_mapping_type_category_2",
+        "id": "inventory_mapping_group_roles_2",
         "author": "shubham.gupta",
         "addPrimaryKey": {
-          "constraintName": "inventory_mapping_type_category_pk",
+          "constraintName": "inventory_mapping_group_roles_pk",
           "schemaName": "inventory",
-          "tableName": "mapping_type_category",
-          "columnNames": "organization_id, super_type_name, type_name, category_id"
+          "tableName": "mapping_group_roles",
+          "columnNames": "group_name, group_organization_id, role_name, role_organization_id"
         }
       }
     },
     {
       "changeSet": {
-        "id": "inventory_mapping_type_category_3",
+        "id": "inventory_mapping_group_roles_3",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_type_category_fk_1",
+          "constraintName": "inventory_mapping_group_roles_fk_1",
           "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_type_category",
-          "baseColumnNames": "organization_id, super_type_name, type_name",
+          "baseTableName": "mapping_group_roles",
+          "baseColumnNames": "role_name, role_organization_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "type",
-          "referencedColumnNames": "organization_id, super_type_name, type_name"
+          "referencedTableName": "role",
+          "referencedColumnNames": "role_name, organization_id"
         }
       }
     },
     {
       "changeSet": {
-        "id": "inventory_mapping_type_category_4",
+        "id": "inventory_mapping_group_roles_4",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_type_category_fk_2",
+          "constraintName": "inventory_mapping_group_roles_fk_2",
           "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_type_category",
-          "baseColumnNames": "category_id",
+          "baseTableName": "mapping_group_roles",
+          "baseColumnNames": "group_name, group_organization_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "category",
-          "referencedColumnNames": "id"
+          "referencedTableName": "group_names",
+          "referencedColumnNames": "group_name, organization_id"
         }
       }
     }

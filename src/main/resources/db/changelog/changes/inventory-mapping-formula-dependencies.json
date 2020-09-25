@@ -2,17 +2,17 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "inventory_mapping_list_variables_1",
+        "id": "inventory_mapping_formula_dependencies_1",
         "author": "shubham.gupta",
         "changes": [
           {
             "createTable": {
               "schemaName": "inventory",
-              "tableName": "mapping_list_variables",
+              "tableName": "mapping_formula_dependencies",
               "columns": [
                 {
                   "column": {
-                    "name": "list_variable_id",
+                    "name": "formula_id",
                     "type": "BIGINT",
                     "constraints": {
                       "nullable": false
@@ -21,16 +21,7 @@
                 },
                 {
                   "column": {
-                    "name": "organization_id",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_super_type_name",
+                    "name": "key_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": false
@@ -39,7 +30,7 @@
                 },
                 {
                   "column": {
-                    "name": "variable_type_name",
+                    "name": "key_parent_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": false
@@ -48,8 +39,8 @@
                 },
                 {
                   "column": {
-                    "name": "variable_super_list_id",
-                    "type": "BIGINT",
+                    "name": "key_parent_type_organization_id",
+                    "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": false
                     }
@@ -57,8 +48,8 @@
                 },
                 {
                   "column": {
-                    "name": "variable_name",
-                    "type": "NVARCHAR(511)",
+                    "name": "key_parent_super_type_name",
+                    "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": false
                     }
@@ -72,47 +63,47 @@
     },
     {
       "changeSet": {
-        "id": "inventory_mapping_list_variables_2",
+        "id": "inventory_mapping_formula_dependencies_2",
         "author": "shubham.gupta",
         "addPrimaryKey": {
-          "constraintName": "inventory_mapping_list_variables_pk",
+          "constraintName": "inventory_mapping_formula_dependencies_pk",
           "schemaName": "inventory",
-          "tableName": "mapping_list_variables",
-          "columnNames": "list_variable_id, variable_name, variable_super_list_id, variable_type_name, organization_id, variable_super_type_name"
+          "tableName": "mapping_formula_dependencies",
+          "columnNames": "formula_id,key_name,key_parent_type_name,key_parent_type_organization_id,key_parent_super_type_name"
         }
       }
     },
     {
       "changeSet": {
-        "id": "inventory_mapping_list_variables_3",
+        "id": "inventory_mapping_formula_dependencies_3",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_list_variables_fk_1",
           "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_list_variables",
-          "baseColumnNames": "organization_id ,variable_super_type_name, variable_type_name, variable_super_list_id, variable_name ",
+          "constraintName": "inventory_mapping_formula_dependencies_fk_1",
+          "baseTableName": "mapping_formula_dependencies",
+          "baseColumnNames": "formula_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_list_id, variable_name"
-        }
-      }
-    },
-    {
-      "changeSet": {
-        "id": "inventory_mapping_list_variables_4",
-        "author": "shubham.gupta",
-        "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_list_variables_fk_2",
-          "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_list_variables",
-          "baseColumnNames": "list_variable_id",
-          "onDelete": "CASCADE",
-          "onUpdate": "RESTRICT",
-          "referencedTableSchemaName": "inventory",
-          "referencedTableName": "variable_list",
+          "referencedTableName": "formula",
           "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_formula_dependencies_4",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "baseTableSchemaName": "inventory",
+          "constraintName": "inventory_mapping_formula_dependencies_fk_",
+          "baseTableName": "mapping_formula_dependencies",
+          "baseColumnNames": "key_name,key_parent_type_name,key_parent_type_organization_id,key_parent_super_type_name",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "key_names",
+          "referencedColumnNames": "key_name, parent_type_name, parent_type_organization_id, parent_super_type_name"
         }
       }
     }

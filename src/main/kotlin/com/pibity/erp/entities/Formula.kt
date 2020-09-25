@@ -11,6 +11,7 @@ package com.pibity.erp.entities
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
+import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "formula", schema = "inventory")
@@ -20,14 +21,26 @@ data class Formula(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = -1,
 
-    @Column(name = "expression", nullable = false)
-    var expression: String = "",
-
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "type_name", referencedColumnName = "type_name")])
-    var returnType: Type
+    @JoinColumns(*[JoinColumn(name = "return_type_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "return_type_super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "return_type_name", referencedColumnName = "type_name")])
+    var returnType: Type,
+
+    @Column(name = "symbols", nullable = false)
+    var symbols: String,
+
+    @Column(name = "expression", nullable = false)
+    var expression: String,
+
+    @ManyToMany
+    @JoinTable(name = "mapping_formula_dependencies", schema = "inventory",
+        joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "key_parent_type_organization_id", referencedColumnName = "parent_type_organization_id"),
+          JoinColumn(name = "key_parent_super_type_name", referencedColumnName = "parent_super_type_name"),
+          JoinColumn(name = "key_parent_type_name", referencedColumnName = "parent_type_name"),
+          JoinColumn(name = "key_name", referencedColumnName = "key_name")])
+    val keyDependencies: MutableSet<Key> = HashSet()
 
 ) : Serializable {
 

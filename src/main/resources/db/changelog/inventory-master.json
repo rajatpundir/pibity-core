@@ -14,11 +14,6 @@
     },
     {
       "include": {
-        "file": "db/changelog/changes/inventory-category.json"
-      }
-    },
-    {
-      "include": {
         "file": "db/changelog/changes/inventory-type.json"
       }
     },
@@ -59,17 +54,62 @@
     },
     {
       "include": {
-        "file": "db/changelog/changes/inventory-mapping-type-category.json"
+        "file": "db/changelog/changes/inventory-mapping-formula-dependencies.json"
       }
     },
     {
       "include": {
-        "file": "db/changelog/changes/inventory-mapping-value-formula.json"
+        "file": "db/changelog/changes/inventory-mapping-value-dependencies.json"
       }
     },
     {
       "include": {
-        "file": "db/changelog/changes/inventory-mapping-category-ancestors.json"
+        "file": "db/changelog/changes/inventory-type-permission.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-key-permission.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-role.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-user.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-group.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-mapping-group-roles.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-mapping-user-roles.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-mapping-user-groups.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-mapping-role-permissions.json"
+      }
+    },
+    {
+      "include": {
+        "file": "db/changelog/changes/inventory-changelog.json"
       }
     }
   ]

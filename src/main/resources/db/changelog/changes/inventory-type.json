@@ -15,7 +15,7 @@
                     "name": "organization_id",
                     "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -24,7 +24,7 @@
                     "name": "super_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -33,7 +33,7 @@
                     "name": "type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -42,7 +42,7 @@
                     "name": "auto_increment_id",
                     "type": "INTEGER",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     },
                     "defaultValue": 0
                   }
@@ -52,7 +52,7 @@
                     "name": "auto_assign_id",
                     "type": "BOOLEAN",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     },
                     "defaultValue": false
                   }
@@ -62,7 +62,7 @@
                     "name": "display_name",
                     "type": "NVARCHAR(511)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     },
                     "defaultValue": ""
                   }
@@ -72,7 +72,7 @@
                     "name": "depth",
                     "type": "INTEGER",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     },
                     "defaultValue": 0
                   }
@@ -85,6 +85,24 @@
                       "nullable": "false"
                     },
                     "defaultValue": false
+                  }
+                },
+                {
+                  "column": {
+                    "name": "multiplicity",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "variable_count",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 }
               ]

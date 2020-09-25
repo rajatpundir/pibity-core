@@ -2,36 +2,27 @@
   "databaseChangeLog": [
     {
       "changeSet": {
-        "id": "inventory_variable_list_1",
+        "id": "inventory_role_1",
         "author": "shubham.gupta",
         "changes": [
           {
             "createTable": {
               "schemaName": "inventory",
-              "tableName": "variable_list",
+              "tableName": "role",
               "columns": [
                 {
                   "column": {
-                    "name": "id",
-                    "autoIncrement": true,
-                    "type": "BIGINT",
+                    "name": "organization_id",
+                    "type": "NVARCHAR(255)",
                     "constraints": {
-                      "primaryKey": true,
-                      "nullable": false,
-                      "primaryKeyName": "inventory_variable_list_pk"
+                      "nullable": false
                     }
                   }
                 },
                 {
                   "column": {
-                    "name": "list_type_id",
-                    "type": "BIGINT"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "size",
-                    "type": "INTEGER",
+                    "name": "role_name",
+                    "type": "VARCHAR(255)",
                     "constraints": {
                       "nullable": false
                     }
@@ -45,17 +36,29 @@
     },
     {
       "changeSet": {
-        "id": "inventory_variable_list_2",
+        "id": "inventory_role_2",
+        "author": "shubham.gupta",
+        "addPrimaryKey": {
+          "constraintName": "inventory_role_pk",
+          "schemaName": "inventory",
+          "tableName": "role",
+          "columnNames": "role_name, organization_id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_role_3",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_variable_list_fk_1",
+          "constraintName": "inventory_role_fk_1",
           "baseTableSchemaName": "inventory",
-          "baseTableName": "variable_list",
-          "baseColumnNames": "list_type_id",
+          "baseTableName": "role",
+          "baseColumnNames": "organization_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "type_list",
+          "referencedTableName": "organization",
           "referencedColumnNames": "id"
         }
       }

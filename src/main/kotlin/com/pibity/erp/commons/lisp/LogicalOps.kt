@@ -33,6 +33,16 @@ fun and(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
       }
       expectedReturnType
     }
+    "collect" -> {
+      val collectedSymbols = mutableSetOf<String>()
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      args.forEach {
+        if (it.isJsonObject)
+          collectedSymbols.addAll(validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
+      }
+      collectedSymbols
+    }
     else -> {
       val result: Boolean = args.fold(true) { acc, arg ->
         acc && if (arg.isJsonObject)
@@ -67,6 +77,16 @@ fun or(args: List<JsonElement>, expectedReturnType: String, mode: String, symbol
       }
       expectedReturnType
     }
+    "collect" -> {
+      val collectedSymbols = mutableSetOf<String>()
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      args.forEach {
+        if (it.isJsonObject)
+          collectedSymbols.addAll(validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
+      }
+      collectedSymbols
+    }
     else -> {
       val result: Boolean = args.fold(false) { acc, arg ->
         acc || if (arg.isJsonObject)
@@ -100,6 +120,16 @@ fun not(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
         }
       }
       expectedReturnType
+    }
+    "collect" -> {
+      val collectedSymbols = mutableSetOf<String>()
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      if (args.isNotEmpty()) {
+        if (args.first().isJsonObject)
+          collectedSymbols.addAll(validateOrEvaluateExpression(args.first().asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
+      }
+      collectedSymbols
     }
     else -> {
       val result: Boolean = if (args.isEmpty()) false

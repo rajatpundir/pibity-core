@@ -15,7 +15,7 @@ import javax.persistence.*
 import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "list_variable", schema = "inventory")
+@Table(name = "variable_list", schema = "inventory")
 data class VariableList(
 
     @Id

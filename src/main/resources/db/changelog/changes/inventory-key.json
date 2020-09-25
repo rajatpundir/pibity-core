@@ -15,7 +15,7 @@
                     "name": "parent_type_organization_id",
                     "type": "NVARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -24,7 +24,7 @@
                     "name": "parent_super_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -33,7 +33,7 @@
                     "name": "parent_type_name",
                     "type": "VARCHAR(255)",
                     "constraints": {
-                      "nullable": "false"
+                      "nullable": false
                     }
                   }
                 },
@@ -122,8 +122,8 @@
                 },
                 {
                   "column": {
-                    "name": "referenced_super_variable_name",
-                    "type": "NVARCHAR(511)"
+                    "name": "referenced_variable_super_list_id",
+                    "type": "BIGINT"
                   }
                 },
                 {
@@ -152,7 +152,7 @@
     },
     {
       "changeSet": {
-        "id": "inventory_key_2",
+        "id": "inventory_key_names_2",
         "author": "shubham.gupta",
         "addPrimaryKey": {
           "constraintName": "inventory_key_pk",
@@ -164,10 +164,10 @@
     },
     {
       "changeSet": {
-        "id": "inventory_key_3",
+        "id": "inventory_key_names_3",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_key_fk_1",
+          "constraintName": "inventory_key_names_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_names",
           "baseColumnNames": "parent_type_organization_id, parent_super_type_name, parent_type_name",
@@ -181,27 +181,27 @@
     },
     {
       "changeSet": {
-        "id": "inventory_key_4",
+        "id": "inventory_key_names_4",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_key_fk_2",
+          "constraintName": "inventory_key_names_fk_2",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_names",
           "baseColumnNames": "list_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "list_type",
+          "referencedTableName": "type_list",
           "referencedColumnNames": "id"
         }
       }
     },
     {
       "changeSet": {
-        "id": "inventory_key_5",
+        "id": "inventory_key_names_5",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_key_fk_3",
+          "constraintName": "inventory_key_names_fk_3",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_names",
           "baseColumnNames": "formula_id",
@@ -215,10 +215,10 @@
     },
     {
       "changeSet": {
-        "id": "inventory_key_6",
+        "id": "inventory_key_names_6",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_key_fk_4",
+          "constraintName": "inventory_key_names_fk_4",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_names",
           "baseColumnNames": "key_type_organization_id, key_super_type_name, key_type_name",
@@ -232,20 +232,21 @@
     },
     {
       "changeSet": {
-        "id": "inventory_key_7",
+        "id": "inventory_key_names_7",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_key_fk_5",
+          "constraintName": "inventory_key_names_fk_5",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_names",
-          "baseColumnNames": "referenced_variable_organization_id, referenced_variable_super_type_name, referenced_variable_type_name, referenced_super_variable_name, referenced_variable_name",
+          "baseColumnNames": "referenced_variable_name, referenced_variable_super_list_id, referenced_variable_type_name, referenced_variable_organization_id, referenced_variable_super_type_name",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_variable_name, variable_name"
+          "referencedColumnNames": "variable_name, super_list_id, type_name, organization_id, super_type_name"
         }
       }
     }
+
   ]
 }
