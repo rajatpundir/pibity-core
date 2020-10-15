@@ -27,8 +27,8 @@ data class Formula(
       JoinColumn(name = "return_type_name", referencedColumnName = "type_name")])
     var returnType: Type,
 
-    @Column(name = "symbols", nullable = false)
-    var symbols: String,
+    @Column(name = "symbol_paths", nullable = false)
+    var symbolPaths: String,
 
     @Column(name = "expression", nullable = false)
     var expression: String,

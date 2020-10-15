@@ -11,6 +11,7 @@ package com.pibity.erp.commons.utils
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
@@ -580,9 +581,38 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix:
         }
       }
       else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
-        val subSymbols: JsonObject = getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
-        if (subSymbols.size() != 0)
-          symbols.add(value.id.key.id.name, subSymbols)
+        if (value.id.key.type.id.superTypeName == GLOBAL_TYPE) {
+          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
+            getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+          else JsonObject()
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", TypeConstants.TEXT)
+            addProperty("value", value.referencedVariable!!.id.name)
+            if (subSymbols.size() != 0)
+              add("values", subSymbols)
+          })
+        } else {
+          if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
+              || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
+            val subSymbols: JsonObject = getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+            if (subSymbols.size() != 0)
+              symbols.add(value.id.key.id.name, JsonObject().apply { add("values", subSymbols) })
+          } else {
+            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
+              getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+            else JsonObject()
+            symbols.add(value.id.key.id.name + "::context", JsonObject().apply {
+              addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.superList.id)
+            })
+            symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.name)
+              if (subSymbols.size() != 0)
+                add("values", subSymbols)
+            })
+          }
+        }
       }
     }
   }
@@ -662,9 +692,40 @@ fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: Mutabl
         }
       }
       else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
-        val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
-        if (subSymbols.size() != 0)
-          symbols.add(value.id.key.id.name, subSymbols)
+        if (value.id.key.type.id.superTypeName == GLOBAL_TYPE) {
+          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
+            getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
+          else JsonObject()
+          symbols.add(value.id.key.id.name, JsonObject().apply {
+            addProperty("type", TypeConstants.TEXT)
+            addProperty("value", value.referencedVariable!!.id.name)
+            if (subSymbols.size() != 0)
+              add("values", subSymbols)
+          })
+          valueDependencies.add(value)
+        } else {
+          if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
+              || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
+            val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
+            if (subSymbols.size() != 0)
+              symbols.add(value.id.key.id.name, subSymbols)
+          } else {
+            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
+              getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
+            else JsonObject()
+            symbols.add(value.id.key.id.name + "::context", JsonObject().apply {
+              addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.superList.id)
+            })
+            symbols.add(value.id.key.id.name, JsonObject().apply {
+              addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.name)
+              if (subSymbols.size() != 0)
+                add("values", subSymbols)
+            })
+            valueDependencies.add(value)
+          }
+        }
       }
     }
   }

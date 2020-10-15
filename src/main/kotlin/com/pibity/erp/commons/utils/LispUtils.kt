@@ -57,6 +57,7 @@ fun validateOrEvaluateExpression(jsonParams: JsonObject, mode: String, symbols: 
       "if" -> ifThenElse(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
       "let" -> let(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
       "." -> dot(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
+      "id" -> identity(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode)
       else -> throw CustomJsonException("Invalid operation")
     }
   } catch (exception: CustomJsonException) {

@@ -40,7 +40,7 @@ fun serialize(key: Key): JsonObject {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
       json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.id?.name)
       json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula?.expression, JsonObject::class.java))
-      json.add(KeyConstants.FORMULA_SYMBOLS, gson.fromJson(key.formula?.symbols, JsonArray::class.java))
+      json.add(KeyConstants.FORMULA_SYMBOLS, gson.fromJson(key.formula?.symbolPaths, JsonArray::class.java))
     }
     TypeConstants.LIST -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)

@@ -24,7 +24,7 @@ fun add(args: List<JsonElement>, types: MutableList<String>, expectedReturnType:
         repeat(args.size - types.size) { types.add(types.last()) }
       if (!expectedReturnTypes.contains(expectedReturnType))
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {
@@ -99,7 +99,7 @@ fun multiply(args: List<JsonElement>, types: MutableList<String>, expectedReturn
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {
@@ -174,7 +174,7 @@ fun subtract(args: List<JsonElement>, types: MutableList<String>, expectedReturn
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {
@@ -279,7 +279,7 @@ fun divide(args: List<JsonElement>, types: MutableList<String>, expectedReturnTy
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {
@@ -361,7 +361,7 @@ fun power(args: List<JsonElement>, types: MutableList<String>, expectedReturnTyp
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {
@@ -446,7 +446,7 @@ fun modulus(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {

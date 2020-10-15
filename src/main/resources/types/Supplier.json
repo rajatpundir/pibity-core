@@ -102,7 +102,7 @@
               "displayName": "Postcode",
               "order": "6"
             },
-            "type": {
+            "addressType": {
               "type": "AddressType",
               "displayName": "Type",
               "order": "7",

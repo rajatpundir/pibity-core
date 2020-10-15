@@ -79,7 +79,7 @@
         "displayName": "Calculated",
         "order": "2"
       },
-      "type": {
+      "operationType": {
         "type": "OperationType",
         "displayName": "Type",
         "order": "3",
@@ -91,7 +91,7 @@
         "order": "4",
         "default": "Average Cost"
       },
-      "value": {
+      "totalValue": {
         "type": "Number",
         "displayName": "Value",
         "order": "5",
@@ -340,7 +340,7 @@
               "displayName": "Postcode",
               "order": "6"
             },
-            "type": {
+            "addressType": {
               "type": "AddressType",
               "displayName": "Type",
               "order": "7",

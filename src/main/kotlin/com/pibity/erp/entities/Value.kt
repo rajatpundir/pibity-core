@@ -65,7 +65,7 @@ data class Value(
       JoinColumn(name = "dependency_value_key_super_type_name", referencedColumnName = "key_super_type_name"),
       JoinColumn(name = "dependency_value_key_type_name", referencedColumnName = "key_type_name"),
       JoinColumn(name = "dependency_value_key_name", referencedColumnName = "key_name")])
-    val valueDependencies: MutableSet<Value> = HashSet(),
+    var valueDependencies: MutableSet<Value> = HashSet(),
 
     @ManyToMany(mappedBy = "valueDependencies")
     val dependentValues: MutableSet<Value> = HashSet()

@@ -16,13 +16,13 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.validateOrEvaluateExpression
 import java.util.regex.Pattern
 
-val symbolIdentifierPattern: Pattern = Pattern.compile("^[a-z][a-zA-Z0-9]*$")
+val symbolIdentifierPattern: Pattern = Pattern.compile("^([a-z][a-zA-Z0-9]*)+(::([a-z][a-zA-Z0-9]*)+)?$")
 
 fun validateSymbols(jsonParams: JsonObject): JsonObject {
   val expectedSymbols = JsonObject()
   for ((symbolName, symbolObject) in jsonParams.entrySet()) {
     val expectedSymbol = JsonObject()
-    val symbol = try {
+    val symbol: JsonObject = try {
       symbolObject.asJsonObject
     } catch (exception: Exception) {
       throw CustomJsonException("{$symbolName: 'Unexpected value for parameter'}")
@@ -58,14 +58,17 @@ fun validateSymbols(jsonParams: JsonObject): JsonObject {
         } else false)
         else -> throw CustomJsonException("{$symbolName: {${KeyConstants.KEY_TYPE}: 'Unexpected value for parameter'}}")
       }
-      expectedSymbols.add(symbolName, expectedSymbol)
-    } else {
+    }
+    if (symbol.has("values")) {
       try {
-        expectedSymbols.add(symbolName, validateSymbols(jsonParams = symbol))
+        expectedSymbol.add("values", validateSymbols(jsonParams = symbol.get("values").asJsonObject))
       } catch (exception: CustomJsonException) {
-        throw CustomJsonException("{$symbolName: ${exception.message}}")
+        throw CustomJsonException("{$symbolName: {values: ${exception.message}}}")
       }
     }
+    if (expectedSymbol.size() == 0)
+      throw CustomJsonException("{$symbolName: 'Unexpected value for parameter'}")
+    expectedSymbols.add(symbolName, expectedSymbol)
   }
   return expectedSymbols
 }
@@ -83,8 +86,8 @@ fun getSymbolPaths(jsonParams: JsonObject, prefix: String = ""): Set<String> {
     val symbol = symbolObject.asJsonObject
     if (symbol.has(KeyConstants.KEY_TYPE))
       symbolPaths.add(prefix + symbolName)
-    else
-      symbolPaths.addAll(getSymbolPaths(jsonParams = symbol, prefix = prefix + symbolName + "."))
+    if (symbol.has("values"))
+      symbolPaths.addAll(getSymbolPaths(jsonParams = symbol.get("values").asJsonObject, prefix = "$prefix$symbolName."))
   }
   return symbolPaths
 }
@@ -119,10 +122,10 @@ fun let(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
   }
 }
 
-// TODO. This function needs a rewrite for improved elegance.
 fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
   println("----HERE--ARE--SYMBOLS----")
   println(symbols)
+  println(args)
   when (mode) {
     "validate" -> {
       if (args.isEmpty())
@@ -137,34 +140,42 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
       }
       for ((index, symbolName) in symbolPaths.withIndex()) {
         if (symbolsJson.has(symbolName)) {
-          if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
-            return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
-              TypeConstants.TEXT -> when (expectedReturnType) {
-                TypeConstants.TEXT -> TypeConstants.TEXT
+          if (index == (symbolPaths.size - 1)) {
+            if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
+              return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
+                TypeConstants.TEXT -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.NUMBER -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.NUMBER -> TypeConstants.NUMBER
+                  TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.DECIMAL -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.NUMBER -> TypeConstants.NUMBER
+                  TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.BOOLEAN -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.BOOLEAN -> TypeConstants.BOOLEAN
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
                 else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
               }
-              TypeConstants.NUMBER -> when (expectedReturnType) {
-                TypeConstants.TEXT -> TypeConstants.TEXT
-                TypeConstants.NUMBER -> TypeConstants.NUMBER
-                TypeConstants.DECIMAL -> TypeConstants.DECIMAL
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              TypeConstants.DECIMAL -> when (expectedReturnType) {
-                TypeConstants.TEXT -> TypeConstants.TEXT
-                TypeConstants.NUMBER -> TypeConstants.NUMBER
-                TypeConstants.DECIMAL -> TypeConstants.DECIMAL
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              TypeConstants.BOOLEAN -> when (expectedReturnType) {
-                TypeConstants.TEXT -> TypeConstants.TEXT
-                TypeConstants.BOOLEAN -> TypeConstants.BOOLEAN
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+            } else throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+          } else {
+            try {
+              symbolsJson = symbolsJson.get(symbolName).asJsonObject.get("values").asJsonObject
+            } catch (exception: Exception) {
+              throw CustomJsonException("{args: 'Unexpected value for parameter'}")
             }
-          } else symbolsJson = symbolsJson.get(symbolName).asJsonObject
+          }
         } else throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-        if (index == (args.size - 1))
+        if (index == (symbolPaths.size - 1))
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
       }
     }
@@ -178,54 +189,117 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
       }
-      return setOf(symbolPaths.joinToString(separator = "."))
+      return mutableSetOf(symbolPaths.joinToString(separator = "."))
     }
     else -> {
       var symbolsJson: JsonObject = symbols
       val symbolPaths: List<String> = args.map {
         try {
-          if (it.isJsonObject)
-            validateOrEvaluateExpression(jsonParams = it.asJsonObject.apply {
-              addProperty("expectedReturnType", TypeConstants.TEXT)
-            }, mode = "evaluate", symbols = symbols) as String
-          else it.asString
+          it.asString
         } catch (exception: Exception) {
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
       }
       for ((index, symbolName) in symbolPaths.withIndex()) {
         if (symbolsJson.has(symbolName)) {
-          if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
-            return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
-              TypeConstants.TEXT -> when (expectedReturnType) {
-                TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
+          if (index == (symbolPaths.size - 1)) {
+            if (symbolsJson.get(symbolName).asJsonObject.has(KeyConstants.KEY_TYPE)) {
+              return when (symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
+                TypeConstants.TEXT -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.NUMBER -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
+                  TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.DECIMAL -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
+                  TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.BOOLEAN -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
+                  TypeConstants.BOOLEAN -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBoolean
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
                 else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
               }
-              TypeConstants.NUMBER -> when (expectedReturnType) {
-                TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
-                TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
-                TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              TypeConstants.DECIMAL -> when (expectedReturnType) {
-                TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
-                TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
-                TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              TypeConstants.BOOLEAN -> when (expectedReturnType) {
-                TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
-                TypeConstants.BOOLEAN -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBoolean
-                else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-              }
-              else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-            }
-          } else symbolsJson = symbolsJson.get(symbolName).asJsonObject
+            } else throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+          } else symbolsJson = symbolsJson.get(symbolName).asJsonObject.get("values").asJsonObject
         } else throw CustomJsonException("{args: 'Unexpected value for parameter'}")
-        if (index == (args.size - 1))
+        if (index == (symbolPaths.size - 1))
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
       }
     }
   }
   throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+}
+
+fun identity(args: List<JsonElement>, types: MutableList<String>, expectedReturnType: String, mode: String): Any {
+  return when (mode) {
+    "validate" -> {
+      if (types.isEmpty())
+        throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+      if (args.isEmpty())
+        throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+      val argType: String = try {
+        types.first()
+      } catch (exception: Exception) {
+        throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+      }
+      val expectedReturnTypes: List<String> = when (argType) {
+        TypeConstants.TEXT -> listOf(TypeConstants.TEXT)
+        TypeConstants.NUMBER, TypeConstants.DECIMAL -> listOf(TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.TEXT)
+        TypeConstants.BOOLEAN -> listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT)
+        else -> throw CustomJsonException("{types: 'Unexpected value for parameter'}")
+      }
+      if (!expectedReturnTypes.contains(expectedReturnType))
+        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+      when (argType) {
+        TypeConstants.TEXT -> try {
+          args.first().asString
+        } catch (exception: Exception) {
+          throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+        }
+        TypeConstants.NUMBER -> try {
+          args.first().asLong
+        } catch (exception: Exception) {
+          throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+        }
+        TypeConstants.DECIMAL -> try {
+          args.first().asDouble
+        } catch (exception: Exception) {
+          throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+        }
+        else -> try {
+          args.first().asBoolean
+        } catch (exception: Exception) {
+          throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+        }
+      }
+      expectedReturnType
+    }
+    "collect" -> mutableSetOf<String>()
+    else -> when (types.first()) {
+      TypeConstants.TEXT -> args.first().asString
+      TypeConstants.NUMBER -> when (expectedReturnType) {
+        TypeConstants.NUMBER -> args.first().asLong
+        TypeConstants.DECIMAL -> args.first().asLong.toDouble()
+        else -> args.first().asLong.toString()
+      }
+      TypeConstants.DECIMAL -> when (expectedReturnType) {
+        TypeConstants.NUMBER -> args.first().asLong
+        TypeConstants.DECIMAL -> args.first().asDouble
+        else -> args.first().asDouble.toString()
+      }
+      else -> when (expectedReturnType) {
+        TypeConstants.BOOLEAN -> args.first().asBoolean
+        else -> args.first().asBoolean.toString()
+      }
+    }
+  }
 }

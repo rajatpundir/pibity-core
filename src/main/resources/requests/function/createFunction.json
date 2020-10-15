@@ -1,0 +1,14 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "functionName": {
+    "type": "String"
+  },
+  "inputs": {
+    "type": "Object"
+  },
+  "outputs": {
+    "type": "Object"
+  }
+}
