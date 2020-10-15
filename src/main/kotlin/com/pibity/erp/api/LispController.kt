@@ -33,7 +33,8 @@ class LispController {
   fun evaluateLispExpression(@RequestBody request: String): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["evaluateExpression"] ?: JsonObject())
-      ResponseEntity(validateOrEvaluateExpression(jsonParams = jsonParams, mode = "collect", symbols = JsonObject()).toString(), HttpStatus.OK)
+      ResponseEntity(validateOrEvaluateExpression(jsonParams = jsonParams, mode = "validate", symbols = JsonObject()).toString()
+          + " " + validateOrEvaluateExpression(jsonParams = jsonParams, mode = "evaluate", symbols = JsonObject()).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

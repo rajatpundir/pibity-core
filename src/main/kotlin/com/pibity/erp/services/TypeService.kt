@@ -12,6 +12,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.commons.lisp.getSymbolPaths
 import com.pibity.erp.commons.lisp.validateSymbols
 import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
@@ -152,18 +153,18 @@ class TypeService(
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
             }
             val keyDependencies: MutableSet<Key> = mutableSetOf()
-            val symbolPaths = validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.apply {
+            val symbolPaths = validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.deepCopy().apply {
               addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
             }, mode = "collect", symbols = JsonObject()) as Set<String>
             val symbols: JsonObject = validateSymbols(jsonParams = getSymbols(type = type, prefix = "", symbolPaths = symbolPaths.toMutableSet(), level = 0, keyDependencies = keyDependencies))
             try {
-              validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.apply {
+              validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.deepCopy().apply {
                 addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
               }, mode = "validate", symbols = symbols) as String
             } catch (exception: CustomJsonException) {
               throw CustomJsonException("{keys: {$keyName: {expression: ${exception.message}}}}")
             }
-            val formula = Formula(returnType = returnType, expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.toString(), symbols = gson.toJson(symbolPaths), keyDependencies = keyDependencies)
+            val formula = Formula(returnType = returnType, expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.toString(), symbolPaths = gson.toJson(getSymbolPaths(jsonParams = symbols)), keyDependencies = keyDependencies)
             key.formula = formula
           }
           else -> throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
@@ -172,8 +173,6 @@ class TypeService(
       }
     }
     type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
-    if (type.depth > 12)
-      throw CustomJsonException("{$typeName: 'Type is highly nested'}")
     val createdType: Type = try {
       typeRepository.save(type)
     } catch (exception: Exception) {

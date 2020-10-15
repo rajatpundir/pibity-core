@@ -23,7 +23,7 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
         throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val argTypes: List<String> = args.zip(types) { arg, type ->
+      args.zip(types) { arg, type ->
         if (!acceptableTypes.contains(type))
           throw CustomJsonException("{types: 'Unexpected value for parameter'}")
         else {

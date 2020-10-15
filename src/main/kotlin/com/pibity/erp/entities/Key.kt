@@ -9,6 +9,10 @@
 package com.pibity.erp.entities
 
 import com.pibity.erp.entities.embeddables.KeyId
+import com.pibity.erp.entities.function.FunctionInput
+import com.pibity.erp.entities.function.FunctionInputKey
+import com.pibity.erp.entities.function.FunctionOutput
+import com.pibity.erp.entities.function.FunctionOutputKey
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
@@ -64,8 +68,26 @@ data class Key(
     @JoinColumn(name = "list_id")
     var list: TypeList? = null,
 
+    @Column(name = "is_dependency")
+    var isDependency: Boolean = false,
+
+    @Column(name = "is_variable_dependency")
+    var isVariableDependency: Boolean = false,
+
     @ManyToMany(mappedBy = "keyDependencies")
-    val dependentFormulas: Set<Formula> = HashSet()
+    val dependentFormulas: Set<Formula> = HashSet(),
+
+    @ManyToMany(mappedBy = "variableNameKeyDependencies")
+    val dependentFunctionInputVariableNames: Set<FunctionInput> = HashSet(),
+
+    @ManyToMany(mappedBy = "keyDependencies")
+    val dependentFunctionInputKeys: Set<FunctionInputKey> = HashSet(),
+
+    @ManyToMany(mappedBy = "variableNameKeyDependencies")
+    val dependentFunctionOutputVariableNames: Set<FunctionOutput> = HashSet(),
+
+    @ManyToMany(mappedBy = "keyDependencies")
+    val dependentFunctionOutputKeys: Set<FunctionOutputKey> = HashSet()
 
 ) : Serializable {
 
