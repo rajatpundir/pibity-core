@@ -6,10 +6,10 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities
+package com.pibity.erp.entities.permission
 
-import com.pibity.erp.entities.embeddables.TypePermissionId
-import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.entities.permission.embeddables.TypePermissionId
+import com.pibity.erp.entities.mappings.RoleTypePermission
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
@@ -32,7 +32,7 @@ data class TypePermission(
     var keyPermissions: MutableSet<KeyPermission> = HashSet(),
 
     @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
-    val permissionRoles: MutableSet<RolePermission> = HashSet()
+    val permissionRoles: MutableSet<RoleTypePermission> = HashSet()
 
 ) : Serializable {
 

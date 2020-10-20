@@ -6,44 +6,37 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities
+package com.pibity.erp.entities.permission
 
-import com.pibity.erp.entities.embeddables.RoleId
-import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.RoleFunctionPermission
-import com.pibity.erp.entities.mappings.RoleTypePermission
-import com.pibity.erp.entities.mappings.UserRole
+import com.pibity.erp.entities.permission.embeddables.FunctionPermissionId
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "role", schema = "inventory")
-data class Role(
+@Table(name = "function_permission", schema = "inventory")
+data class FunctionPermission(
 
     @EmbeddedId
-    val id: RoleId,
+    val id: FunctionPermissionId,
 
-    @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
-    val roleTypePermissions: MutableSet<RoleTypePermission> = HashSet(),
+    @OneToMany(mappedBy = "id.functionPermission", cascade = [CascadeType.ALL])
+    var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
-    val roleFunctionPermissions: MutableSet<RoleFunctionPermission> = HashSet(),
+    @OneToMany(mappedBy = "id.functionPermission", cascade = [CascadeType.ALL])
+    var functionOutputPermissions: MutableSet<FunctionOutputPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.role")
-    val roleGroups: Set<GroupRole> = HashSet(),
-
-    @OneToMany(mappedBy = "id.role")
-    val roleUsers: Set<UserRole> = HashSet()
+    @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
+    val permissionRoles: MutableSet<RoleFunctionPermission> = HashSet()
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as Role
+    other as FunctionPermission
     return this.id == other.id
   }
 

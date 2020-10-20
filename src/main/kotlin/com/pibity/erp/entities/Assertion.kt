@@ -6,28 +6,37 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities.mappings
+package com.pibity.erp.entities
 
-import com.pibity.erp.entities.mappings.embeddables.RolePermissionId
+import com.google.gson.annotations.Expose
+import com.pibity.erp.entities.embeddables.AssertionId
 import java.io.Serializable
 import java.util.*
+import javax.persistence.Column
 import javax.persistence.EmbeddedId
 import javax.persistence.Entity
 import javax.persistence.Table
 
 @Entity
-@Table(name = "mapping_role_permissions", schema = "inventory")
-data class RolePermission(
+@Table(name = "assertion", schema = "inventory")
+data class Assertion(
 
     @EmbeddedId
-    val id: RolePermissionId
+    val id: AssertionId,
+
+    @Expose
+    @Column(name = "display_name", nullable = false)
+    var displayName: String = "",
+
+    @Column(name = "expression", nullable = false)
+    val expression: String
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as RolePermission
+    other as Assertion
     return this.id == other.id
   }
 

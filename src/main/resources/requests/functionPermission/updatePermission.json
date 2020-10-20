@@ -5,16 +5,10 @@
   "functionName": {
     "type": "String"
   },
-  "inputs": {
-    "type": "Object"
-  },
-  "outputs": {
-    "type": "Object"
+  "permissionName": {
+    "type": "String"
   },
   "permissions": {
-    "type": "Array"
-  },
-  "roles": {
     "type": "Object"
   }
 }

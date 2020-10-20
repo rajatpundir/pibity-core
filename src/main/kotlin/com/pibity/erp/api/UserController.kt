@@ -17,7 +17,9 @@ import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.UserService
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
+import org.keycloak.representations.AccessToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -36,8 +38,10 @@ class UserController(val userService: UserService) {
       "updateUserGroups" to getExpectedParams("user", "updateUserGroups"),
       "updateUserRoles" to getExpectedParams("user", "updateUserRoles"),
       "getUserDetails" to getExpectedParams("user", "getUserDetails"),
-      "getUserPermissions" to getExpectedParams("user", "getUserPermissions"),
-      "superimposeUserPermissions" to getExpectedParams("user", "superimposeUserPermissions")
+      "getUserTypePermissions" to getExpectedParams("user", "getUserTypePermissions"),
+      "getUserFunctionPermissions" to getExpectedParams("user", "getUserFunctionPermissions"),
+      "superimposeUserTypePermissions" to getExpectedParams("user", "superimposeUserTypePermissions"),
+      "superimposeUserFunctionPermissions" to getExpectedParams("user", "superimposeUserFunctionPermissions")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -96,13 +100,13 @@ class UserController(val userService: UserService) {
     }
   }
 
-  @PostMapping(path = ["/permissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(path = ["/typePermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_USER)
-  fun getUserPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun getUserTypePermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserPermissions"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserTypePermissions"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.getUserPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.getUserTypePermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -110,13 +114,45 @@ class UserController(val userService: UserService) {
     }
   }
 
-  @PostMapping(path = ["/superimpose"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun superimposeUserPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  @PostMapping(path = ["/functionPermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
+  fun getUserFunctionPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserPermissions"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserFunctionPermissions"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.superimposeUserPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.getUserFunctionPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/superimpose/typePermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun superimposeUserTypePermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+    return try {
+      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserPermissions"]
+          ?: JsonObject()).apply { addProperty("username", token.subject) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
+  }
+
+  @PostMapping(path = ["/superimpose/functionPermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  fun superimposeUserFunctionPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+    return try {
+      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserFunctionPermissions"]
+          ?: JsonObject()).apply { addProperty("username", token.subject) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

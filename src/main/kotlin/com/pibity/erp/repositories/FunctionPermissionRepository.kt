@@ -8,15 +8,16 @@
 
 package com.pibity.erp.repositories
 
+import com.pibity.erp.entities.permission.FunctionPermission
 import com.pibity.erp.entities.permission.TypePermission
-import com.pibity.erp.entities.permission.embeddables.TypePermissionId
+import com.pibity.erp.entities.permission.embeddables.FunctionPermissionId
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.transaction.annotation.Transactional
 
-interface TypePermissionRepository : CrudRepository<TypePermission, TypePermissionId> {
+interface FunctionPermissionRepository : CrudRepository<FunctionPermission, FunctionPermissionId> {
 
   @Transactional(readOnly = true)
-  @Query("SELECT p FROM TypePermission p WHERE p.id.type.id.organization.id = :organizationName AND p.id.type.id.superTypeName = :superTypeName AND p.id.type.id.name = :typeName AND p.id.name = :name")
-  fun findTypePermission(organizationName: String, superTypeName: String, typeName: String, name: String): TypePermission?
+  @Query("SELECT p FROM FunctionPermission p WHERE p.id.function.id.organization.id = :organizationName AND p.id.function.id.name = :functionName AND p.id.name = :name")
+  fun findFunctionPermission(organizationName: String, functionName: String, name: String): FunctionPermission?
 }

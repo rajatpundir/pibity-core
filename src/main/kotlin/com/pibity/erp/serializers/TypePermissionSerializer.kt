@@ -12,7 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.permission.TypePermission
 
 fun serialize(typePermission: TypePermission): JsonObject {
   val json = JsonObject()

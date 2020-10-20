@@ -6,10 +6,10 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities.embeddables
+package com.pibity.erp.entities.permission.embeddables
 
-import com.pibity.erp.entities.Key
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.function.FunctionOutput
+import com.pibity.erp.entities.permission.FunctionPermission
 import java.io.Serializable
 import java.util.*
 import javax.persistence.Embeddable
@@ -18,30 +18,28 @@ import javax.persistence.JoinColumns
 import javax.persistence.ManyToOne
 
 @Embeddable
-data class KeyPermissionId(
+data class FunctionOutputPermissionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "type_name", referencedColumnName = "type_name"),
+      JoinColumn(name = "function_name", referencedColumnName = "function_name"),
       JoinColumn(name = "permission_name", referencedColumnName = "permission_name")])
-    val typePermission: TypePermission,
+    val functionPermission: FunctionPermission,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "key_organization_id", referencedColumnName = "parent_type_organization_id"),
-      JoinColumn(name = "key_super_type_name", referencedColumnName = "parent_super_type_name"),
-      JoinColumn(name = "key_type_name", referencedColumnName = "parent_type_name"),
-      JoinColumn(name = "key_name", referencedColumnName = "key_name")])
-    val key: Key
+    @JoinColumns(*[JoinColumn(name = "function_output_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "function_output_function_name", referencedColumnName = "function_name"),
+      JoinColumn(name = "function_output_name", referencedColumnName = "output_name")])
+    val functionOutput: FunctionOutput
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as KeyPermissionId
-    return this.typePermission == other.typePermission && this.key == other.key
+    other as FunctionOutputPermissionId
+    return this.functionPermission == other.functionPermission && this.functionOutput == other.functionOutput
   }
 
-  override fun hashCode(): Int = Objects.hash(typePermission, key)
+  override fun hashCode(): Int = Objects.hash(functionPermission, functionOutput)
 }

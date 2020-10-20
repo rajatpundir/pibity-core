@@ -16,7 +16,7 @@ import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
-import com.pibity.erp.services.RoleService
+import com.pibity.erp.services.TypePermissionService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,25 +26,24 @@ import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = ["/api/role"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-class RoleController(val roleService: RoleService) {
+@RequestMapping(path = ["/api/typePermission"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+class TypePermissionController(val typePermissionService: TypePermissionService) {
 
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createRole" to getExpectedParams("role", "createRole"),
-      "updateRoleTypePermissions" to getExpectedParams("role", "updateRoleTypePermissions"),
-      "updateRoleFunctionPermissions" to getExpectedParams("role", "updateRoleFunctionPermissions"),
-      "getRoleDetails" to getExpectedParams("role", "getRoleDetails")
+      "createPermission" to getExpectedParams("typePermission", "createPermission"),
+      "updatePermission" to getExpectedParams("typePermission", "updatePermission"),
+      "getPermissionDetails" to getExpectedParams("typePermission", "getPermissionDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun createRole(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun createPermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createRole"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.createRole(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typePermissionService.createTypePermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -52,27 +51,13 @@ class RoleController(val roleService: RoleService) {
     }
   }
 
-  @PostMapping(path = ["/update/typePermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun updateRoleTypePermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun updatePermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRoleTypePermissions"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.updateRoleTypePermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/update/functionPermissions"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun updateRoleFunctionPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
-    return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRoleFunctionPermissions"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.updateRoleFunctionPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typePermissionService.updateTypePermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")
@@ -82,11 +67,11 @@ class RoleController(val roleService: RoleService) {
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun getRoleDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun getPermissionDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getRoleDetails"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getPermissionDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.getRoleDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typePermissionService.getTypePermissionDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: Exception) {
       val message: String = exception.message ?: "Unable to process your request"
       logger.info("Exception caused via request: $request with message: $message")

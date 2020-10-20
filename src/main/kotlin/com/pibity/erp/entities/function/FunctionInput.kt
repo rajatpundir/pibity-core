@@ -10,6 +10,7 @@ package com.pibity.erp.entities.function
 
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.function.embeddables.FunctionInputId
 import java.io.Serializable
 import java.util.*
@@ -49,7 +50,27 @@ data class FunctionInput(
       JoinColumn(name = "values_organization_id", referencedColumnName = "organization_id"),
       JoinColumn(name = "values_super_type_name", referencedColumnName = "super_type_name"),
       JoinColumn(name = "values_type_name", referencedColumnName = "type_name")])
-    var values: FunctionInputType? = null
+    var values: FunctionInputType? = null,
+
+    @Column(name = "default_string_value")
+    var defaultStringValue: String? = null,
+
+    @Column(name = "default_long_value")
+    var defaultLongValue: Long? = null,
+
+    @Column(name = "default_double_value")
+    var defaultDoubleValue: Double? = null,
+
+    @Column(name = "default_boolean_value")
+    var defaultBooleanValue: Boolean? = null,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
+      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
+      JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
+      JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
+      JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
+    var referencedVariable: Variable? = null
 
 ) : Serializable {
 

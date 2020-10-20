@@ -15,7 +15,7 @@ import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.entities.Value
 import com.pibity.erp.entities.Variable
 

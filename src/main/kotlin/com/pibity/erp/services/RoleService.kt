@@ -13,14 +13,19 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
-import com.pibity.erp.entities.mappings.RolePermission
-import com.pibity.erp.entities.mappings.embeddables.RolePermissionId
+import com.pibity.erp.entities.mappings.RoleFunctionPermission
+import com.pibity.erp.entities.mappings.RoleTypePermission
+import com.pibity.erp.entities.mappings.embeddables.RoleFunctionPermissionId
+import com.pibity.erp.entities.mappings.embeddables.RoleTypePermissionId
+import com.pibity.erp.entities.permission.FunctionPermission
+import com.pibity.erp.entities.permission.TypePermission
+import com.pibity.erp.repositories.FunctionPermissionRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.TypePermissionRepository
-import com.pibity.erp.repositories.mappings.RolePermissionRepository
+import com.pibity.erp.repositories.mappings.RoleFunctionPermissionRepository
+import com.pibity.erp.repositories.mappings.RoleTypePermissionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -29,7 +34,9 @@ class RoleService(
     val organizationRepository: OrganizationRepository,
     val typePermissionRepository: TypePermissionRepository,
     val roleRepository: RoleRepository,
-    val rolePermissionRepository: RolePermissionRepository
+    val roleTypePermissionRepository: RoleTypePermissionRepository,
+    val functionPermissionRepository: FunctionPermissionRepository,
+    val roleFunctionPermissionRepository: RoleFunctionPermissionRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -45,7 +52,7 @@ class RoleService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun updateRole(jsonParams: JsonObject): Role {
+  fun updateRoleTypePermissions(jsonParams: JsonObject): Role {
     val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(
@@ -55,10 +62,33 @@ class RoleService(
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
     when (jsonParams.get("operation").asString) {
-      "add" -> role.rolePermissions.add(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+      "add" -> role.roleTypePermissions.add(RoleTypePermission(id = RoleTypePermissionId(role = role, permission = typePermission)))
       "remove" -> {
-        rolePermissionRepository.delete(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
-        role.rolePermissions.remove(RolePermission(id = RolePermissionId(role = role, permission = typePermission)))
+        roleTypePermissionRepository.delete(RoleTypePermission(id = RoleTypePermissionId(role = role, permission = typePermission)))
+        role.roleTypePermissions.remove(RoleTypePermission(id = RoleTypePermissionId(role = role, permission = typePermission)))
+      }
+      else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+    }
+    return try {
+      roleRepository.save(role)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{roleName: 'Unable to update permission for role'}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun updateRoleFunctionPermissions(jsonParams: JsonObject): Role {
+    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
+        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
+    val functionPermission: FunctionPermission = functionPermissionRepository.findFunctionPermission(organizationName = jsonParams.get("organization").asString,
+        functionName = jsonParams.get("functionName").asString,
+        name = jsonParams.get("permissionName").asString)
+        ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
+    when (jsonParams.get("operation").asString) {
+      "add" -> role.roleFunctionPermissions.add(RoleFunctionPermission(id = RoleFunctionPermissionId(role = role, permission = functionPermission)))
+      "remove" -> {
+        roleFunctionPermissionRepository.delete(RoleFunctionPermission(id = RoleFunctionPermissionId(role = role, permission = functionPermission)))
+        role.roleFunctionPermissions.remove(RoleFunctionPermission(id = RoleFunctionPermissionId(role = role, permission = functionPermission)))
       }
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }

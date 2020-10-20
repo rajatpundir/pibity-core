@@ -9,7 +9,6 @@
 package com.pibity.erp.repositories
 
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.TypePermission
 import com.pibity.erp.entities.embeddables.RoleId
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository

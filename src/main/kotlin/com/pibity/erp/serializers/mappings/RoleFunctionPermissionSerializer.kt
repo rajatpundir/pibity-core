@@ -10,14 +10,14 @@ package com.pibity.erp.serializers.mappings
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.entities.mappings.RolePermission
+import com.pibity.erp.entities.mappings.RoleFunctionPermission
 import com.pibity.erp.serializers.serialize
 
-fun serialize(rolePermission: RolePermission): JsonObject {
-  return serialize(rolePermission.id.permission)
+fun serialize(roleFunctionPermission: RoleFunctionPermission): JsonObject {
+  return serialize(roleFunctionPermission.id.permission)
 }
 
-fun serialize(entities: Set<RolePermission>): JsonArray {
+fun serialize(entities: Set<RoleFunctionPermission>): JsonArray {
   val json = JsonArray()
   for (entity in entities)
     json.add(serialize(entity))

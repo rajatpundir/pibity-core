@@ -6,10 +6,17 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.repositories.mappings
+package com.pibity.erp.services
 
-import com.pibity.erp.entities.mappings.RolePermission
-import com.pibity.erp.entities.mappings.embeddables.RolePermissionId
-import org.springframework.data.repository.CrudRepository
+import com.google.gson.JsonObject
+import org.springframework.stereotype.Service
 
-interface RolePermissionRepository  : CrudRepository<RolePermission, RolePermissionId>
+@Service
+class AssertionService(
+    val typeService: TypeService
+) {
+
+  fun createAssertion(jsonParams: JsonObject): JsonObject {
+    return JsonObject()
+  }
+}
