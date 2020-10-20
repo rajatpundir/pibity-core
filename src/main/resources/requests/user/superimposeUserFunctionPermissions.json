@@ -1,0 +1,8 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "functionName": {
+    "type": "String"
+  }
+}

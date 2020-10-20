@@ -38,6 +38,10 @@ class FunctionController(val functionService: FunctionService) {
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
   fun createFunction(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+//    val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+//    val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
+//        ?: JsonObject()).apply { addProperty("username", token.subject) }
+//    return ResponseEntity(functionService.createFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
@@ -51,21 +55,17 @@ class FunctionController(val functionService: FunctionService) {
   }
 
   @PostMapping(path = ["/execute"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
+  @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun executeFunction(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
-    val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
-    val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
-        ?: JsonObject()).apply { addProperty("username", token.subject) }
-    return ResponseEntity(functionService.executeFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
-//    return try {
-//      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
-//      val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
-//          ?: JsonObject()).apply { addProperty("username", token.subject) }
-//      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
-//    } catch (exception: Exception) {
-//      val message: String = exception.message ?: "Unable to process your request"
-//      logger.info("Exception caused via request: $request with message: $message")
-//      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-//    }
+    return try {
+      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
+          ?: JsonObject()).apply { addProperty("username", token.subject) }
+      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
+    } catch (exception: Exception) {
+      val message: String = exception.message ?: "Unable to process your request"
+      logger.info("Exception caused via request: $request with message: $message")
+      ResponseEntity(message, HttpStatus.BAD_REQUEST)
+    }
   }
 }

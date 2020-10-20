@@ -39,8 +39,10 @@ class FunctionService(
     val functionInputTypeRepository: FunctionInputTypeRepository,
     val functionOutputRepository: FunctionOutputRepository,
     val functionOutputTypeRepository: FunctionOutputTypeRepository,
+    val functionPermissionService: FunctionPermissionService,
     val variableRepository: VariableRepository,
-    val variableService: VariableService
+    val variableService: VariableService,
+    val roleService: RoleService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -78,6 +80,20 @@ class FunctionService(
             else mutableSetOf()
           }
       )
+      if (input.isJsonObject) {
+        when (type.id.name) {
+          TypeConstants.TEXT -> functionInput.defaultStringValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asString else ""
+          TypeConstants.NUMBER -> functionInput.defaultLongValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asLong else 0
+          TypeConstants.DECIMAL -> functionInput.defaultDoubleValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asDouble else 0.0
+          TypeConstants.BOOLEAN -> functionInput.defaultBooleanValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asBoolean else false
+          TypeConstants.FORMULA, TypeConstants.LIST -> {
+          }
+          else -> if (input.asJsonObject.has(KeyConstants.DEFAULT)) {
+            functionInput.referencedVariable = variableRepository.findVariable(organizationName = organization.id, superList = organization.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.id.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
+                ?: throw CustomJsonException("{inputs: {${inputName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
+          }
+        }
+      }
       functionInputRepository.save(functionInput)
       if (input.isJsonObject && input.asJsonObject.has("values")) {
         functionInput.values = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = FunctionInput(id = FunctionInputId(function = function, name = inputName), type = type), type = type, values = input.asJsonObject.get("values").asJsonObject)
@@ -111,7 +127,53 @@ class FunctionService(
       }
       function.outputs.add(functionOutput)
     }
+    function.permissions.add(functionPermissionService.createDefaultFunctionPermission(function = function))
+    createPermissionsForFunction(jsonParams = jsonParams)
+    assignFunctionPermissionsToRoles(jsonParams = jsonParams)
     return function
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun createPermissionsForFunction(jsonParams: JsonObject) {
+    for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
+      if (jsonPermission.isJsonObject) {
+        functionPermissionService.createFunctionPermission(jsonParams = JsonObject().apply {
+          addProperty("organization", jsonParams.get("organization").asString)
+          addProperty("functionName", jsonParams.get("functionName").asString)
+          try {
+            addProperty("permissionName", jsonParams.get("permissionName").asString)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {permissionName: 'Unexpected value for parameter'}}")
+          }
+          try {
+            add("permissions", jsonParams.get("permissions").asJsonArray)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{permissions: {permissions: 'Unexpected value for parameter'}}")
+          }
+        })
+      } else throw CustomJsonException("{permissions: 'Unexpected value for parameter'}")
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun assignFunctionPermissionsToRoles(jsonParams: JsonObject) {
+    for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
+      if (permissionNames.isJsonArray) {
+        for (permissionName in permissionNames.asJsonArray) {
+          roleService.updateRoleFunctionPermissions(jsonParams = JsonObject().apply {
+            addProperty("organization", jsonParams.get("organization").asString)
+            addProperty("functionName", jsonParams.get("functionName").asString)
+            addProperty("roleName", roleName)
+            try {
+              addProperty("permissionName", permissionName.asString)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}")
+            }
+            addProperty("operation", "add")
+          })
+        }
+      } else throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}}")
+    }
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -161,6 +223,33 @@ class FunctionService(
     println(symbolPaths)
     println("-------------SYMBOLS--------------")
     println(symbols)
+    for (input in inputs) {
+      when (input.type.id.name) {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.LIST, TypeConstants.FORMULA -> {
+        }
+        else -> {
+          if (input.variableName != null || input.values != null) {
+            try {
+              variableService.updateVariable(jsonParams = JsonObject().apply {
+                addProperty("organization", jsonParams.get("organization").asString)
+                addProperty("username", jsonParams.get("username").asString)
+                addProperty("typeName", input.type.id.name)
+                addProperty("variableName", args.get(input.id.name).asString)
+                if (input.variableName != null) {
+                  addProperty("updatedVariableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(input.variableName, JsonObject::class.java).apply {
+                    addProperty("expectedReturnType", TypeConstants.TEXT)
+                  }, mode = "evaluate", symbols = symbols) as String)
+                }
+                if (input.values != null)
+                  add("values", getFunctionInputTypeJson(functionInputType = input.values!!, symbols = symbols))
+              })
+            } catch (exception: CustomJsonException) {
+              throw CustomJsonException("{inputs: {${input.id.name}: ${exception.message}}}")
+            }
+          }
+        }
+      }
+    }
     val results = JsonObject()
     val outputs: Set<FunctionOutput> = functionOutputRepository.getFunctionOutputs(organizationName = organization.id, functionName = jsonParams.get("functionName").asString)
     for (output in outputs) {
@@ -180,15 +269,19 @@ class FunctionService(
         }, mode = "evaluate", symbols = symbols) as Boolean)
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
-        else -> results.add(output.id.name, serialize(variableService.createVariable(jsonParams = JsonObject().apply {
-          addProperty("organization", jsonParams.get("organization").asString)
-          addProperty("username", jsonParams.get("username").asString)
-          addProperty("typeName", output.type.id.name)
-          addProperty("variableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
-            addProperty("expectedReturnType", TypeConstants.TEXT)
-          }, mode = "evaluate", symbols = symbols) as String)
-          add("values", getFunctionOutputTypeJson(functionOutputType = output.values!!, symbols = symbols))
-        })))
+        else -> results.add(output.id.name, serialize(try {
+          variableService.createVariable(jsonParams = JsonObject().apply {
+            addProperty("organization", jsonParams.get("organization").asString)
+            addProperty("username", jsonParams.get("username").asString)
+            addProperty("typeName", output.type.id.name)
+            addProperty("variableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+              addProperty("expectedReturnType", TypeConstants.TEXT)
+            }, mode = "evaluate", symbols = symbols) as String)
+            add("values", getFunctionOutputTypeJson(functionOutputType = output.values!!, symbols = symbols))
+          })
+        } catch (exception: CustomJsonException) {
+          throw CustomJsonException("{outputs: {${output.id.name}: ${exception.message}}}")
+        }))
       }
     }
     return results

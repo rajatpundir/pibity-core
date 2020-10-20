@@ -17,6 +17,7 @@ import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.ValueId
 import com.pibity.erp.entities.embeddables.VariableId
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.repositories.ValueRepository
 import com.pibity.erp.repositories.VariableListRepository
 import com.pibity.erp.repositories.VariableRepository
@@ -36,7 +37,7 @@ class VariableService(
     println("-----CREATE--VARIABLE-----")
     println(jsonParams)
     val typePermission: TypePermission = variableTypePermission
-        ?: userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+        ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
           addProperty("organization", jsonParams.get("organization").asString)
           addProperty("username", jsonParams.get("username").asString)
           addProperty("typeName", jsonParams.get("typeName").asString)
@@ -187,7 +188,7 @@ class VariableService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Pair<Variable, Map<Value, MutableSet<Value>>> {
     val typePermission: TypePermission = variableTypePermission
-        ?: userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+        ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
           addProperty("organization", jsonParams.get("organization").asString)
           addProperty("username", jsonParams.get("username").asString)
           addProperty("typeName", jsonParams.get("typeName").asString)

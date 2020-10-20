@@ -9,7 +9,7 @@
 package com.pibity.erp.entities.mappings.embeddables
 
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.permission.FunctionPermission
 import java.io.Serializable
 import java.util.*
 import javax.persistence.Embeddable
@@ -18,7 +18,7 @@ import javax.persistence.JoinColumns
 import javax.persistence.ManyToOne
 
 @Embeddable
-data class RolePermissionId(
+data class RoleFunctionPermissionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "role_organization_id", referencedColumnName = "organization_id"),
@@ -27,17 +27,16 @@ data class RolePermissionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "permission_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "permission_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "permission_type_name", referencedColumnName = "type_name"),
+      JoinColumn(name = "permission_function_name", referencedColumnName = "function_name"),
       JoinColumn(name = "permission_name", referencedColumnName = "permission_name")])
-    val permission: TypePermission
+    val permission: FunctionPermission
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as RolePermissionId
+    other as RoleFunctionPermissionId
     return this.role == other.role && this.permission == other.permission
   }
 

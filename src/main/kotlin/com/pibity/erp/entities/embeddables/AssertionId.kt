@@ -14,7 +14,7 @@ import java.util.*
 import javax.persistence.*
 
 @Embeddable
-data class TypePermissionId(
+data class AssertionId(
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
@@ -22,15 +22,15 @@ data class TypePermissionId(
       JoinColumn(name = "type_name", referencedColumnName = "type_name")])
     val type: Type,
 
-    @Column(name = "permission_name", nullable = false)
-    val name: String
+    @Column(name = "assertion_name", nullable = false)
+    val name: String = ""
 
 ) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as TypePermissionId
+    other as AssertionId
     return this.type == other.type && this.name == other.name
   }
 

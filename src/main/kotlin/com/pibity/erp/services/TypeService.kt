@@ -18,6 +18,7 @@ import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.embeddables.KeyId
 import com.pibity.erp.entities.embeddables.TypeId
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.TypeRepository
 import com.pibity.erp.repositories.VariableRepository
@@ -30,7 +31,7 @@ class TypeService(
     val typeRepository: TypeRepository,
     val variableRepository: VariableRepository,
     val variableService: VariableService,
-    val permissionService: PermissionService,
+    val typePermissionService: TypePermissionService,
     val roleService: RoleService
 ) {
 
@@ -181,7 +182,7 @@ class TypeService(
     if (type.id.superTypeName == GLOBAL_TYPE) {
       createdType.permissions.addAll(createDefaultPermissionsForType(createdType))
       createPermissionsForType(jsonParams = jsonParams)
-      assignPermissionsToRoles(jsonParams = jsonParams)
+      assignTypePermissionsToRoles(jsonParams = jsonParams)
       if (jsonParams.has("variables?"))
         createVariablesForType(jsonParams = jsonParams)
     }
@@ -211,7 +212,7 @@ class TypeService(
   fun createPermissionsForType(jsonParams: JsonObject) {
     for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
       if (jsonPermission.isJsonObject) {
-        permissionService.createPermission(jsonParams = JsonObject().apply {
+        typePermissionService.createTypePermission(jsonParams = JsonObject().apply {
           addProperty("organization", jsonParams.get("organization").asString)
           addProperty("typeName", jsonParams.get("typeName").asString)
           try {
@@ -240,11 +241,11 @@ class TypeService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun assignPermissionsToRoles(jsonParams: JsonObject) {
+  fun assignTypePermissionsToRoles(jsonParams: JsonObject) {
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
-          roleService.updateRole(jsonParams = JsonObject().apply {
+          roleService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
             addProperty("organization", jsonParams.get("organization").asString)
             addProperty("typeName", jsonParams.get("typeName").asString)
             addProperty("roleName", roleName)
@@ -286,8 +287,8 @@ class TypeService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultPermissionsForType(type: Type): Set<TypePermission> {
     val defaultPermissions = mutableSetOf<TypePermission>()
-    defaultPermissions.add(permissionService.createDefaultPermission(type = type, permissionName = "READ_ALL", accessLevel = 1))
-    defaultPermissions.add(permissionService.createDefaultPermission(type = type, permissionName = "WRITE_ALL", accessLevel = 2))
+    defaultPermissions.add(typePermissionService.createDefaultTypePermission(type = type, permissionName = "READ_ALL", accessLevel = 1))
+    defaultPermissions.add(typePermissionService.createDefaultTypePermission(type = type, permissionName = "WRITE_ALL", accessLevel = 2))
     return defaultPermissions
   }
 

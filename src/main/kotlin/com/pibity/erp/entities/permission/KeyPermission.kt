@@ -6,9 +6,9 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.entities
+package com.pibity.erp.entities.permission
 
-import com.pibity.erp.entities.embeddables.KeyPermissionId
+import com.pibity.erp.entities.permission.embeddables.KeyPermissionId
 import java.io.Serializable
 import java.util.*
 import javax.persistence.*

@@ -46,8 +46,7 @@ fun serialize(function: Function): JsonObject {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
           add(output.id.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, output.type.id.name)
-            if (output.variableName != null)
-              add("values", gson.fromJson(output.variableName, JsonObject::class.java))
+            add("values", gson.fromJson(output.variableName, JsonObject::class.java))
           })
         }
         TypeConstants.FORMULA, TypeConstants.LIST -> {
@@ -61,6 +60,7 @@ fun serialize(function: Function): JsonObject {
       }
     }
   })
+  json.add("permissions", serialize(function.permissions))
   return json
 }
 

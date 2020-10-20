@@ -1,0 +1,17 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "typeName": {
+    "type": "String"
+  },
+  "assertionName": {
+    "type": "String"
+  },
+  "displayName": {
+    "type": "String"
+  },
+  "assertion": {
+    "type": "Object"
+  }
+}

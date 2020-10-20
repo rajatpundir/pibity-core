@@ -13,7 +13,7 @@ import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.TypePermission
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.repositories.TypePermissionRepository
 import com.pibity.erp.repositories.QueryRepository
@@ -29,7 +29,7 @@ class QueryService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun queryVariables(jsonParams: JsonObject): List<Variable> {
-    val typePermission = userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+    val typePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
       addProperty("organization", jsonParams.get("organization").asString)
       addProperty("username", jsonParams.get("username").asString)
       addProperty("typeName", jsonParams.get("typeName").asString)
@@ -389,7 +389,7 @@ class QueryService(
                                     name = "PUBLIC")
                                     ?: throw CustomJsonException("{typeName: 'Type cannot be determined'}")
                               } else {
-                                userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                                userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
                                   addProperty("organization", key.id.parentType.id.organization.id)
                                   addProperty("username", username)
                                   addProperty("typeName", key.type.id.name)
@@ -500,7 +500,7 @@ class QueryService(
                                 name = "PUBLIC")
                                 ?: throw CustomJsonException("{typeName: 'Type cannot be determined'}")
                           } else {
-                            userService.superimposeUserPermissions(jsonParams = JsonObject().apply {
+                            userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
                               addProperty("organization", key.id.parentType.id.organization.id)
                               addProperty("username", username)
                               addProperty("suerTypeName", key.type.id.superTypeName)

@@ -28,8 +28,8 @@ data class FunctionOutput(
       JoinColumn(name = "output_type_name", referencedColumnName = "type_name")])
     val type: Type,
 
-    @Column(name = "variable_name")
-    val variableName: String? = null,
+    @Column(name = "variable_name", nullable = false)
+    val variableName: String,
 
     @ManyToMany
     @JoinTable(name = "mapping_function_output_variable_name_dependencies", schema = "inventory",

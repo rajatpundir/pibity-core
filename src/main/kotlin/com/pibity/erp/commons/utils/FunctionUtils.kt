@@ -18,8 +18,7 @@ import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.function.FunctionInput
-import com.pibity.erp.entities.function.FunctionOutput
-import com.pibity.erp.entities.function.FunctionOutputKey
+import com.pibity.erp.entities.function.FunctionInputType
 import com.pibity.erp.entities.function.FunctionOutputType
 
 fun validateFunctionName(functionName: String): String {
@@ -271,7 +270,9 @@ fun validateValue(values: JsonObject, type: Type, symbols: JsonObject, paramsAre
             if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
                 || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
               try {
-                expectedValue.add(key.id.name, validateValue(values = keyExpression, type = key.type, symbols = symbols, paramsAreInputs = paramsAreInputs))
+                val subValues: JsonObject = validateValue(values = keyExpression, type = key.type, symbols = symbols, paramsAreInputs = paramsAreInputs)
+                if (subValues.size() != 0)
+                  expectedValue.add(key.id.name, subValues)
               } catch (exception: CustomJsonException) {
                 throw CustomJsonException("{${key.id.name}: ${exception.message}}")
               }
@@ -331,8 +332,6 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
       } catch (exception: Exception) {
         throw CustomJsonException("{${keyName}: 'Unexpected value for parameter'}")
       }
-      if (!primitiveTypes.contains(type.id.name))
-        throw CustomJsonException("{${keyName}: 'Unexpected value for parameter'}")
       if (listOf(TypeConstants.FORMULA, TypeConstants.LIST).contains(type.id.name))
         throw CustomJsonException("{${keyName}: 'Unexpected value for parameter'}")
       expectedJson.addProperty(keyName, type.id.name)
@@ -355,6 +354,37 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
         throw CustomJsonException("{${keyName}: {type: 'Unexpected value for parameter'}}")
       expectedKeyJson.addProperty("type", type.id.name)
       if (paramsAreInputs) {
+        if (keyJson.has(KeyConstants.DEFAULT)) {
+          when (type.id.name) {
+            TypeConstants.TEXT -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asString)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.NUMBER -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asLong)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.DECIMAL -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asDouble)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.BOOLEAN -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asBoolean)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.FORMULA, TypeConstants.LIST -> {
+            }
+            else -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asString)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+          }
+        }
         if (!primitiveTypes.contains(type.id.name)) {
           if (keyJson.has("variableName")) {
             val variableNameExpression: JsonObject = try {
@@ -375,11 +405,13 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
             } catch (exception: Exception) {
               throw CustomJsonException("{${keyName}: {values: 'Unexpected value for parameter'}}")
             }
-            expectedKeyJson.add("values", try {
+            val validatedValues: JsonObject = try {
               validateValue(values = values, type = type, symbols = symbols, paramsAreInputs = paramsAreInputs)
             } catch (exception: CustomJsonException) {
               throw CustomJsonException("{${keyName}: {values: ${exception.message}}}")
-            })
+            }
+            if (validatedValues.size() != 0)
+              expectedKeyJson.add("values", validatedValues)
           }
         }
       } else {
@@ -408,11 +440,13 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
               throw CustomJsonException("{${keyName}: {values: 'Unexpected value for parameter'}}")
             }
           }
-          expectedKeyJson.add("values", try {
+          val validatedValues: JsonObject = try {
             validateValue(values = values, type = type, symbols = symbols, paramsAreInputs = paramsAreInputs)
           } catch (exception: CustomJsonException) {
             throw CustomJsonException("{${keyName}: {values: ${exception.message}}}")
-          })
+          }
+          if (validatedValues.size() != 0)
+            expectedKeyJson.add("values", validatedValues)
         } else {
           val values: JsonObject = if (!keyJson.has("values"))
             throw CustomJsonException("{${keyName}: {values: 'Field is missing in request body'}}")
@@ -585,37 +619,35 @@ fun getInputKeyDependencies(inputs: JsonObject, globalTypes: Set<Type>, symbolPa
 fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInput>): JsonObject {
   val expectedJson = JsonObject()
   for (input in inputs) {
-    if (args.has(input.id.name)) {
-      when (input.type.id.name) {
-        TypeConstants.TEXT -> expectedJson.addProperty(input.id.name, try {
-          args.get(input.id.name).asString
-        } catch (exception: Exception) {
-          throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-        })
-        TypeConstants.NUMBER -> expectedJson.addProperty(input.id.name, try {
-          args.get(input.id.name).asLong
-        } catch (exception: Exception) {
-          throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-        })
-        TypeConstants.DECIMAL -> expectedJson.addProperty(input.id.name, try {
-          args.get(input.id.name).asDouble
-        } catch (exception: Exception) {
-          throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-        })
-        TypeConstants.BOOLEAN -> expectedJson.addProperty(input.id.name, try {
-          args.get(input.id.name).asBoolean
-        } catch (exception: Exception) {
-          throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-        })
-        TypeConstants.LIST, TypeConstants.FORMULA -> {
-        }
-        else -> expectedJson.addProperty(input.id.name, try {
-          args.get(input.id.name).asString
-        } catch (exception: Exception) {
-          throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-        })
+    when (input.type.id.name) {
+      TypeConstants.TEXT -> try {
+        expectedJson.addProperty(input.id.name, if (args.has(input.id.name)) args.get(input.id.name).asString else input.defaultStringValue!!)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
       }
-    } else throw CustomJsonException("{args: {${input.id.name}: 'Field is missing in request body'}}")
+      TypeConstants.NUMBER -> try {
+        expectedJson.addProperty(input.id.name, if (args.has(input.id.name)) args.get(input.id.name).asLong else input.defaultLongValue!!)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.DECIMAL -> try {
+        expectedJson.addProperty(input.id.name, if (args.has(input.id.name)) args.get(input.id.name).asDouble else input.defaultDoubleValue!!)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.BOOLEAN -> try {
+        expectedJson.addProperty(input.id.name, if (args.has(input.id.name)) args.get(input.id.name).asBoolean else input.defaultBooleanValue!!)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.LIST, TypeConstants.FORMULA -> {
+      }
+      else -> try {
+        expectedJson.addProperty(input.id.name, if (args.has(input.id.name)) args.get(input.id.name).asString else input.referencedVariable!!.id.name)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
+      }
+    }
   }
   return expectedJson
 }
@@ -701,11 +733,11 @@ fun getSymbolsForFunctionArgs(symbolPaths: Set<String>, variable: Variable, pref
   return expectedSymbols
 }
 
-fun getFunctionOutputTypeJson(functionOutputType: FunctionOutputType, symbols: JsonObject) :JsonObject {
+fun getFunctionOutputTypeJson(functionOutputType: FunctionOutputType, symbols: JsonObject): JsonObject {
   val expectedJson = JsonObject()
   for (functionOutputKey in functionOutputType.functionOutputKeys) {
     val key: Key = functionOutputKey.id.key
-    when(key.type.id.name) {
+    when (key.type.id.name) {
       TypeConstants.TEXT -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.id.name)
       }, mode = "evaluate", symbols = symbols) as String)
@@ -718,7 +750,8 @@ fun getFunctionOutputTypeJson(functionOutputType: FunctionOutputType, symbols: J
       TypeConstants.BOOLEAN -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.id.name)
       }, mode = "evaluate", symbols = symbols) as Boolean)
-      TypeConstants.FORMULA, TypeConstants.LIST -> {}
+      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      }
       else -> {
         if (key.type.id.superTypeName == GLOBAL_TYPE) {
           expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
@@ -745,6 +778,55 @@ fun getFunctionOutputTypeJson(functionOutputType: FunctionOutputType, symbols: J
     }
   }
   println("-------getFunctionOutputTypeJson--------")
+  println(expectedJson)
+  return expectedJson
+}
+
+fun getFunctionInputTypeJson(functionInputType: FunctionInputType, symbols: JsonObject): JsonObject {
+  val expectedJson = JsonObject()
+  for (functionInputKey in functionInputType.functionInputKeys) {
+    val key: Key = functionInputKey.id.key
+    when (key.type.id.name) {
+      TypeConstants.TEXT -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.id.name)
+      }, mode = "evaluate", symbols = symbols) as String)
+      TypeConstants.NUMBER -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.id.name)
+      }, mode = "evaluate", symbols = symbols) as Long)
+      TypeConstants.DECIMAL -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.id.name)
+      }, mode = "evaluate", symbols = symbols) as Double)
+      TypeConstants.BOOLEAN -> expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.id.name)
+      }, mode = "evaluate", symbols = symbols) as Boolean)
+      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      }
+      else -> {
+        if (key.type.id.superTypeName == GLOBAL_TYPE) {
+          expectedJson.addProperty(key.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+            addProperty("expectedReturnType", TypeConstants.TEXT)
+          }, mode = "evaluate", symbols = symbols) as String)
+        } else {
+          if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
+              || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+            expectedJson.add(key.id.name, JsonObject().apply {
+              add("values", getFunctionInputTypeJson(functionInputType = functionInputKey.referencedFunctionInputType!!, symbols = symbols))
+            })
+          } else {
+            expectedJson.add(key.id.name, JsonObject().apply {
+              addProperty("context", validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).get("context").asJsonObject.apply {
+                addProperty("expectedReturnType", TypeConstants.NUMBER)
+              }, mode = "evaluate", symbols = symbols) as Long)
+              addProperty("variableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).get("variableName").asJsonObject.apply {
+                addProperty("expectedReturnType", TypeConstants.TEXT)
+              }, mode = "evaluate", symbols = symbols) as String)
+            })
+          }
+        }
+      }
+    }
+  }
+  println("-------getFunctionInputTypeJson--------")
   println(expectedJson)
   return expectedJson
 }

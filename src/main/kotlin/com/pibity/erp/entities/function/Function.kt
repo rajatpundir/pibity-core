@@ -9,6 +9,8 @@
 package com.pibity.erp.entities.function
 
 import com.pibity.erp.entities.function.embeddables.FunctionId
+import com.pibity.erp.entities.permission.FunctionPermission
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
@@ -28,7 +30,10 @@ data class Function(
     val inputs: MutableSet<FunctionInput> = HashSet(),
 
     @OneToMany(mappedBy = "id.function", cascade = [CascadeType.ALL])
-    val outputs: MutableSet<FunctionOutput> = HashSet()
+    val outputs: MutableSet<FunctionOutput> = HashSet(),
+
+    @OneToMany(mappedBy = "id.function", cascade = [CascadeType.ALL])
+    val permissions: MutableSet<FunctionPermission> = HashSet()
 
 ) : Serializable {
 

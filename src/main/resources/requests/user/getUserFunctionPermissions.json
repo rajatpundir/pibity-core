@@ -5,7 +5,7 @@
   "username": {
     "type": "String"
   },
-  "typeName": {
+  "functionName": {
     "type": "String"
   }
 }

@@ -11,20 +11,25 @@ package com.pibity.erp.services
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.*
+import com.pibity.erp.commons.utils.createKeycloakUser
+import com.pibity.erp.commons.utils.getKeycloakId
+import com.pibity.erp.entities.Group
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.User
 import com.pibity.erp.entities.embeddables.UserId
 import com.pibity.erp.entities.mappings.UserGroup
 import com.pibity.erp.entities.mappings.UserRole
 import com.pibity.erp.entities.mappings.embeddables.UserGroupId
 import com.pibity.erp.entities.mappings.embeddables.UserRoleId
+import com.pibity.erp.entities.permission.FunctionPermission
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.repositories.GroupRepository
 import com.pibity.erp.repositories.OrganizationRepository
 import com.pibity.erp.repositories.RoleRepository
 import com.pibity.erp.repositories.UserRepository
 import com.pibity.erp.repositories.mappings.UserGroupRepository
 import com.pibity.erp.repositories.mappings.UserRoleRepository
-import com.pibity.erp.commons.utils.createKeycloakUser
-import com.pibity.erp.commons.utils.getKeycloakId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -34,7 +39,8 @@ class UserService(
     val roleRepository: RoleRepository,
     val groupRepository: GroupRepository,
     val userRepository: UserRepository,
-    val permissionService: PermissionService,
+    val typePermissionService: TypePermissionService,
+    val functionPermissionService: FunctionPermissionService,
     val userRoleRepository: UserRoleRepository,
     val userGroupRepository: UserGroupRepository
 ) {
@@ -128,15 +134,37 @@ class UserService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun getUserPermissions(jsonParams: JsonObject): Set<TypePermission> {
-    return (userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
+  fun getUserTypePermissions(jsonParams: JsonObject): Set<TypePermission> {
+    println("------------------------")
+    println(jsonParams)
+    return (userRepository.getUserTypePermissions(organizationName = jsonParams.get("organization").asString, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun superimposeUserPermissions(jsonParams: JsonObject): TypePermission {
-    val typePermissions = userRepository.getUserPermissions(organizationName = jsonParams.get("organization").asString, superTypeName = if (jsonParams.has("superTypeName")) jsonParams.get("superTypeName").asString else GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
+  fun getUserFunctionPermissions(jsonParams: JsonObject): Set<FunctionPermission> {
+    println("------------------------")
+    println(jsonParams)
+    return (userRepository.getUserFunctionPermissions(organizationName = jsonParams.get("organization").asString, functionName = jsonParams.get("functionName").asString, username = jsonParams.get("username").asString))
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun superimposeUserTypePermissions(jsonParams: JsonObject): TypePermission {
+    println("------------------------")
+    println(jsonParams)
+    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(organizationName = jsonParams.get("organization").asString, superTypeName = if (jsonParams.has("superTypeName")) jsonParams.get("superTypeName").asString else GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
     if (typePermissions.isNotEmpty())
-      return permissionService.superimposePermissions(typePermissions = typePermissions, type = typePermissions.first().id.type)
+      return typePermissionService.superimposeTypePermissions(typePermissions = typePermissions, type = typePermissions.first().id.type)
+    else
+      throw CustomJsonException("{error: 'Unauthorized Access'}")
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun superimposeUserFunctionPermissions(jsonParams: JsonObject): FunctionPermission {
+    println("------------------------")
+    println(jsonParams)
+    val functionPermissions: Set<FunctionPermission> = userRepository.getUserFunctionPermissions(organizationName = jsonParams.get("organization").asString, functionName = jsonParams.get("functionName").asString, username = jsonParams.get("username").asString)
+    if (functionPermissions.isNotEmpty())
+      return functionPermissionService.superimposeFunctionPermissions(functionPermissions = functionPermissions, function = functionPermissions.first().id.function)
     else
       throw CustomJsonException("{error: 'Unauthorized Access'}")
   }

@@ -9,6 +9,7 @@
 package com.pibity.erp.entities
 
 import com.pibity.erp.entities.embeddables.TypeId
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*

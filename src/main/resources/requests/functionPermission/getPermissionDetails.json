@@ -1,0 +1,11 @@
+{
+  "organization": {
+    "type": "String"
+  },
+  "functionName": {
+    "type": "String"
+  },
+  "permissionName": {
+    "type": "String"
+  }
+}

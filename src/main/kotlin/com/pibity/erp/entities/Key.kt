@@ -13,6 +13,7 @@ import com.pibity.erp.entities.function.FunctionInput
 import com.pibity.erp.entities.function.FunctionInputKey
 import com.pibity.erp.entities.function.FunctionOutput
 import com.pibity.erp.entities.function.FunctionOutputKey
+import com.pibity.erp.entities.permission.KeyPermission
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.util.*
