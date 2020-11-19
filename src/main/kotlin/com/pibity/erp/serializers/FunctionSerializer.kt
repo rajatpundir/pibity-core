@@ -20,18 +20,19 @@ import com.pibity.erp.entities.function.FunctionOutputType
 
 fun serialize(function: Function): JsonObject {
   val json = JsonObject()
-  json.addProperty("organizationId", function.id.organization.id)
-  json.addProperty("functionName", function.id.name)
+  json.addProperty("orgId", function.organization.id)
+  json.addProperty("functionName", function.name)
+//  json.addProperty("version", function.version.time)
   json.add("inputs", JsonObject().apply {
     for (input in function.inputs) {
-      when (input.type.id.name) {
+      when (input.type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-          addProperty(input.id.name, input.type.id.name)
+          addProperty(input.name, input.type.name)
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else ->
-          add(input.id.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, input.type.id.name)
+          add(input.name, JsonObject().apply {
+            addProperty(KeyConstants.KEY_TYPE, input.type.name)
             if (input.variableName != null)
               add("variableName", gson.fromJson(input.variableName, JsonObject::class.java))
             if (input.values != null)
@@ -42,18 +43,18 @@ fun serialize(function: Function): JsonObject {
   })
   json.add("outputs", JsonObject().apply {
     for (output in function.outputs) {
-      when (output.type.id.name) {
+      when (output.type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
-          add(output.id.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, output.type.id.name)
+          add(output.name, JsonObject().apply {
+            addProperty(KeyConstants.KEY_TYPE, output.type.name)
             add("values", gson.fromJson(output.variableName, JsonObject::class.java))
           })
         }
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else ->
-          add(output.id.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, output.type.id.name)
+          add(output.name, JsonObject().apply {
+            addProperty(KeyConstants.KEY_TYPE, output.type.name)
             add("variableName", gson.fromJson(output.variableName, JsonObject::class.java))
             add("values", serialize(output.values!!))
           })
@@ -74,19 +75,19 @@ fun serialize(entities: Set<Function>): JsonArray {
 fun serialize(functionInputType: FunctionInputType): JsonObject {
   val json = JsonObject()
   for (functionInputKey in functionInputType.functionInputKeys) {
-    when (functionInputKey.id.key.type.id.name) {
+    when (functionInputKey.key.type.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-        json.add(functionInputKey.id.key.id.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
+        json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
       TypeConstants.FORMULA, TypeConstants.LIST -> {
       }
-      else -> if (functionInputKey.id.key.type.id.superTypeName == GLOBAL_TYPE) {
-        json.add(functionInputKey.id.key.id.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
+      else -> if (functionInputKey.key.type.superTypeName == GLOBAL_TYPE) {
+        json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
       } else {
-        if ((functionInputKey.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && functionInputKey.id.key.id.parentType.id.name == functionInputKey.id.key.type.id.superTypeName)
-            || (functionInputKey.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && functionInputKey.id.key.id.parentType.id.superTypeName == functionInputKey.id.key.type.id.superTypeName)) {
-          json.add(functionInputKey.id.key.id.name, serialize(functionInputKey.referencedFunctionInputType!!))
+        if ((functionInputKey.key.parentType.superTypeName == GLOBAL_TYPE && functionInputKey.key.parentType.name == functionInputKey.key.type.superTypeName)
+            || (functionInputKey.key.parentType.superTypeName != GLOBAL_TYPE && functionInputKey.key.parentType.superTypeName == functionInputKey.key.type.superTypeName)) {
+          json.add(functionInputKey.key.name, serialize(functionInputKey.referencedFunctionInputType!!))
         } else {
-          json.add(functionInputKey.id.key.id.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
+          json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
         }
       }
     }
@@ -97,19 +98,19 @@ fun serialize(functionInputType: FunctionInputType): JsonObject {
 fun serialize(functionOutputType: FunctionOutputType): JsonObject {
   val json = JsonObject()
   for (functionOutputKey in functionOutputType.functionOutputKeys) {
-    when (functionOutputKey.id.key.type.id.name) {
+    when (functionOutputKey.key.type.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-        json.add(functionOutputKey.id.key.id.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
+        json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
       TypeConstants.FORMULA, TypeConstants.LIST -> {
       }
-      else -> if (functionOutputKey.id.key.type.id.superTypeName == GLOBAL_TYPE) {
-        json.add(functionOutputKey.id.key.id.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
+      else -> if (functionOutputKey.key.type.superTypeName == GLOBAL_TYPE) {
+        json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
       } else {
-        if ((functionOutputKey.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && functionOutputKey.id.key.id.parentType.id.name == functionOutputKey.id.key.type.id.superTypeName)
-            || (functionOutputKey.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && functionOutputKey.id.key.id.parentType.id.superTypeName == functionOutputKey.id.key.type.id.superTypeName)) {
-          json.add(functionOutputKey.id.key.id.name, serialize(functionOutputKey.referencedFunctionOutputType!!))
+        if ((functionOutputKey.key.parentType.superTypeName == GLOBAL_TYPE && functionOutputKey.key.parentType.name == functionOutputKey.key.type.superTypeName)
+            || (functionOutputKey.key.parentType.superTypeName != GLOBAL_TYPE && functionOutputKey.key.parentType.superTypeName == functionOutputKey.key.type.superTypeName)) {
+          json.add(functionOutputKey.key.name, serialize(functionOutputKey.referencedFunctionOutputType!!))
         } else {
-          json.add(functionOutputKey.id.key.id.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
+          json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
         }
       }
     }

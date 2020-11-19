@@ -35,7 +35,7 @@
     "keys": {},
     "variables": {
       "JUKI": {},
-      "YAMAHAH": {},
+      "YAMAHA": {},
       "SAMSUNG": {},
       "PANASONIC": {},
       "FUJI": {}
@@ -133,7 +133,7 @@
     }
   },
   {
-    "typeName": "User",
+    "typeName": "User1",
     "displayName": "User",
     "keys": {
       "firstName": {
@@ -144,17 +144,17 @@
       "lastName": {
         "type": "Text",
         "displayName": "Last Name",
-        "order": "1"
+        "order": "2"
       },
       "email": {
         "type": "Text",
         "displayName": "email",
-        "order": "2"
+        "order": "3"
       },
       "phone": {
         "type": "Number",
         "displayName": "phone",
-        "order": "3"
+        "order": "4"
       }
     },
     "permissions": [],
@@ -181,17 +181,17 @@
       "price": {
         "type": "Decimal",
         "displayName": "Price",
-        "order": "2"
+        "order": "3"
       },
       "quantity": {
         "type": "Number",
         "displayName": "Quantity",
-        "order": "3"
+        "order": "4"
       },
       "status": {
         "type": "BiddingStatus",
         "displayName": "status",
-        "order": "3",
+        "order": "5",
         "default": "Pending"
       }
     },

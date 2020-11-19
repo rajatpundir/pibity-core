@@ -1,11 +1,8 @@
 {
-  "organization": {
+  "orgId": {
     "type": "String"
   },
   "typeName": {
-    "type": "String"
-  },
-  "displayName": {
     "type": "String"
   },
   "multiplicity?": {

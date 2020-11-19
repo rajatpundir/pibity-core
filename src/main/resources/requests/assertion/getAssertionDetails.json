@@ -1,0 +1,11 @@
+{
+  "orgId": {
+    "type": "String"
+  },
+  "typeName": {
+    "type": "String"
+  },
+  "assertionName": {
+    "type": "String"
+  }
+}

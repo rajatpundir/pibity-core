@@ -10,22 +10,33 @@ package com.pibity.erp.entities.function
 
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
-import com.pibity.erp.entities.function.embeddables.FunctionOutputId
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_output", schema = "inventory")
+@Table(name = "function_output", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionOutput(
 
-    @EmbeddedId
-    val id: FunctionOutputId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_output_generator")
+    @SequenceGenerator(name = "function_output_generator", sequenceName = "function_output_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+    val function: Function,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "output_type_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "output_type_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "output_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     val type: Type,
 
     @Column(name = "variable_name", nullable = false)
@@ -33,22 +44,12 @@ data class FunctionOutput(
 
     @ManyToMany
     @JoinTable(name = "mapping_function_output_variable_name_dependencies", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "function_name", referencedColumnName = "function_name"),
-          JoinColumn(name = "output_name", referencedColumnName = "output_name")],
-        inverseJoinColumns = [JoinColumn(name = "dependency_key_parent_type_organization_id", referencedColumnName = "parent_type_organization_id"),
-          JoinColumn(name = "dependency_key_parent_super_type_name", referencedColumnName = "parent_super_type_name"),
-          JoinColumn(name = "dependency_key_parent_type_name", referencedColumnName = "parent_type_name"),
-          JoinColumn(name = "dependency_key_name", referencedColumnName = "key_name")])
+        joinColumns = [JoinColumn(name = "function_output_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "dependency_key_id", referencedColumnName = "id")])
     val variableNameKeyDependencies: MutableSet<Key> = HashSet(),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "values_function_organization_id", referencedColumnName = "function_organization_id"),
-      JoinColumn(name = "values_function_name", referencedColumnName = "function_name"),
-      JoinColumn(name = "values_function_output_name", referencedColumnName = "function_output_name"),
-      JoinColumn(name = "values_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "values_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "values_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "function_output_type_id", referencedColumnName = "id")])
     var values: FunctionOutputType? = null
 
 ) : Serializable {
@@ -57,7 +58,7 @@ data class FunctionOutput(
     other ?: return false
     if (this === other) return true
     other as FunctionOutput
-    return this.id == other.id
+    return this.function == other.function && this.name == other.name
   }
 
   override fun hashCode(): Int = Objects.hash(id)

@@ -21,12 +21,12 @@ fun validateFunctionPermissions(jsonParams: JsonObject, function: Function): Jso
   }
   val expectedInputPermissions = JsonObject()
   for (input in function.inputs) {
-    if (!inputsJson.has(input.id.name))
-      throw CustomJsonException("{permissions: {inputs: {${input.id.name}: 'Field is missing in request body'}}}")
+    if (!inputsJson.has(input.name))
+      throw CustomJsonException("{permissions: {inputs: {${input.name}: 'Field is missing in request body'}}}")
     else try {
-      expectedInputPermissions.addProperty(input.id.name, inputsJson.get(input.id.name).asBoolean)
+      expectedInputPermissions.addProperty(input.name, inputsJson.get(input.name).asBoolean)
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissions: {inputs: {${input.id.name}: 'Unexpected value for parameter'}}}")
+      throw CustomJsonException("{permissions: {inputs: {${input.name}: 'Unexpected value for parameter'}}}")
     }
   }
   expectedFunctionPermissions.add("inputs", expectedInputPermissions)
@@ -37,12 +37,12 @@ fun validateFunctionPermissions(jsonParams: JsonObject, function: Function): Jso
   }
   val expectedOutputPermissions = JsonObject()
   for (output in function.outputs) {
-    if (!outputsJson.has(output.id.name))
-      throw CustomJsonException("{permissions: {outputs: {${output.id.name}: 'Field is missing in request body'}}}")
+    if (!outputsJson.has(output.name))
+      throw CustomJsonException("{permissions: {outputs: {${output.name}: 'Field is missing in request body'}}}")
     else try {
-      expectedOutputPermissions.addProperty(output.id.name, outputsJson.get(output.id.name).asBoolean)
+      expectedOutputPermissions.addProperty(output.name, outputsJson.get(output.name).asBoolean)
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissions: {outputs: {${output.id.name}: 'Unexpected value for parameter'}}}")
+      throw CustomJsonException("{permissions: {outputs: {${output.name}: 'Unexpected value for parameter'}}}")
     }
   }
   expectedFunctionPermissions.add("outputs", expectedOutputPermissions)

@@ -10,6 +10,7 @@ package com.pibity.erp.api
 
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.services.OrganizationService
 import com.pibity.erp.commons.utils.getExpectedParams
@@ -39,8 +40,8 @@ class OrganizationController(val organizationService: OrganizationService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createOrganization"] ?: JsonObject())
       ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = jsonParams)), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }

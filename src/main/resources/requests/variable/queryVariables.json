@@ -1,9 +1,15 @@
 {
-  "organization": {
+  "orgId": {
     "type": "String"
   },
   "typeName": {
     "type": "String"
+  },
+  "limit": {
+    "type": "Int"
+  },
+  "offset": {
+    "type": "Int"
   },
   "query": {
     "type": "Object"

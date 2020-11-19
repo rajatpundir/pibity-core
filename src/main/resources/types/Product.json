@@ -8,8 +8,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -27,8 +31,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -48,8 +56,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -63,8 +75,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -78,8 +94,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -94,8 +114,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -111,8 +135,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -124,8 +152,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -139,8 +171,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -159,8 +195,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -176,8 +216,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -335,11 +379,7 @@
               "order": "0"
             },
             "bin": {
-              "type": {
-                "typeName": "Bin",
-                "displayName": "Bin",
-                "keys": {}
-              },
+              "type": "Text",
               "displayName": "Bin",
               "order": "1"
             },
@@ -621,8 +661,74 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "StockAdjustment",
+    "displayName": "Stock Adjustment",
+    "keys": {
+      "product": {
+        "type": "Product",
+        "displayName": "Product",
+        "order": "0"
+      },
+      "location": {
+        "type": "Location",
+        "displayName": "Location",
+        "order": "1"
+      },
+      "date": {
+        "type": "Text",
+        "displayName": "Date",
+        "order": "2"
+      },
+      "unit": {
+        "type": "UnitOfMeasure",
+        "displayName": "Unit Of Measure",
+        "order": "3",
+        "default": "Item"
+      },
+      "account": {
+        "type": "Text",
+        "displayName": "Account",
+        "order": "4"
+      },
+      "onHand": {
+        "type": "Number",
+        "displayName": "On Hand",
+        "order": "5"
+      },
+      "newQuantity": {
+        "type": "Number",
+        "displayName": "New Quantity",
+        "order": "6",
+        "default": 0
+      },
+      "variance": {
+        "type": "Number",
+        "displayName": " Variance",
+        "order": "7"
+      },
+      "comment": {
+        "type": "Text",
+        "displayName": "Comment",
+        "order": "8"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   }
 ]

@@ -8,23 +8,34 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.RoleId
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.RoleFunctionPermission
 import com.pibity.erp.entities.mappings.RoleTypePermission
 import com.pibity.erp.entities.mappings.UserRole
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "role", schema = "inventory")
+@Table(name = "role", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Role(
 
-    @EmbeddedId
-    val id: RoleId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_generator")
+    @SequenceGenerator(name = "role_generator", sequenceName = "role_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    val organization: Organization,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
     val roleTypePermissions: MutableSet<RoleTypePermission> = HashSet(),
@@ -44,10 +55,10 @@ data class Role(
     other ?: return false
     if (this === other) return true
     other as Role
-    return this.id == other.id
+    return this.organization == other.organization && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

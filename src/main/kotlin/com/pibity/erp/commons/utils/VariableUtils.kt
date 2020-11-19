@@ -15,42 +15,42 @@ import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.entities.Value
 import com.pibity.erp.entities.Variable
+import com.pibity.erp.entities.permission.TypePermission
 
 fun validateVariableValues(values: JsonObject, typePermission: TypePermission): JsonObject {
   val expectedValues = JsonObject()
   for (keyPermission in typePermission.keyPermissions) {
-    val key = keyPermission.id.key
-    if (!values.has(key.id.name)) {
+    val key = keyPermission.key
+    if (!values.has(key.name)) {
       // If value is not provided, try to inject default value for they key
-      when (key.type.id.name) {
-        TypeConstants.TEXT -> expectedValues.addProperty(key.id.name, key.defaultStringValue
-            ?: throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}"))
-        TypeConstants.NUMBER -> expectedValues.addProperty(key.id.name, key.defaultLongValue
-            ?: throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}"))
-        TypeConstants.DECIMAL -> expectedValues.addProperty(key.id.name, key.defaultDoubleValue
-            ?: throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}"))
-        TypeConstants.BOOLEAN -> expectedValues.addProperty(key.id.name, key.defaultBooleanValue
-            ?: throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}"))
-        TypeConstants.LIST -> expectedValues.add(key.id.name, JsonArray())
+      when (key.type.name) {
+        TypeConstants.TEXT -> expectedValues.addProperty(key.name, key.defaultStringValue
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.NUMBER -> expectedValues.addProperty(key.name, key.defaultLongValue
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDoubleValue
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.BOOLEAN -> expectedValues.addProperty(key.name, key.defaultBooleanValue
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.LIST -> expectedValues.add(key.name, JsonArray())
         TypeConstants.FORMULA -> {
         }
         else -> {
           if (key.referencedVariable == null)
-            throw CustomJsonException("{${key.id.name}: 'Key value is not provided'}")
+            throw CustomJsonException("{${key.name}: 'Key value is not provided'}")
           else {
-            if (key.type.id.superTypeName == GLOBAL_TYPE) {
-              expectedValues.addProperty(key.id.name, key.referencedVariable!!.id.name)
+            if (key.type.superTypeName == GLOBAL_TYPE) {
+              expectedValues.addProperty(key.name, key.referencedVariable!!.name)
             } else {
-              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-                throw CustomJsonException("{${key.id.name}: 'Internal local values cannot have a default'}")
+              if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                  || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
+                throw CustomJsonException("{${key.name}: 'Internal local values cannot have a default'}")
               } else {
-                expectedValues.add(key.id.name, JsonObject().apply {
-                  addProperty("context", key.referencedVariable!!.id.superList.id)
-                  addProperty("variableName", key.referencedVariable!!.id.name)
+                expectedValues.add(key.name, JsonObject().apply {
+                  addProperty("context", key.referencedVariable!!.superList.id)
+                  addProperty("variableName", key.referencedVariable!!.name)
                 })
               }
             }
@@ -58,123 +58,123 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
         }
       }
     } else {
-      if (key.type.id.name in listOf(TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN) && keyPermission.accessLevel != PermissionConstants.WRITE_ACCESS) {
+      if (key.type.name in listOf(TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN) && keyPermission.accessLevel != PermissionConstants.WRITE_ACCESS) {
         // Default value is used as Write permission is not present
-        when (key.type.id.name) {
-          TypeConstants.TEXT -> expectedValues.addProperty(key.id.name, key.defaultStringValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.NUMBER -> expectedValues.addProperty(key.id.name, key.defaultLongValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.DECIMAL -> expectedValues.addProperty(key.id.name, key.defaultDoubleValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
-          TypeConstants.BOOLEAN -> expectedValues.addProperty(key.id.name, key.defaultBooleanValue
-              ?: throw CustomJsonException("{${key.id.name}: 'Key default value is not defined'}"))
+        when (key.type.name) {
+          TypeConstants.TEXT -> expectedValues.addProperty(key.name, key.defaultStringValue
+              ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
+          TypeConstants.NUMBER -> expectedValues.addProperty(key.name, key.defaultLongValue
+              ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
+          TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDoubleValue
+              ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
+          TypeConstants.BOOLEAN -> expectedValues.addProperty(key.name, key.defaultBooleanValue
+              ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
         }
       } else {
-        if (values.get(key.id.name).isJsonObject) {
-          when (key.type.id.name) {
+        if (values.get(key.name).isJsonObject) {
+          when (key.type.name) {
             TypeConstants.TEXT,
             TypeConstants.NUMBER,
             TypeConstants.DECIMAL,
             TypeConstants.BOOLEAN,
-            TypeConstants.LIST -> throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+            TypeConstants.LIST -> throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             TypeConstants.FORMULA -> {
             }
             else -> {
-              if (key.type.id.superTypeName == GLOBAL_TYPE)
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              if (key.type.superTypeName == GLOBAL_TYPE)
+                throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
               else {
-                if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                    || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
+                if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                    || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
                   val valueJson = JsonObject()
-                  if (values.get(key.id.name).asJsonObject.has("values")) {
+                  if (values.get(key.name).asJsonObject.has("values")) {
                     try {
-                      valueJson.add("values", values.get(key.id.name).asJsonObject.get("values").asJsonObject)
+                      valueJson.add("values", values.get(key.name).asJsonObject.get("values").asJsonObject)
                     } catch (exception: Exception) {
-                      throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                      throw CustomJsonException("{${key.name}: {values: 'Unexpected value for parameter'}}")
                     }
-                  } else throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
-                  expectedValues.add(key.id.name, valueJson)
+                  } else throw CustomJsonException("{${key.name}: {values: 'Field is missing in request body'}}")
+                  expectedValues.add(key.name, valueJson)
                 } else {
                   val valueJson = JsonObject()
-                  if (values.get(key.id.name).asJsonObject.has("context")) {
+                  if (values.get(key.name).asJsonObject.has("context")) {
                     try {
-                      valueJson.addProperty("context", values.get(key.id.name).asJsonObject.get("context").asLong)
+                      valueJson.addProperty("context", values.get(key.name).asJsonObject.get("context").asLong)
                     } catch (exception: Exception) {
-                      throw CustomJsonException("{${key.id.name}: {context: 'Unexpected value for parameter'}}")
+                      throw CustomJsonException("{${key.name}: {context: 'Unexpected value for parameter'}}")
                     }
-                  } else throw CustomJsonException("{${key.id.name}: {context: 'Field is missing in request body'}}")
-                  if (values.get(key.id.name).asJsonObject.has("variableName")) {
+                  } else throw CustomJsonException("{${key.name}: {context: 'Field is missing in request body'}}")
+                  if (values.get(key.name).asJsonObject.has("variableName")) {
                     try {
-                      valueJson.addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
+                      valueJson.addProperty("variableName", values.get(key.name).asJsonObject.get("variableName").asString)
                     } catch (exception: Exception) {
-                      throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                      throw CustomJsonException("{${key.name}: {variableName: 'Unexpected value for parameter'}}")
                     }
-                  } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
-                  expectedValues.add(key.id.name, valueJson)
+                  } else throw CustomJsonException("{${key.name}: {variableName: 'Field is missing in request body'}}")
+                  expectedValues.add(key.name, valueJson)
                 }
               }
             }
           }
         } else {
-          when (key.type.id.name) {
+          when (key.type.name) {
             TypeConstants.TEXT -> try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+              expectedValues.addProperty(key.name, values.get(key.name).asString)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.NUMBER -> try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asLong)
+              expectedValues.addProperty(key.name, values.get(key.name).asLong)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.DECIMAL -> try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asDouble)
+              expectedValues.addProperty(key.name, values.get(key.name).asDouble)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.BOOLEAN -> try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asBoolean)
+              expectedValues.addProperty(key.name, values.get(key.name).asBoolean)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.LIST -> {
               val jsonArray: JsonArray = try {
-                values.get(key.id.name).asJsonArray
+                values.get(key.name).asJsonArray
               } catch (exception: Exception) {
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
               }
               if (key.list!!.max != 0 && jsonArray.size() > key.list!!.max)
-                throw CustomJsonException("{${key.id.name}: 'List cannot contain more than ${key.list!!.max} variables'}")
+                throw CustomJsonException("{${key.name}: 'List cannot contain more than ${key.list!!.max} variables'}")
               if (jsonArray.size() < key.list!!.min)
-                throw CustomJsonException("{${key.id.name}: 'List cannot contain less than ${key.list!!.min} variables'}")
+                throw CustomJsonException("{${key.name}: 'List cannot contain less than ${key.list!!.min} variables'}")
               val expectedArray = JsonArray()
               for (ref in jsonArray) {
-                if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
+                if (key.list!!.type.superTypeName == GLOBAL_TYPE) {
                   try {
                     expectedArray.add(ref.asString)
                   } catch (exception: Exception) {
-                    throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                    throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
                   }
                 } else {
                   if (ref.isJsonObject) {
-                    if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                        || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
+                    if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.list!!.type.superTypeName)
+                        || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.list!!.type.superTypeName)) {
                       val valueJson = JsonObject()
                       if (ref.asJsonObject.has("variableName")) {
                         try {
                           valueJson.addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.name}: {variableName: 'Unexpected value for parameter'}}")
                         }
-                      } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
+                      } else throw CustomJsonException("{${key.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
                       if (ref.asJsonObject.has("values")) {
                         try {
                           valueJson.add("values", ref.asJsonObject.get("values").asJsonObject)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {values: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.name}: {values: 'Unexpected value for parameter'}}")
                         }
-                      } else throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body of one of the variables'}}")
+                      } else throw CustomJsonException("{${key.name}: {values: 'Field is missing in request body of one of the variables'}}")
                       expectedArray.add(valueJson)
                     } else {
                       val valueJson = JsonObject()
@@ -182,33 +182,33 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
                         try {
                           valueJson.addProperty("context", ref.asJsonObject.get("context").asLong)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {context: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.name}: {context: 'Unexpected value for parameter'}}")
                         }
-                      } else throw CustomJsonException("{${key.id.name}: {context: 'Field is missing in request body'}}")
+                      } else throw CustomJsonException("{${key.name}: {context: 'Field is missing in request body'}}")
                       if (ref.asJsonObject.has("variableName")) {
                         try {
                           valueJson.addProperty("variableName", ref.asJsonObject.get("variableName").asString)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.name}: {variableName: 'Unexpected value for parameter'}}")
                         }
-                      } else throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
+                      } else throw CustomJsonException("{${key.name}: {variableName: 'Field is missing in request body of one of the variables'}}")
                       expectedArray.add(valueJson)
                     }
-                  } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                  } else throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
                 }
               }
-              expectedValues.add(key.id.name, expectedArray)
+              expectedValues.add(key.name, expectedArray)
             }
             TypeConstants.FORMULA -> {
             }
             else -> {
-              if (key.type.id.superTypeName == GLOBAL_TYPE) {
+              if (key.type.superTypeName == GLOBAL_TYPE) {
                 try {
-                  expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+                  expectedValues.addProperty(key.name, values.get(key.name).asString)
                 } catch (exception: Exception) {
-                  throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                  throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
                 }
-              } else throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              } else throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
           }
         }
@@ -221,113 +221,113 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
 fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermission): JsonObject {
   val expectedValues = JsonObject()
   for (keyPermission in typePermission.keyPermissions) {
-    val key = keyPermission.id.key
-    if (values.has(key.id.name)) {
-      when (key.type.id.name) {
+    val key = keyPermission.key
+    if (values.has(key.name)) {
+      when (key.type.name) {
         TypeConstants.TEXT -> {
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+              expectedValues.addProperty(key.name, values.get(key.name).asString)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
           }
         }
         TypeConstants.NUMBER -> {
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asLong)
+              expectedValues.addProperty(key.name, values.get(key.name).asLong)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
           }
         }
         TypeConstants.DECIMAL -> {
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asDouble)
+              expectedValues.addProperty(key.name, values.get(key.name).asDouble)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
           }
         }
         TypeConstants.BOOLEAN -> {
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
-              expectedValues.addProperty(key.id.name, values.get(key.id.name).asBoolean)
+              expectedValues.addProperty(key.name, values.get(key.name).asBoolean)
             } catch (exception: Exception) {
-              throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
           }
         }
         TypeConstants.FORMULA -> {
         }
         TypeConstants.LIST -> {
-          if (!values.get(key.id.name).isJsonObject)
-            throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+          if (!values.get(key.name).isJsonObject)
+            throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
           else {
             val listParams = JsonObject()
-            if (key.list!!.type.id.superTypeName == GLOBAL_TYPE) {
+            if (key.list!!.type.superTypeName == GLOBAL_TYPE) {
               if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
-                if (values.get(key.id.name).asJsonObject.has("add")) {
-                  if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
-                    throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
+                if (values.get(key.name).asJsonObject.has("add")) {
+                  if (!values.get(key.name).asJsonObject.get("add").isJsonArray)
+                    throw CustomJsonException("{${key.name}: {add: 'Unexpected value for parameter'}}")
                   else {
                     val params = JsonArray()
-                    values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
+                    values.get(key.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
                       try {
                         params.add(it.asString)
                       } catch (exception: Exception) {
-                        throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
+                        throw CustomJsonException("{${key.name}: {add: 'Unexpected value for parameter'}}")
                       }
                     }
                     listParams.add("add", params)
                   }
                 }
-                if (values.get(key.id.name).asJsonObject.has("remove")) {
-                  if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
-                    throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                if (values.get(key.name).asJsonObject.has("remove")) {
+                  if (!values.get(key.name).asJsonObject.get("remove").isJsonArray)
+                    throw CustomJsonException("{${key.name}: {remove: 'Unexpected value for parameter'}}")
                   else {
                     val params = JsonArray()
-                    values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                    values.get(key.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
                       try {
                         params.add(it.asString)
                       } catch (exception: Exception) {
-                        throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                        throw CustomJsonException("{${key.name}: {remove: 'Unexpected value for parameter'}}")
                       }
                     }
                     listParams.add("remove", params)
                   }
                 }
-                expectedValues.add(key.id.name, listParams)
+                expectedValues.add(key.name, listParams)
               }
             } else {
-              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.list!!.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.list!!.type.id.superTypeName)) {
-                if (values.get(key.id.name).asJsonObject.has("add")) {
+              if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.list!!.type.superTypeName)
+                  || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.list!!.type.superTypeName)) {
+                if (values.get(key.name).asJsonObject.has("add")) {
                   if (keyPermission.referencedTypePermission!!.creatable) {
-                    if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
+                    if (!values.get(key.name).asJsonObject.get("add").isJsonArray)
+                      throw CustomJsonException("{${key.name}: {add: 'Unexpected value for parameter'}}")
                     else {
                       val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
+                      values.get(key.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
                         val jsonObject = JsonObject()
                         if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {add: {variableName: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
                           } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
+                            throw CustomJsonException("{${key.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
                           }
                         }
                         if (!it.asJsonObject.has("values"))
-                          throw CustomJsonException("{${key.id.name}: {add: {values: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {add: {values: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.add("values", validateVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission))
                           } catch (exception: CustomJsonException) {
-                            throw CustomJsonException("{${key.id.name}: {add: {values: ${exception.message}}}}")
+                            throw CustomJsonException("{${key.name}: {add: {values: ${exception.message}}}}")
                           }
                         }
                         params.add(jsonObject)
@@ -336,46 +336,46 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                     }
                   }
                 }
-                if (values.get(key.id.name).asJsonObject.has("remove")) {
+                if (values.get(key.name).asJsonObject.has("remove")) {
                   if (keyPermission.referencedTypePermission!!.deletable) {
-                    if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                    if (!values.get(key.name).asJsonObject.get("remove").isJsonArray)
+                      throw CustomJsonException("{${key.name}: {remove: 'Unexpected value for parameter'}}")
                     else {
                       val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                      values.get(key.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
                         try {
                           params.add(it.asString)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                          throw CustomJsonException("{${key.name}: {remove: 'Unexpected value for parameter'}}")
                         }
                       }
                       listParams.add("remove", params)
                     }
                   }
                 }
-                if (values.get(key.id.name).asJsonObject.has("update")) {
-                  if (!values.get(key.id.name).asJsonObject.get("update").isJsonArray)
-                    throw CustomJsonException("{${key.id.name}: {update: 'Unexpected value for parameter'}}")
+                if (values.get(key.name).asJsonObject.has("update")) {
+                  if (!values.get(key.name).asJsonObject.get("update").isJsonArray)
+                    throw CustomJsonException("{${key.name}: {update: 'Unexpected value for parameter'}}")
                   else {
                     val params = JsonArray()
-                    values.get(key.id.name).asJsonObject.get("update").asJsonArray.toSet().forEach {
+                    values.get(key.name).asJsonObject.get("update").asJsonArray.toSet().forEach {
                       val jsonObject = JsonObject()
                       if (!it.asJsonObject.has("variableName"))
-                        throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Field is missing in request body'}}}")
+                        throw CustomJsonException("{${key.name}: {update: {variableName: 'Field is missing in request body'}}}")
                       else {
                         try {
                           jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
                         } catch (exception: Exception) {
-                          throw CustomJsonException("{${key.id.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
+                          throw CustomJsonException("{${key.name}: {update: {variableName: 'Unexpected value for parameter'}}}")
                         }
                       }
                       if (!it.asJsonObject.has("values"))
-                        throw CustomJsonException("{${key.id.name}: {update: {values: 'Field is missing in request body'}}}")
+                        throw CustomJsonException("{${key.name}: {update: {values: 'Field is missing in request body'}}}")
                       else {
                         try {
                           jsonObject.add("values", validateUpdatedVariableValues(it.asJsonObject.get("values").asJsonObject, keyPermission.referencedTypePermission!!))
                         } catch (exception: CustomJsonException) {
-                          throw CustomJsonException("{${key.id.name}: {update: {values: ${exception.message}}}")
+                          throw CustomJsonException("{${key.name}: {update: {values: ${exception.message}}}")
                         }
                       }
                       params.add(jsonObject)
@@ -383,32 +383,32 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                     listParams.add("update", params)
                   }
                 }
-                expectedValues.add(key.id.name, listParams)
+                expectedValues.add(key.name, listParams)
               } else {
                 if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
-                  if (values.get(key.id.name).asJsonObject.has("add")) {
-                    if (!values.get(key.id.name).asJsonObject.get("add").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {add: 'Unexpected value for parameter'}}")
+                  if (values.get(key.name).asJsonObject.has("add")) {
+                    if (!values.get(key.name).asJsonObject.get("add").isJsonArray)
+                      throw CustomJsonException("{${key.name}: {add: 'Unexpected value for parameter'}}")
                     else {
                       val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
+                      values.get(key.name).asJsonObject.get("add").asJsonArray.toSet().forEach {
                         val jsonObject = JsonObject()
                         if (!it.asJsonObject.has("context"))
-                          throw CustomJsonException("{${key.id.name}: {add: {context: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {add: {context: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.addProperty("context", it.asJsonObject.get("context").asLong)
                           } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {add: {context: 'Unexpected value for parameter'}}}")
+                            throw CustomJsonException("{${key.name}: {add: {context: 'Unexpected value for parameter'}}}")
                           }
                         }
                         if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {add: {variableName: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
                           } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
+                            throw CustomJsonException("{${key.name}: {add: {variableName: 'Unexpected value for parameter'}}}")
                           }
                         }
                         params.add(jsonObject)
@@ -416,29 +416,29 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                       listParams.add("add", params)
                     }
                   }
-                  if (values.get(key.id.name).asJsonObject.has("remove")) {
-                    if (!values.get(key.id.name).asJsonObject.get("remove").isJsonArray)
-                      throw CustomJsonException("{${key.id.name}: {remove: 'Unexpected value for parameter'}}")
+                  if (values.get(key.name).asJsonObject.has("remove")) {
+                    if (!values.get(key.name).asJsonObject.get("remove").isJsonArray)
+                      throw CustomJsonException("{${key.name}: {remove: 'Unexpected value for parameter'}}")
                     else {
                       val params = JsonArray()
-                      values.get(key.id.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
+                      values.get(key.name).asJsonObject.get("remove").asJsonArray.toSet().forEach {
                         val jsonObject = JsonObject()
                         if (!it.asJsonObject.has("context"))
-                          throw CustomJsonException("{${key.id.name}: {remove: {context: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {remove: {context: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.addProperty("context", it.asJsonObject.get("context").asLong)
                           } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {remove: {context: 'Unexpected value for parameter'}}}")
+                            throw CustomJsonException("{${key.name}: {remove: {context: 'Unexpected value for parameter'}}}")
                           }
                         }
                         if (!it.asJsonObject.has("variableName"))
-                          throw CustomJsonException("{${key.id.name}: {remove: {variableName: 'Field is missing in request body'}}}")
+                          throw CustomJsonException("{${key.name}: {remove: {variableName: 'Field is missing in request body'}}}")
                         else {
                           try {
                             jsonObject.addProperty("variableName", it.asJsonObject.get("variableName").asString)
                           } catch (exception: Exception) {
-                            throw CustomJsonException("{${key.id.name}: {remove: {variableName: 'Unexpected value for parameter'}}}")
+                            throw CustomJsonException("{${key.name}: {remove: {variableName: 'Unexpected value for parameter'}}}")
                           }
                         }
                         params.add(jsonObject)
@@ -446,60 +446,60 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
                       listParams.add("remove", params)
                     }
                   }
-                  expectedValues.add(key.id.name, listParams)
+                  expectedValues.add(key.name, listParams)
                 }
               }
             }
           }
         }
         else -> {
-          if (key.type.id.superTypeName == GLOBAL_TYPE) {
+          if (key.type.superTypeName == GLOBAL_TYPE) {
             if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
               try {
-                expectedValues.addProperty(key.id.name, values.get(key.id.name).asString)
+                expectedValues.addProperty(key.name, values.get(key.name).asString)
               } catch (exception: Exception) {
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
+                throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
               }
             }
           } else {
-            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-              if (!values.get(key.id.name).isJsonObject)
-                throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
-              else expectedValues.add(key.id.name, JsonObject().apply {
-                if (!values.get(key.id.name).asJsonObject.has("values"))
-                  throw CustomJsonException("{${key.id.name}: {values: 'Field is missing in request body'}}")
+            if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
+              if (!values.get(key.name).isJsonObject)
+                throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+              else expectedValues.add(key.name, JsonObject().apply {
+                if (!values.get(key.name).asJsonObject.has("values"))
+                  throw CustomJsonException("{${key.name}: {values: 'Field is missing in request body'}}")
                 else {
                   try {
                     add("values", validateUpdatedVariableValues(
-                        values = values.get(key.id.name).asJsonObject.get("values").asJsonObject,
+                        values = values.get(key.name).asJsonObject.get("values").asJsonObject,
                         typePermission = keyPermission.referencedTypePermission!!))
                   } catch (exception: Exception) {
-                    throw CustomJsonException("{${key.id.name}: {values: ${exception.message}}}")
+                    throw CustomJsonException("{${key.name}: {values: ${exception.message}}}")
                   }
                 }
               })
             } else {
               if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
-                if (!values.get(key.id.name).isJsonObject)
-                  throw CustomJsonException("{${key.id.name}: 'Unexpected value for parameter'}")
-                else expectedValues.add(key.id.name, JsonObject().apply {
-                  if (!values.get(key.id.name).asJsonObject.has("context"))
-                    throw CustomJsonException("{${key.id.name}: {context: 'Field is missing in request body'}}")
+                if (!values.get(key.name).isJsonObject)
+                  throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+                else expectedValues.add(key.name, JsonObject().apply {
+                  if (!values.get(key.name).asJsonObject.has("context"))
+                    throw CustomJsonException("{${key.name}: {context: 'Field is missing in request body'}}")
                   else {
                     try {
-                      addProperty("context", values.get(key.id.name).asJsonObject.get("context").asLong)
+                      addProperty("context", values.get(key.name).asJsonObject.get("context").asLong)
                     } catch (exception: Exception) {
-                      throw CustomJsonException("{${key.id.name}: {context: ${exception.message}}}")
+                      throw CustomJsonException("{${key.name}: {context: ${exception.message}}}")
                     }
                   }
-                  if (!values.get(key.id.name).asJsonObject.has("variableName"))
-                    throw CustomJsonException("{${key.id.name}: {variableName: 'Field is missing in request body'}}")
+                  if (!values.get(key.name).asJsonObject.has("variableName"))
+                    throw CustomJsonException("{${key.name}: {variableName: 'Field is missing in request body'}}")
                   else {
                     try {
-                      addProperty("variableName", values.get(key.id.name).asJsonObject.get("variableName").asString)
+                      addProperty("variableName", values.get(key.name).asJsonObject.get("variableName").asString)
                     } catch (exception: Exception) {
-                      throw CustomJsonException("{${key.id.name}: {variableName: 'Unexpected value for parameter'}}")
+                      throw CustomJsonException("{${key.name}: {variableName: 'Unexpected value for parameter'}}")
                     }
                   }
                 })
@@ -513,101 +513,101 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
   return expectedValues
 }
 
-fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0): JsonObject {
+fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0, symbolsForFormula: Boolean = true): JsonObject {
   val symbols = JsonObject()
   for (value in variable.values) {
-    when (value.id.key.type.id.name) {
+    when (value.key.type.name) {
       TypeConstants.TEXT -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.stringValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
         }
       }
       TypeConstants.NUMBER -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.longValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
         }
       }
       TypeConstants.DECIMAL -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.doubleValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
         }
       }
       TypeConstants.BOOLEAN -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.booleanValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
         }
       }
       TypeConstants.LIST -> {
       }
       TypeConstants.FORMULA -> {
-        if (level != 0 && symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply { addProperty("type", value.id.key.formula!!.returnType.id.name) })
-          when (value.id.key.formula!!.returnType.id.name) {
-            TypeConstants.TEXT -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+        if ((!symbolsForFormula || level != 0) && symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply { addProperty("type", value.key.formula!!.returnType.name) })
+          when (value.key.formula!!.returnType.name) {
+            TypeConstants.TEXT -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.stringValue!!)
             })
-            TypeConstants.NUMBER -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.NUMBER -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.longValue!!)
             })
-            TypeConstants.DECIMAL -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.DECIMAL -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.doubleValue!!)
             })
-            TypeConstants.BOOLEAN -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.BOOLEAN -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.booleanValue!!)
             })
-            else -> throw CustomJsonException("{${value.id.key.id.name}: 'Unable to compute formula value'}")
+            else -> throw CustomJsonException("{${value.key.name}: 'Unable to compute formula value'}")
           }
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
         }
       }
-      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
-        if (value.id.key.type.id.superTypeName == GLOBAL_TYPE) {
-          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
-            getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name) }) {
+        if (value.key.type.superTypeName == GLOBAL_TYPE) {
+          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") })
+            getSymbolValues(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, symbolsForFormula = symbolsForFormula)
           else JsonObject()
-          symbols.add(value.id.key.id.name, JsonObject().apply {
+          symbols.add(value.key.name, JsonObject().apply {
             addProperty("type", TypeConstants.TEXT)
-            addProperty("value", value.referencedVariable!!.id.name)
+            addProperty("value", value.referencedVariable!!.name)
             if (subSymbols.size() != 0)
               add("values", subSymbols)
           })
         } else {
-          if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
-              || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
-            val subSymbols: JsonObject = getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+          if ((value.key.parentType.superTypeName == GLOBAL_TYPE && value.key.parentType.name == value.key.type.superTypeName)
+              || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.type.superTypeName)) {
+            val subSymbols: JsonObject = getSymbolValues(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, symbolsForFormula = symbolsForFormula)
             if (subSymbols.size() != 0)
-              symbols.add(value.id.key.id.name, JsonObject().apply { add("values", subSymbols) })
+              symbols.add(value.key.name, JsonObject().apply { add("values", subSymbols) })
           } else {
-            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
-              getSymbolValues(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1)
+            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") })
+              getSymbolValues(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, symbolsForFormula = symbolsForFormula)
             else JsonObject()
-            symbols.add(value.id.key.id.name + "::context", JsonObject().apply {
+            symbols.add(value.key.name + "::context", JsonObject().apply {
               addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
-              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.superList.id)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.superList.id)
             })
-            symbols.add(value.id.key.id.name, JsonObject().apply {
+            symbols.add(value.key.name, JsonObject().apply {
               addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.name)
+              addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
               if (subSymbols.size() != 0)
                 add("values", subSymbols)
             })
@@ -619,111 +619,143 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix:
   return symbols
 }
 
-fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0, valueDependencies: MutableSet<Value>): JsonObject {
+fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: MutableSet<String>, prefix: String = "", level: Int = 0, valueDependencies: MutableSet<Value>, variableDependencies: MutableSet<Variable>, symbolsForFormula: Boolean = true): JsonObject {
   val symbols = JsonObject()
   for (value in variable.values) {
-    when (value.id.key.type.id.name) {
-      TypeConstants.TEXT -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+    if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name) }) {
+      when (value.key.type.name) {
+        TypeConstants.TEXT -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.stringValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-      }
-      TypeConstants.NUMBER -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        TypeConstants.NUMBER -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.longValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-      }
-      TypeConstants.DECIMAL -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        TypeConstants.DECIMAL -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.doubleValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-      }
-      TypeConstants.BOOLEAN -> {
-        if (symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", value.id.key.type.id.name)
+        TypeConstants.BOOLEAN -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
             addProperty("value", value.booleanValue!!)
           })
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-      }
-      TypeConstants.LIST -> {
-      }
-      TypeConstants.FORMULA -> {
-        if (level != 0 && symbolPaths.contains(prefix + value.id.key.id.name)) {
-          symbols.add(value.id.key.id.name, JsonObject().apply { addProperty("type", value.id.key.formula!!.returnType.id.name) })
-          when (value.id.key.formula!!.returnType.id.name) {
-            TypeConstants.TEXT -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+        TypeConstants.LIST -> {
+        }
+        TypeConstants.FORMULA -> if (!symbolsForFormula || level != 0) {
+          symbols.add(value.key.name, JsonObject().apply { addProperty("type", value.key.formula!!.returnType.name) })
+          when (value.key.formula!!.returnType.name) {
+            TypeConstants.TEXT -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.stringValue!!)
             })
-            TypeConstants.NUMBER -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.NUMBER -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.longValue!!)
             })
-            TypeConstants.DECIMAL -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.DECIMAL -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.doubleValue!!)
             })
-            TypeConstants.BOOLEAN -> symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty("type", value.id.key.formula!!.returnType.id.name)
+            TypeConstants.BOOLEAN -> symbols.add(value.key.name, JsonObject().apply {
+              addProperty("type", value.key.formula!!.returnType.name)
               addProperty("value", value.booleanValue!!)
             })
-            else -> throw CustomJsonException("{${value.id.key.id.name}: 'Unable to compute formula value'}")
+            else -> throw CustomJsonException("{${value.key.name}: 'Unable to compute formula value'}")
           }
-          symbolPaths.remove(prefix + value.id.key.id.name)
+          symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-      }
-      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name) }) {
-        if (value.id.key.type.id.superTypeName == GLOBAL_TYPE) {
-          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
-            getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
-          else JsonObject()
-          symbols.add(value.id.key.id.name, JsonObject().apply {
-            addProperty("type", TypeConstants.TEXT)
-            addProperty("value", value.referencedVariable!!.id.name)
-            if (subSymbols.size() != 0)
-              add("values", subSymbols)
-          })
-          valueDependencies.add(value)
-        } else {
-          if ((value.id.key.id.parentType.id.superTypeName == GLOBAL_TYPE && value.id.key.id.parentType.id.name == value.id.key.type.id.superTypeName)
-              || (value.id.key.id.parentType.id.superTypeName != GLOBAL_TYPE && value.id.key.id.parentType.id.superTypeName == value.id.key.type.id.superTypeName)) {
-            val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
-            if (subSymbols.size() != 0)
-              symbols.add(value.id.key.id.name, subSymbols)
+        else -> {
+          if (value.key.type.superTypeName == GLOBAL_TYPE) {
+            if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") }) {
+              val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = symbolsForFormula)
+              val valueSymbols = JsonObject().apply {
+                if (symbolPaths.contains(prefix + value.key.name)) {
+                  addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                  addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
+                  variableDependencies.add(value.referencedVariable!!)
+                }
+                if (subSymbols.size() != 0)
+                  add("values", subSymbols)
+              }
+              if (valueSymbols.size() != 0) {
+                symbols.add(value.key.name, valueSymbols)
+                valueDependencies.add(value)
+              }
+            } else {
+              symbols.add(value.key.name, JsonObject().apply {
+                addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
+                variableDependencies.add(value.referencedVariable!!)
+                valueDependencies.add(value)
+              })
+            }
           } else {
-            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + value.id.key.id.name + ".") })
-              getSymbolValuesAndUpdateDependencies(prefix = prefix + value.id.key.id.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies)
-            else JsonObject()
-            symbols.add(value.id.key.id.name + "::context", JsonObject().apply {
-              addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
-              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.superList.id)
-            })
-            symbols.add(value.id.key.id.name, JsonObject().apply {
-              addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-              addProperty(KeyConstants.VALUE, value.referencedVariable!!.id.name)
+            if ((value.key.parentType.superTypeName == GLOBAL_TYPE && value.key.parentType.name == value.key.type.superTypeName)
+                || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.type.superTypeName)) {
+              val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = symbolsForFormula)
               if (subSymbols.size() != 0)
-                add("values", subSymbols)
-            })
-            valueDependencies.add(value)
+                symbols.add(value.key.name, subSymbols)
+            } else {
+              if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") }) {
+                val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = symbolsForFormula)
+                val keySymbols = JsonObject().apply {
+                  if (subSymbols.size() != 0)
+                    add("values", subSymbols)
+                }
+                if (symbolPaths.contains(prefix + value.key.name)) {
+                  keySymbols.addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                  keySymbols.addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
+                  variableDependencies.add(value.referencedVariable!!)
+                }
+                if (keySymbols.size() != 0) {
+                  symbols.add(value.key.name, keySymbols)
+                  valueDependencies.add(value)
+                }
+                if (symbolPaths.contains(prefix + value.key.name + "::context")) {
+                  symbols.add(value.key.name + "::context", JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+                    addProperty(KeyConstants.VALUE, value.referencedVariable!!.superList.id)
+                  })
+                  variableDependencies.add(value.referencedVariable!!)
+                  valueDependencies.add(value)
+                }
+              } else {
+                if (symbolPaths.contains(prefix + value.key.name)) {
+                  symbols.add(value.key.name, JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                    addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
+                  })
+                  variableDependencies.add(value.referencedVariable!!)
+                  valueDependencies.add(value)
+                }
+                if (symbolPaths.contains(prefix + value.key.name + "::context")) {
+                  symbols.add(value.key.name + "::context", JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+                    addProperty(KeyConstants.VALUE, value.referencedVariable!!.superList.id)
+                  })
+                  variableDependencies.add(value.referencedVariable!!)
+                  valueDependencies.add(value)
+                }
+              }
+            }
           }
         }
       }

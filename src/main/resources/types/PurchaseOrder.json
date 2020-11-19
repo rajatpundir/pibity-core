@@ -278,7 +278,7 @@
             "purchaseOrderMemo": {
               "type": "Text",
               "displayName": "Purchase Order Memo",
-              "order": "6"
+              "order": "7"
             }
           }
         },
@@ -298,7 +298,7 @@
               "min": "0",
               "max": "0",
               "listType": {
-                "typeName": "ProductInvoice",
+                "typeName": "ProductInvoice2",
                 "displayName": "Product Invoice",
                 "keys": {
                   "product": {
@@ -356,7 +356,7 @@
               "min": "0",
               "max": "0",
               "listType": {
-                "typeName": "AdditionalCost",
+                "typeName": "AdditionalCost2",
                 "displayName": "Additional Cost",
                 "keys": {
                   "description": {
@@ -404,7 +404,7 @@
               "min": "0",
               "max": "0",
               "listType": {
-                "typeName": "SupplierDeposit",
+                "typeName": "SupplierDeposit2",
                 "displayName": "SupplierDeposit",
                 "keys": {
                   "account": {

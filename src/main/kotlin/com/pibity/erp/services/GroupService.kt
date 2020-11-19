@@ -13,31 +13,32 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Group
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
-import com.pibity.erp.entities.embeddables.GroupId
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.embeddables.GroupRoleId
-import com.pibity.erp.repositories.GroupRepository
-import com.pibity.erp.repositories.OrganizationRepository
-import com.pibity.erp.repositories.RoleRepository
+import com.pibity.erp.repositories.jpa.GroupJpaRepository
+import com.pibity.erp.repositories.query.GroupRepository
+import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
+import com.pibity.erp.repositories.query.RoleRepository
 import com.pibity.erp.repositories.mappings.GroupRoleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class GroupService(
-    val organizationRepository: OrganizationRepository,
+    val organizationJpaRepository: OrganizationJpaRepository,
     val groupRepository: GroupRepository,
     val roleRepository: RoleRepository,
-    val groupRoleRepository: GroupRoleRepository
+    val groupRoleRepository: GroupRoleRepository,
+    val groupJpaRepository: GroupJpaRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createGroup(jsonParams: JsonObject): Group {
-    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val group = Group(id = GroupId(organization = organization, name = jsonParams.get("groupName").asString))
+    val organization: Organization = organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
+        ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
+    val group = Group(organization = organization, name = jsonParams.get("groupName").asString)
     return try {
-      groupRepository.save(group)
+      groupJpaRepository.save(group)
     } catch (exception: Exception) {
       throw CustomJsonException("{groupName: 'Group could not be created'}")
     }
@@ -45,9 +46,9 @@ class GroupService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateGroup(jsonParams: JsonObject): Group {
-    val group: Group = groupRepository.findGroup(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("groupName").asString)
+    val group: Group = groupRepository.findGroup(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("groupName").asString)
         ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
-    val role: Role = roleRepository.findRole(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("roleName").asString)
+    val role: Role = roleRepository.findRole(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("roleName").asString)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     when (jsonParams.get("operation").asString) {
       "add" -> group.groupRoles.add(GroupRole(id = GroupRoleId(group = group, role = role)))
@@ -58,14 +59,14 @@ class GroupService(
       else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
     }
     return try {
-      groupRepository.save(group)
+      groupJpaRepository.save(group)
     } catch (exception: Exception) {
       throw CustomJsonException("{groupName: 'Unable to update role for group'}")
     }
   }
 
   fun getGroupDetails(jsonParams: JsonObject): Group {
-    return (groupRepository.findGroup(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("groupName").asString)
+    return (groupRepository.findGroup(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("groupName").asString)
         ?: throw CustomJsonException("{groupName: 'Group could not be determined'}"))
   }
 }

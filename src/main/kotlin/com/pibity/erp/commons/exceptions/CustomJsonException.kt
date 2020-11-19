@@ -15,11 +15,11 @@ data class CustomJsonException(val json: String) : RuntimeException() {
 
   private val logger by Logger()
 
-  override val message: String?
+  override val message: String
     get() = try {
       JsonParser.parseString(json).asJsonObject.toString()
     } catch (exception: Exception) {
       logger.error("Unable to parse string to JSON: $json")
-      null
+      "Unable to process your request"
     }
 }

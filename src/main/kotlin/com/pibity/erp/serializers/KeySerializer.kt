@@ -17,38 +17,37 @@ import com.pibity.erp.entities.Key
 
 fun serialize(key: Key): JsonObject {
   val json = JsonObject()
-  json.addProperty(KeyConstants.DISPLAY_NAME, key.displayName)
   json.addProperty(KeyConstants.ORDER, key.keyOrder)
-  when (key.type.id.name) {
+  when (key.type.name) {
     TypeConstants.TEXT -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
       json.addProperty(KeyConstants.DEFAULT, key.defaultStringValue)
     }
     TypeConstants.NUMBER -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
       json.addProperty(KeyConstants.DEFAULT, key.defaultLongValue)
     }
     TypeConstants.DECIMAL -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
       json.addProperty(KeyConstants.DEFAULT, key.defaultDoubleValue)
     }
     TypeConstants.BOOLEAN -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
       json.addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue)
     }
     TypeConstants.FORMULA -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
-      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.id?.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
+      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.name)
       json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula?.expression, JsonObject::class.java))
       json.add(KeyConstants.FORMULA_SYMBOLS, gson.fromJson(key.formula?.symbolPaths, JsonArray::class.java))
     }
     TypeConstants.LIST -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
       json.add(KeyConstants.LIST_TYPE, serialize(key.list!!.type))
     }
     else -> {
-      if (key.type.id.superTypeName == "Any") {
-        json.addProperty(KeyConstants.KEY_TYPE, key.type.id.name)
+      if (key.type.superTypeName == "Any") {
+        json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
         if (key.referencedVariable != null)
           json.add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))
       } else json.add(KeyConstants.KEY_TYPE, serialize(key.type))

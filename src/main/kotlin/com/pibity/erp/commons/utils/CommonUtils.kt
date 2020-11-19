@@ -77,9 +77,9 @@ fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonP
   val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
   val claims: Map<String, String> = token.otherClaims as Map<String, String>
   val groups: Set<String> = if (!claims.containsKey("groups"))
-    throw CustomJsonException("{organization: 'Organization cannot be determined'}")
+    throw CustomJsonException("{orgId: 'Organization cannot be determined'}")
   else
     gson.fromJson(gson.toJson(claims["groups"]), JsonArray::class.java).map { it.asString }.toSet()
-  if (!groups.contains(listOf("", jsonParams.get("organization").asString, subGroupName).joinToString(separator = "/")))
-    throw CustomJsonException("{organization: 'Organization could not be found'}")
+  if (!groups.contains(listOf("", jsonParams.get("orgId").asString, subGroupName).joinToString(separator = "/")))
+    throw CustomJsonException("{orgId: 'Organization could not be found'}")
 }

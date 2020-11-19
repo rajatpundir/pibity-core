@@ -13,5 +13,8 @@
   },
   "password": {
     "type": "String"
+  },
+  "details": {
+    "type": "Object"
   }
 }

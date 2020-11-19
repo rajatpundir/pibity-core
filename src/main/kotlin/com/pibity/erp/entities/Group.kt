@@ -8,21 +8,32 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.GroupId
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.UserGroup
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "group_names", schema = "inventory")
+@Table(name = "groups", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Group(
 
-    @EmbeddedId
-    val id: GroupId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "group_generator")
+    @SequenceGenerator(name = "group_generator", sequenceName = "group_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    val organization: Organization,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL])
     val groupRoles: MutableSet<GroupRole> = HashSet(),
@@ -36,10 +47,10 @@ data class Group(
     other ?: return false
     if (this === other) return true
     other as Group
-    return this.id == other.id
+    return this.organization == other.organization && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

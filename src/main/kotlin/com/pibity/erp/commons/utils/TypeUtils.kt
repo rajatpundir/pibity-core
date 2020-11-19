@@ -248,70 +248,99 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
         throw CustomJsonException("{keys: {$keyName: {${KeyConstants.ORDER}: 'Order for key is not valid'}}}")
       }
     }
-    // validate displayName for key
-    if (key.has(KeyConstants.DISPLAY_NAME)) {
-      try {
-        expectedKey.addProperty(KeyConstants.DISPLAY_NAME, key.get(KeyConstants.DISPLAY_NAME).asString)
-      } catch (exception: Exception) {
-        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DISPLAY_NAME}: 'Display name for key is not valid'}}}")
-      }
-    }
     expectedKeys.add(keyName, expectedKey)
   }
   return expectedKeys
 }
 
-fun getSymbols(type: Type, symbolPaths: MutableSet<String>, prefix: String = "", level: Int, keyDependencies: MutableSet<Key>): JsonObject {
+fun getSymbols(type: Type, symbolPaths: MutableSet<String>, prefix: String = "", level: Int, keyDependencies: MutableSet<Key>, typeDependencies: MutableSet<Type>, symbolsForFormula: Boolean = true): JsonObject {
   val symbols = JsonObject()
   for (key in type.keys) {
-    when (key.type.id.name) {
-      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> if (symbolPaths.contains(prefix + key.id.name)) {
-        symbols.add(key.id.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.type.id.name) })
-        symbolPaths.remove(prefix + key.id.name)
-        keyDependencies.add(key.apply { isDependency = true })
-      }
-      TypeConstants.LIST -> {
-      }
-      TypeConstants.FORMULA -> {
-        if (level != 0 && symbolPaths.contains(prefix + key.id.name)) {
-          symbols.add(key.id.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.formula!!.returnType.id.name) })
-          symbolPaths.remove(prefix + key.id.name)
-          keyDependencies.add(key.apply { isDependency = true })
+    if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
+      when (key.type.name) {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+          symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.type.name) })
+          symbolPaths.remove(prefix + key.name)
+          keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
         }
-      }
-      else -> if (symbolPaths.any { it.startsWith(prefix = prefix + key.id.name) }) {
-        if (key.type.id.superTypeName == GLOBAL_TYPE) {
-          val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + key.id.name + ".") })
-            getSymbols(prefix = prefix + key.id.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies)
-          else JsonObject()
-          symbols.add(key.id.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-            if (subSymbols.size() != 0)
-              add("values", subSymbols)
-          })
-          keyDependencies.add(key.apply { isVariableDependency = true })
-        } else {
-          if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-              || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-            val subSymbols: JsonObject = getSymbols(prefix = prefix + key.id.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies)
-            if (subSymbols.size() != 0) {
-              symbols.add(key.id.name, JsonObject().apply {
-                add("values", subSymbols)
+        TypeConstants.LIST -> {
+        }
+        TypeConstants.FORMULA -> if (level != 0) {
+          symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.formula!!.returnType.name) })
+          symbolPaths.remove(prefix + key.name)
+          keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+        }
+        else -> {
+          if (key.type.superTypeName == GLOBAL_TYPE) {
+            if (symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") }) {
+              val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
+              val keySymbols = JsonObject().apply {
+                if (symbolPaths.contains(prefix + key.name)) {
+                  addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                }
+                if (subSymbols.size() != 0)
+                  add("values", subSymbols)
+              }
+              if (keySymbols.size() != 0) {
+                symbols.add(key.name, keySymbols)
+                keyDependencies.add(key.apply { isVariableDependency = true })
+              }
+            } else {
+              symbols.add(key.name, JsonObject().apply {
+                addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
               })
+              typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+              keyDependencies.add(key.apply { isVariableDependency = true })
             }
           } else {
-            val subSymbols: JsonObject = if (symbolPaths.any { it.startsWith(prefix = prefix + key.id.name + ".") })
-              getSymbols(prefix = prefix + key.id.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies)
-            else JsonObject()
-            symbols.add(key.id.name + "::context", JsonObject().apply {
-              addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
-            })
-            symbols.add(key.id.name, JsonObject().apply {
-              addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-              if (subSymbols.size() != 0)
-                add("values", subSymbols)
-            })
-            keyDependencies.add(key.apply { isVariableDependency = true })
+            if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
+              val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
+              if (subSymbols.size() != 0) {
+                symbols.add(key.name, JsonObject().apply {
+                  add("values", subSymbols)
+                })
+              }
+            } else {
+              if (symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") }) {
+                val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
+                val keySymbols = JsonObject().apply {
+                  if (subSymbols.size() != 0)
+                    add("values", subSymbols)
+                }
+                if (symbolPaths.contains(prefix + key.name)) {
+                  keySymbols.addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                }
+                if (keySymbols.size() != 0) {
+                  symbols.add(key.name, keySymbols)
+                  keyDependencies.add(key.apply { isVariableDependency = true })
+                }
+                if (symbolPaths.contains(prefix + key.name + "::context")) {
+                  symbols.add(key.name + "::context", JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+                  })
+                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                  keyDependencies.add(key.apply { isVariableDependency = true })
+                }
+              } else {
+                if (symbolPaths.contains(prefix + key.name)) {
+                  symbols.add(key.name, JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+                  })
+                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                  keyDependencies.add(key.apply { isVariableDependency = true })
+                }
+                if (symbolPaths.contains(prefix + key.name + "::context")) {
+                  symbols.add(key.name + "::context", JsonObject().apply {
+                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
+                  })
+                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                  keyDependencies.add(key.apply { isVariableDependency = true })
+                }
+              }
+            }
           }
         }
       }

@@ -8,57 +8,66 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.KeyId
 import com.pibity.erp.entities.function.FunctionInput
 import com.pibity.erp.entities.function.FunctionInputKey
 import com.pibity.erp.entities.function.FunctionOutput
 import com.pibity.erp.entities.function.FunctionOutputKey
 import com.pibity.erp.entities.permission.KeyPermission
 import com.pibity.erp.serializers.serialize
+//import com.pibity.erp.serializers.serialize
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "key_names", schema = "inventory")
+@Table(name = "keys", schema = "inventory",
+    uniqueConstraints = [
+      UniqueConstraint(columnNames = ["parent_type_id", "name"]),
+      UniqueConstraint(columnNames = ["parent_type_id", "key_order"])
+    ])
 data class Key(
 
-    @EmbeddedId
-    val id: KeyId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "key_generator")
+    @SequenceGenerator(name = "key_generator", sequenceName = "key_sequence")
+    val id: Long = -1,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "key_type_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "key_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "key_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "parent_type_id", referencedColumnName = "id")])
+    val parentType: Type,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     val type: Type,
 
-    @OneToMany(mappedBy = "id.key", cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "key", cascade = [CascadeType.ALL])
     val permissions: Set<KeyPermission> = HashSet(),
-
-    @Column(name = "display_name")
-    var displayName: String = "",
 
     @Column(name = "key_order")
     var keyOrder: Int = 0,
 
-    @Column(name = "default_string_value")
+    @Column(name = "value_string")
     var defaultStringValue: String? = null,
 
-    @Column(name = "default_long_value")
+    @Column(name = "value_long")
     var defaultLongValue: Long? = null,
 
-    @Column(name = "default_double_value")
+    @Column(name = "value_double")
     var defaultDoubleValue: Double? = null,
 
-    @Column(name = "default_boolean_value")
+    @Column(name = "value_boolean")
     var defaultBooleanValue: Boolean? = null,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
-      JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
+    @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null,
 
     @OneToOne(cascade = [CascadeType.ALL])
@@ -66,17 +75,23 @@ data class Key(
     var formula: Formula? = null,
 
     @OneToOne(cascade = [CascadeType.ALL])
-    @JoinColumn(name = "list_id")
+    @JoinColumn(name = "value_type_list_id")
     var list: TypeList? = null,
 
-    @Column(name = "is_dependency")
-    var isDependency: Boolean = false,
+    @Column(name = "is_formula_dependency", nullable = false)
+    var isFormulaDependency: Boolean = false,
 
-    @Column(name = "is_variable_dependency")
+    @Column(name = "is_assertion_dependency", nullable = false)
+    var isAssertionDependency: Boolean = false,
+
+    @Column(name = "is_variable_dependency", nullable = false)
     var isVariableDependency: Boolean = false,
 
     @ManyToMany(mappedBy = "keyDependencies")
     val dependentFormulas: Set<Formula> = HashSet(),
+
+    @ManyToMany(mappedBy = "keyDependencies")
+    val dependentAssertions: Set<TypeAssertion> = HashSet(),
 
     @ManyToMany(mappedBy = "variableNameKeyDependencies")
     val dependentFunctionInputVariableNames: Set<FunctionInput> = HashSet(),
@@ -96,10 +111,10 @@ data class Key(
     other ?: return false
     if (this === other) return true
     other as Key
-    return this.id == other.id
+    return this.parentType == other.parentType && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

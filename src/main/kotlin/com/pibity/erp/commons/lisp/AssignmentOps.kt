@@ -123,9 +123,6 @@ fun let(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
 }
 
 fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
-  println("----HERE--ARE--SYMBOLS----")
-  println(symbols)
-  println(args)
   when (mode) {
     "validate" -> {
       if (args.isEmpty())
@@ -258,7 +255,7 @@ fun identity(args: List<JsonElement>, types: MutableList<String>, expectedReturn
         else -> throw CustomJsonException("{types: 'Unexpected value for parameter'}")
       }
       if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+        throw CustomJsonException("{types: 'Unexpected value for parameter'}")
       when (argType) {
         TypeConstants.TEXT -> try {
           args.first().asString

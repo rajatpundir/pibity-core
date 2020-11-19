@@ -9,14 +9,23 @@
 package com.pibity.erp.repositories.function
 
 import com.pibity.erp.entities.function.Function
-import com.pibity.erp.entities.function.embeddables.FunctionId
-import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.CrudRepository
+import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import javax.persistence.EntityManager
+import javax.persistence.LockModeType
+import javax.persistence.TypedQuery
 
-interface FunctionRepository : CrudRepository<Function, FunctionId> {
+@Repository
+class FunctionRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  @Query("SELECT f FROM Function f WHERE f.id.organization.id = :organizationName AND f.id.name = :name")
-  fun findFunction(organizationName: String, name: String): Function?
+  fun findFunction(organizationId: Long, name: String): Function? {
+    val hql = "SELECT f FROM Function f WHERE f.organization.id = :organizationId AND f.name = :name"
+    val query: TypedQuery<Function> = entityManager.createQuery(hql, Function::class.java).apply {
+      lockMode = LockModeType.OPTIMISTIC_FORCE_INCREMENT
+      setParameter("organizationId", organizationId)
+      setParameter("name", name)
+    }
+    return query.singleResult
+  }
 }
