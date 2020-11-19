@@ -8,19 +8,32 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.VariableId
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "variable", schema = "inventory")
+@Table(name = "variable", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["super_list_id", "type_id", "name"])])
 data class Variable(
 
-    @EmbeddedId
-    val id: VariableId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_generator")
+    @SequenceGenerator(name = "variable_generator", sequenceName = "variable_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    val superList: VariableList,
+
+    @ManyToOne
+    val type: Type,
+
+    @Column(name = "name", nullable = false)
+    var name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
     var subList: VariableList,
@@ -34,15 +47,24 @@ data class Variable(
     @Column(name = "active", nullable = false)
     var active: Boolean = true,
 
-    @OneToMany(mappedBy = "id.variable", cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL])
     val values: MutableSet<Value> = HashSet(),
+
+    @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL])
+    val variableAssertions: MutableSet<VariableAssertion> = HashSet(),
 
     @OneToMany(mappedBy = "referencedVariable", cascade = [CascadeType.ALL])
     val referencingValues: Set<Value> = HashSet(),
 
     // Use this to find out which lists contain this variable
     @ManyToMany(mappedBy = "variables")
-    val referencingLists: Set<VariableList> = HashSet()
+    val referencingLists: Set<VariableList> = HashSet(),
+
+    @ManyToMany(mappedBy = "variableDependencies", cascade = [CascadeType.ALL])
+    val dependentValues: MutableSet<Value> = HashSet(),
+
+    @ManyToMany(mappedBy = "variableDependencies", cascade = [CascadeType.ALL])
+    val dependentAssertions: MutableSet<VariableAssertion> = HashSet()
 
 ) : Serializable {
 
@@ -50,10 +72,10 @@ data class Variable(
     other ?: return false
     if (this === other) return true
     other as Variable
-    return this.id == other.id
+    return this.superList == other.superList && this.type == other.type && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

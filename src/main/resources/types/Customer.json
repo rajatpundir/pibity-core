@@ -4,7 +4,9 @@
     "displayName": "Location",
     "keys": {},
     "variables": {
-     "Main Warehouse": {}
+     "Main Warehouse": {},
+      "Local Warehouse": {},
+      "Offsite Storage": {}
     },
     "permissions": [],
     "roles": {

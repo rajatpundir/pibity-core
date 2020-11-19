@@ -9,7 +9,7 @@
 package com.pibity.erp.entities
 
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
@@ -17,8 +17,13 @@ import javax.persistence.*
 data class TypeList(
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "type_list_generator")
+    @SequenceGenerator(name="type_list_generator", sequenceName = "type_list_sequence")
     val id: Long = -1,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @Column(name = "min", nullable = false)
     val min: Int,
@@ -27,9 +32,7 @@ data class TypeList(
     val max: Int,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     var type: Type
 
 ) : Serializable {
@@ -41,5 +44,5 @@ data class TypeList(
     return this.id == other.id
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

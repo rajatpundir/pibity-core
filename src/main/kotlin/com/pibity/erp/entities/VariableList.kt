@@ -10,17 +10,21 @@ package com.pibity.erp.entities
 
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "variable_list", schema = "inventory")
 data class VariableList(
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_list_generator")
+    @SequenceGenerator(name="variable_list_generator", sequenceName = "variable_list_sequence")
     val id: Long = -1,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @Column(name = "size", nullable = false)
     var size: Int = 0,
@@ -30,13 +34,7 @@ data class VariableList(
     val listType: TypeList,
 
     @ManyToMany
-    @JoinTable(name = "mapping_list_variables", schema = "inventory",
-        joinColumns = [JoinColumn(name = "list_variable_id")],
-        inverseJoinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "variable_super_list_id", referencedColumnName = "super_list_id"),
-          JoinColumn(name = "variable_super_type_name", referencedColumnName = "super_type_name"),
-          JoinColumn(name = "variable_type_name", referencedColumnName = "type_name"),
-          JoinColumn(name = "variable_name", referencedColumnName = "variable_name")])
+    @JoinTable(name = "mapping_list_variables", schema = "inventory", joinColumns = [JoinColumn(name = "variable_list_id")], inverseJoinColumns = [JoinColumn(name = "variable_id", referencedColumnName = "id")])
     val variables: MutableSet<Variable> = HashSet()
 
 ) : Serializable {
@@ -48,7 +46,7 @@ data class VariableList(
     return this.id == other.id
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   init {
     if (size < 0)

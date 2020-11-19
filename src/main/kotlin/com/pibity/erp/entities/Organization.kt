@@ -10,21 +10,27 @@ package com.pibity.erp.entities
 
 import com.google.gson.annotations.Expose
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
 @Table(name = "organization", schema = "inventory")
 data class Organization(
 
-    @Id
     @Expose
-    @Column(name = "id", unique = true, nullable = false)
-    val id: String,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organization_generator")
+    @SequenceGenerator(name="organization_generator", sequenceName = "organization_sequence")
+    @Column(name = "id", updatable = false, nullable = false)
+    val id: Long = -1L,
 
     @Expose
-    @Column(name = "display_name", nullable = false)
-    var displayName: String = "",
+    @Column(name = "name", unique = true, nullable = false)
+    var name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
     var superList: VariableList? = null
@@ -35,8 +41,8 @@ data class Organization(
     other ?: return false
     if (this === other) return true
     other as Organization
-    return this.id == other.id
+    return this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

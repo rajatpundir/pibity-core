@@ -9,42 +9,39 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.validateFunctionPermissions
 import com.pibity.erp.entities.function.Function
 import com.pibity.erp.entities.permission.FunctionInputPermission
 import com.pibity.erp.entities.permission.FunctionOutputPermission
 import com.pibity.erp.entities.permission.FunctionPermission
-import com.pibity.erp.entities.permission.TypePermission
-import com.pibity.erp.entities.permission.embeddables.FunctionInputPermissionId
-import com.pibity.erp.entities.permission.embeddables.FunctionOutputPermissionId
-import com.pibity.erp.entities.permission.embeddables.FunctionPermissionId
-import com.pibity.erp.repositories.FunctionPermissionRepository
+import com.pibity.erp.repositories.query.FunctionPermissionRepository
 import com.pibity.erp.repositories.function.FunctionRepository
+import com.pibity.erp.repositories.jpa.FunctionPermissionJpaRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class FunctionPermissionService(
     val functionRepository: FunctionRepository,
-    val functionPermissionRepository: FunctionPermissionRepository
+    val functionPermissionRepository: FunctionPermissionRepository,
+    val functionPermissionJpaRepository: FunctionPermissionJpaRepository
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createFunctionPermission(jsonParams: JsonObject): FunctionPermission {
-    val function: Function = functionRepository.findFunction(organizationName = jsonParams.get("organization").asString, name = jsonParams.get("functionName").asString)
+    val function: Function = functionRepository.findFunction(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("functionName").asString)
         ?: throw CustomJsonException("{functionName: 'Function could not be determined'}")
     val jsonPermissions: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = function)
-    val functionPermission = FunctionPermission(id = FunctionPermissionId(function = function, name = jsonParams.get("permissionName").asString))
+    val functionPermission = FunctionPermission(function = function, name = jsonParams.get("permissionName").asString)
     function.inputs.forEach {
-      functionPermission.functionInputPermissions.add(FunctionInputPermission(id = FunctionInputPermissionId(functionPermission = functionPermission, functionInput = it), accessLevel = jsonPermissions.get("inputs").asJsonObject.get(it.id.name).asBoolean))
+      functionPermission.functionInputPermissions.add(FunctionInputPermission(functionPermission = functionPermission, functionInput = it, accessLevel = jsonPermissions.get("inputs").asJsonObject.get(it.name).asBoolean))
     }
     function.outputs.forEach {
-      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(id = FunctionOutputPermissionId(functionPermission = functionPermission, functionOutput = it), accessLevel = jsonPermissions.get("outputs").asJsonObject.get(it.id.name).asBoolean))
+      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(functionPermission = functionPermission, functionOutput = it, accessLevel = jsonPermissions.get("outputs").asJsonObject.get(it.name).asBoolean))
     }
     return try {
-      functionPermissionRepository.save(functionPermission)
+      functionPermissionJpaRepository.save(functionPermission)
     } catch (exception: Exception) {
       throw CustomJsonException("{permissionName: 'Permission could not be created'}")
     }
@@ -52,13 +49,13 @@ class FunctionPermissionService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateFunctionPermission(jsonParams: JsonObject): FunctionPermission {
-    val functionPermission: FunctionPermission = functionPermissionRepository.findFunctionPermission(organizationName = jsonParams.get("organization").asString, functionName = jsonParams.get("functionName").asString, name = jsonParams.get("permissionName").asString)
+    val functionPermission: FunctionPermission = functionPermissionRepository.findFunctionPermission(organizationId = jsonParams.get("orgId").asLong, functionName = jsonParams.get("functionName").asString, name = jsonParams.get("permissionName").asString)
         ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")
-    val jsonPermissions: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = functionPermission.id.function)
-    functionPermission.functionInputPermissions.forEach { it.accessLevel = jsonPermissions.get("inputs").asJsonObject.get(it.id.functionInput.id.name).asBoolean }
-    functionPermission.functionOutputPermissions.forEach { it.accessLevel = jsonPermissions.get("outputs").asJsonObject.get(it.id.functionOutput.id.name).asBoolean }
+    val jsonPermissions: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = functionPermission.function)
+    functionPermission.functionInputPermissions.forEach { it.accessLevel = jsonPermissions.get("inputs").asJsonObject.get(it.functionInput.name).asBoolean }
+    functionPermission.functionOutputPermissions.forEach { it.accessLevel = jsonPermissions.get("outputs").asJsonObject.get(it.functionOutput.name).asBoolean }
     return try {
-      functionPermissionRepository.save(functionPermission)
+      functionPermissionJpaRepository.save(functionPermission)
     } catch (exception: Exception) {
       throw CustomJsonException("{permissionName: 'Permission could not be created'}")
     }
@@ -66,15 +63,15 @@ class FunctionPermissionService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultFunctionPermission(function: Function): FunctionPermission {
-    val functionPermission = FunctionPermission(id = FunctionPermissionId(function = function, name = "DEFAULT"))
+    val functionPermission = FunctionPermission(function = function, name = "DEFAULT")
     function.inputs.forEach {
-      functionPermission.functionInputPermissions.add(FunctionInputPermission(id = FunctionInputPermissionId(functionPermission = functionPermission, functionInput = it), accessLevel = true))
+      functionPermission.functionInputPermissions.add(FunctionInputPermission(functionPermission = functionPermission, functionInput = it, accessLevel = true))
     }
     function.outputs.forEach {
-      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(id = FunctionOutputPermissionId(functionPermission = functionPermission, functionOutput = it), accessLevel = true))
+      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(functionPermission = functionPermission, functionOutput = it, accessLevel = true))
     }
     return try {
-      functionPermissionRepository.save(functionPermission)
+      functionPermissionJpaRepository.save(functionPermission)
     } catch (exception: Exception) {
       throw CustomJsonException("{permissionName: 'Permission could not be created'}")
     }
@@ -83,21 +80,21 @@ class FunctionPermissionService(
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun getFunctionPermissionDetails(jsonParams: JsonObject): FunctionPermission {
     return (functionPermissionRepository.findFunctionPermission(
-        organizationName = jsonParams.get("organization").asString,
+        organizationId = jsonParams.get("orgId").asLong,
         functionName = jsonParams.get("functionName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
   }
 
   fun superimposeFunctionPermissions(functionPermissions: Set<FunctionPermission>, function: Function): FunctionPermission {
-    val functionPermission = FunctionPermission(id = FunctionPermissionId(function = function, name = "SUPERIMPOSED_PERMISSION"))
+    val functionPermission = FunctionPermission(function = function, name = "SUPERIMPOSED_PERMISSION")
     for (input in function.inputs) {
-      functionPermission.functionInputPermissions.add(FunctionInputPermission(id = FunctionInputPermissionId(functionPermission = functionPermission, functionInput = input),
-          accessLevel = functionPermissions.map { fp -> fp.functionInputPermissions.single { it.id.functionInput.id.name == input.id.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }))
+      functionPermission.functionInputPermissions.add(FunctionInputPermission(functionPermission = functionPermission, functionInput = input,
+          accessLevel = functionPermissions.map { fp -> fp.functionInputPermissions.single { it.functionInput.name == input.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }))
     }
     for (output in function.outputs) {
-      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(id = FunctionOutputPermissionId(functionPermission = functionPermission, functionOutput = output),
-          accessLevel = functionPermissions.map { fp -> fp.functionOutputPermissions.single { it.id.functionOutput.id.name == output.id.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }))
+      functionPermission.functionOutputPermissions.add(FunctionOutputPermission(functionPermission = functionPermission, functionOutput = output,
+          accessLevel = functionPermissions.map { fp -> fp.functionOutputPermissions.single { it.functionOutput.name == output.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }))
     }
     return functionPermission
   }

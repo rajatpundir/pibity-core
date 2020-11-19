@@ -10,7 +10,6 @@ package com.pibity.erp.commons.constants
 
 object KeyConstants {
   const val KEY_TYPE = "type"
-  const val DISPLAY_NAME = "displayName"
   const val ORDER = "order"
   const val DEFAULT = "default"
   const val FORMULA_EXPRESSION = "expression"

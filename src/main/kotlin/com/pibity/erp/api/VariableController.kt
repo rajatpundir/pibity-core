@@ -11,6 +11,7 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.QueryService
@@ -48,9 +49,10 @@ class VariableController(val variableService: VariableService, val queryService:
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createVariable"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(serialize(variableService.createVariable(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+      val (variable, typePermission) = variableService.createVariable(jsonParams = jsonParams)
+      ResponseEntity(serialize(variable ,typePermission).toString(), HttpStatus.OK)
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -66,8 +68,8 @@ class VariableController(val variableService: VariableService, val queryService:
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
       val (variable, _) = variableService.updateVariable(jsonParams = jsonParams)
       ResponseEntity(serialize(variable).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -82,8 +84,8 @@ class VariableController(val variableService: VariableService, val queryService:
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
       ResponseEntity(serialize(queryService.queryVariables(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -94,8 +96,8 @@ class VariableController(val variableService: VariableService, val queryService:
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryVariables"] ?: JsonObject())
       ResponseEntity(serialize(queryService.queryPublicVariables(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }

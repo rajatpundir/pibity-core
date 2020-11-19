@@ -16,20 +16,21 @@ import com.pibity.erp.entities.permission.TypePermission
 
 fun serialize(typePermission: TypePermission): JsonObject {
   val json = JsonObject()
-  if (typePermission.id.type.id.superTypeName == "Any") {
-    json.addProperty("organization", typePermission.id.type.id.organization.id)
-    json.addProperty("typeName", typePermission.id.type.id.name)
-    json.addProperty("permissionName", typePermission.id.name)
+  if (typePermission.type.superTypeName == "Any") {
+    json.addProperty("orgId", typePermission.type.organization.id)
+    json.addProperty("typeName", typePermission.type.name)
+    json.addProperty("permissionName", typePermission.name)
+//    json.addProperty("version", typePermission.version.time)
     json.addProperty("creatable", typePermission.creatable)
     json.addProperty("deletable", typePermission.deletable)
   }
 
   val jsonKeyPermissions = JsonObject()
   for (keyPermission in typePermission.keyPermissions) {
-    when (keyPermission.id.key.type.id.name) {
+    when (keyPermission.key.type.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA -> {
         jsonKeyPermissions.addProperty(
-            keyPermission.id.key.id.name,
+            keyPermission.key.name,
             when (keyPermission.accessLevel) {
               PermissionConstants.READ_ACCESS -> "READ"
               PermissionConstants.WRITE_ACCESS -> "WRITE"
@@ -37,21 +38,21 @@ fun serialize(typePermission: TypePermission): JsonObject {
             })
       }
       TypeConstants.LIST -> {
-        if (keyPermission.id.key.list!!.type.id.superTypeName == "Any")
+        if (keyPermission.key.list!!.type.superTypeName == "Any")
           jsonKeyPermissions.addProperty(
-              keyPermission.id.key.id.name,
+              keyPermission.key.name,
               when (keyPermission.accessLevel) {
                 PermissionConstants.READ_ACCESS -> "READ"
                 PermissionConstants.WRITE_ACCESS -> "WRITE"
                 else -> "NONE"
               })
         else {
-          if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.list!!.type.id.superTypeName)
-              || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.list!!.type.id.superTypeName))
-            jsonKeyPermissions.add(keyPermission.id.key.id.name, serialize(keyPermission.referencedTypePermission!!))
+          if ((keyPermission.key.parentType.superTypeName == "Any" && keyPermission.key.parentType.name == keyPermission.key.list!!.type.superTypeName)
+              || (keyPermission.key.parentType.superTypeName != "Any" && keyPermission.key.parentType.superTypeName == keyPermission.key.list!!.type.superTypeName))
+            jsonKeyPermissions.add(keyPermission.key.name, serialize(keyPermission.referencedTypePermission!!))
           else
             jsonKeyPermissions.addProperty(
-                keyPermission.id.key.id.name,
+                keyPermission.key.name,
                 when (keyPermission.accessLevel) {
                   PermissionConstants.READ_ACCESS -> "READ"
                   PermissionConstants.WRITE_ACCESS -> "WRITE"
@@ -60,21 +61,21 @@ fun serialize(typePermission: TypePermission): JsonObject {
         }
       }
       else -> {
-        if (keyPermission.id.key.type.id.superTypeName == "Any")
+        if (keyPermission.key.type.superTypeName == "Any")
           jsonKeyPermissions.addProperty(
-              keyPermission.id.key.id.name,
+              keyPermission.key.name,
               when (keyPermission.accessLevel) {
                 PermissionConstants.READ_ACCESS -> "READ"
                 PermissionConstants.WRITE_ACCESS -> "WRITE"
                 else -> "NONE"
               })
         else {
-          if ((keyPermission.id.key.id.parentType.id.superTypeName == "Any" && keyPermission.id.key.id.parentType.id.name == keyPermission.id.key.type.id.superTypeName)
-              || (keyPermission.id.key.id.parentType.id.superTypeName != "Any" && keyPermission.id.key.id.parentType.id.superTypeName == keyPermission.id.key.type.id.superTypeName))
-            jsonKeyPermissions.add(keyPermission.id.key.id.name, serialize(keyPermission.referencedTypePermission!!))
+          if ((keyPermission.key.parentType.superTypeName == "Any" && keyPermission.key.parentType.name == keyPermission.key.type.superTypeName)
+              || (keyPermission.key.parentType.superTypeName != "Any" && keyPermission.key.parentType.superTypeName == keyPermission.key.type.superTypeName))
+            jsonKeyPermissions.add(keyPermission.key.name, serialize(keyPermission.referencedTypePermission!!))
           else
             jsonKeyPermissions.addProperty(
-                keyPermission.id.key.id.name,
+                keyPermission.key.name,
                 when (keyPermission.accessLevel) {
                   PermissionConstants.READ_ACCESS -> "READ"
                   PermissionConstants.WRITE_ACCESS -> "WRITE"

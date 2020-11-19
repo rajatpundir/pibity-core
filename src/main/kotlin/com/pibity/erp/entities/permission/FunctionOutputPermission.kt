@@ -8,20 +8,32 @@
 
 package com.pibity.erp.entities.permission
 
-import com.pibity.erp.entities.permission.embeddables.FunctionOutputPermissionId
+import com.pibity.erp.entities.function.FunctionOutput
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
-import javax.persistence.Column
-import javax.persistence.EmbeddedId
-import javax.persistence.Entity
-import javax.persistence.Table
+import javax.persistence.*
 
 @Entity
-@Table(name = "function_output_permission", schema = "inventory")
+@Table(name = "function_output_permission", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_permission_id", "function_output_id"])])
 data class FunctionOutputPermission(
 
-    @EmbeddedId
-    val id: FunctionOutputPermissionId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_output_permission_generator")
+    @SequenceGenerator(name="function_output_permission_generator", sequenceName = "function_output_permission_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_permission_id", referencedColumnName = "id")])
+    val functionPermission: FunctionPermission,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_output_id", referencedColumnName = "id")])
+    val functionOutput: FunctionOutput,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @Column(name = "access_level", nullable = false)
     var accessLevel: Boolean
@@ -32,8 +44,8 @@ data class FunctionOutputPermission(
     other ?: return false
     if (this === other) return true
     other as FunctionOutputPermission
-    return this.id == other.id
+    return this.functionOutput == other.functionOutput && this.functionPermission == other.functionPermission
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

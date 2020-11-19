@@ -8,24 +8,38 @@
 
 package com.pibity.erp.entities.permission
 
+import com.pibity.erp.entities.function.Function
 import com.pibity.erp.entities.mappings.RoleFunctionPermission
-import com.pibity.erp.entities.permission.embeddables.FunctionPermissionId
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_permission", schema = "inventory")
+@Table(name = "function_permission", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionPermission(
 
-    @EmbeddedId
-    val id: FunctionPermissionId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_permission_generator")
+    @SequenceGenerator(name="function_permission_generator", sequenceName = "function_permission_sequence")
+    val id: Long = -1,
 
-    @OneToMany(mappedBy = "id.functionPermission", cascade = [CascadeType.ALL])
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+    val function: Function,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL])
     var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.functionPermission", cascade = [CascadeType.ALL])
+    @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL])
     var functionOutputPermissions: MutableSet<FunctionOutputPermission> = HashSet(),
 
     @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
@@ -37,10 +51,10 @@ data class FunctionPermission(
     other ?: return false
     if (this === other) return true
     other as FunctionPermission
-    return this.id == other.id
+    return this.function == other.function && this.name == other.name
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

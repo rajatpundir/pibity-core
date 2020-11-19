@@ -11,22 +11,33 @@ package com.pibity.erp.entities.function
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
-import com.pibity.erp.entities.function.embeddables.FunctionInputId
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_input", schema = "inventory")
+@Table(name = "function_input", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionInput(
 
-    @EmbeddedId
-    val id: FunctionInputId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_input_generator")
+    @SequenceGenerator(name = "function_input_generator", sequenceName = "function_input_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+    val function: Function,
+
+    @Column(name = "name", nullable = false)
+    val name: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "input_type_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "input_type_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "input_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     val type: Type,
 
     @Column(name = "variable_name")
@@ -34,42 +45,28 @@ data class FunctionInput(
 
     @ManyToMany
     @JoinTable(name = "mapping_function_input_variable_name_dependencies", schema = "inventory",
-        joinColumns = [JoinColumn(name = "organization_id", referencedColumnName = "organization_id"),
-          JoinColumn(name = "function_name", referencedColumnName = "function_name"),
-          JoinColumn(name = "input_name", referencedColumnName = "input_name")],
-        inverseJoinColumns = [JoinColumn(name = "dependency_key_parent_type_organization_id", referencedColumnName = "parent_type_organization_id"),
-          JoinColumn(name = "dependency_key_parent_super_type_name", referencedColumnName = "parent_super_type_name"),
-          JoinColumn(name = "dependency_key_parent_type_name", referencedColumnName = "parent_type_name"),
-          JoinColumn(name = "dependency_key_name", referencedColumnName = "key_name")])
+        joinColumns = [JoinColumn(name = "function_input_id", referencedColumnName = "id")],
+        inverseJoinColumns = [JoinColumn(name = "dependency_key_id", referencedColumnName = "id")])
     val variableNameKeyDependencies: MutableSet<Key> = HashSet(),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "values_function_organization_id", referencedColumnName = "function_organization_id"),
-      JoinColumn(name = "values_function_name", referencedColumnName = "function_name"),
-      JoinColumn(name = "values_function_input_name", referencedColumnName = "function_input_name"),
-      JoinColumn(name = "values_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "values_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "values_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "values_function_input_type_id", referencedColumnName = "id")])
     var values: FunctionInputType? = null,
 
-    @Column(name = "default_string_value")
+    @Column(name = "value_string")
     var defaultStringValue: String? = null,
 
-    @Column(name = "default_long_value")
+    @Column(name = "value_long")
     var defaultLongValue: Long? = null,
 
-    @Column(name = "default_double_value")
+    @Column(name = "value_double")
     var defaultDoubleValue: Double? = null,
 
-    @Column(name = "default_boolean_value")
+    @Column(name = "value_boolean")
     var defaultBooleanValue: Boolean? = null,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
-      JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
+    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null
 
 ) : Serializable {
@@ -78,7 +75,7 @@ data class FunctionInput(
     other ?: return false
     if (this === other) return true
     other as FunctionInput
-    return this.id == other.id
+    return this.function == other.function && this.name == other.name
   }
 
   override fun hashCode(): Int = Objects.hash(id)

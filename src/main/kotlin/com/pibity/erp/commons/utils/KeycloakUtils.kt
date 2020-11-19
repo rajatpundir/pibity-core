@@ -18,7 +18,7 @@ import org.keycloak.representations.idm.GroupRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 
 fun createKeycloakGroup(jsonParams: JsonObject) {
-  realmResource.groups().add(GroupRepresentation().apply { name = jsonParams.get("organization").asString }).use { response ->
+  realmResource.groups().add(GroupRepresentation().apply { name = jsonParams.get("orgId").asString }).use { response ->
     val parentGroupId: String = CreatedResponseUtil.getCreatedId(response)
     setOf(RoleConstants.ADMIN, RoleConstants.USER).forEach { subGroupName ->
       realmResource.groups().group(parentGroupId).subGroup(GroupRepresentation().apply { name = subGroupName })
@@ -44,7 +44,7 @@ fun createKeycloakUser(jsonParams: JsonObject): String {
     type = CredentialRepresentation.PASSWORD
     value = jsonParams.get("password").asString
   })
-  val subGroupId: String = realmResource.getGroupByPath(listOf(jsonParams.get("organization").asString, if (jsonParams.has("subGroupName")) jsonParams.get("subGroupName").asString else "USER").joinToString(separator = "/")).id
+  val subGroupId: String = realmResource.getGroupByPath(listOf(jsonParams.get("orgId").asString, if (jsonParams.has("subGroupName")) jsonParams.get("subGroupName").asString else "USER").joinToString(separator = "/")).id
   userResource.joinGroup(subGroupId)
   return keycloakUserId
 }

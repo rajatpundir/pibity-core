@@ -8,21 +8,32 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.UserId
 import com.pibity.erp.entities.mappings.UserGroup
 import com.pibity.erp.entities.mappings.UserRole
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "user", schema = "inventory")
+@Table(name = "user", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "username"])])
 data class User(
 
-    @EmbeddedId
-    val id: UserId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_generator")
+    @SequenceGenerator(name = "user_generator", sequenceName = "user_sequence")
+    val id: Long = -1,
+
+    @ManyToOne
+    @JoinColumn(name = "organization_id", nullable = false)
+    val organization: Organization,
+
+    @Column(name = "username", nullable = false)
+    val username: String,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @Column(name = "active", nullable = false)
     var active: Boolean,
@@ -36,6 +47,9 @@ data class User(
     @Column(name = "last_name", nullable = false)
     var lastName: String,
 
+    @OneToOne
+    var details: Variable? = null,
+
     @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL])
     val userRoles: MutableSet<UserRole> = HashSet(),
 
@@ -48,10 +62,10 @@ data class User(
     other ?: return false
     if (this === other) return true
     other as User
-    return this.id == other.id
+    return this.organization == other.organization && this.username == other.username
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 
   override fun toString(): String = serialize(this).toString()
 }

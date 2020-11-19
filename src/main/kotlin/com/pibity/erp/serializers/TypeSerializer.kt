@@ -14,17 +14,17 @@ import com.pibity.erp.entities.Type
 
 fun serialize(type: Type): JsonObject {
   val json = JsonObject()
-  if (type.id.superTypeName == "Any")
-    json.addProperty("organizationId", type.id.organization.id)
+  if (type.superTypeName == "Any")
+    json.addProperty("orgId", type.organization.id)
   else
-    json.addProperty("superTypeName", type.id.superTypeName)
-  json.addProperty("typeName", type.id.name)
-  json.addProperty("displayName", type.displayName)
+    json.addProperty("superTypeName", type.superTypeName)
+  json.addProperty("typeName", type.name)
+//  json.addProperty("version", type.version.time)
   val jsonKeys = JsonObject()
   for (key in type.keys)
-    jsonKeys.add(key.id.name, serialize(key))
+    jsonKeys.add(key.name, serialize(key))
   json.add("keys", jsonKeys)
-  if (type.id.superTypeName == "Any")
+  if (type.superTypeName == "Any")
     json.add("permissions", serialize(type.permissions))
   return json
 }

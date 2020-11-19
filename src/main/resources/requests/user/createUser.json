@@ -1,5 +1,5 @@
 {
-  "organization": {
+  "orgId": {
     "type": "String"
   },
   "email": {
@@ -16,5 +16,11 @@
   },
   "password": {
     "type": "String"
+  },
+  "details": {
+    "type": "Object"
+  },
+  "roles": {
+    "type": "Array"
   }
 }

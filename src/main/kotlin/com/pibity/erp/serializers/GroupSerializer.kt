@@ -15,8 +15,9 @@ import com.pibity.erp.serializers.mappings.serialize
 
 fun serialize(group: Group): JsonObject {
   val json = JsonObject()
-  json.addProperty("organization", group.id.organization.id)
-  json.addProperty("groupName", group.id.name)
+  json.addProperty("orgId", group.organization.id)
+  json.addProperty("groupName", group.name)
+//  json.addProperty("version", group.version.time)
   json.add("roles", serialize(group.groupRoles))
   return json
 }

@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
@@ -35,8 +36,8 @@ class LispController {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["evaluateExpression"] ?: JsonObject())
       ResponseEntity(validateOrEvaluateExpression(jsonParams = jsonParams, mode = "validate", symbols = JsonObject()).toString()
           + " " + validateOrEvaluateExpression(jsonParams = jsonParams, mode = "evaluate", symbols = JsonObject()).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }

@@ -21,36 +21,43 @@ import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.function.*
 import com.pibity.erp.entities.function.Function
-import com.pibity.erp.entities.function.embeddables.*
-import com.pibity.erp.repositories.OrganizationRepository
-import com.pibity.erp.repositories.TypeRepository
-import com.pibity.erp.repositories.VariableRepository
-import com.pibity.erp.repositories.function.*
+import com.pibity.erp.entities.permission.FunctionPermission
+import com.pibity.erp.repositories.function.FunctionInputRepository
+import com.pibity.erp.repositories.function.FunctionOutputRepository
+import com.pibity.erp.repositories.function.FunctionRepository
+import com.pibity.erp.repositories.function.jpa.*
+import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
+import com.pibity.erp.repositories.query.TypeRepository
+import com.pibity.erp.repositories.query.VariableRepository
 import com.pibity.erp.serializers.serialize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class FunctionService(
-    val organizationRepository: OrganizationRepository,
+    val organizationJpaRepository: OrganizationJpaRepository,
     val typeRepository: TypeRepository,
     val functionRepository: FunctionRepository,
+    val functionJpaRepository: FunctionJpaRepository,
     val functionInputRepository: FunctionInputRepository,
-    val functionInputTypeRepository: FunctionInputTypeRepository,
+    val functionInputJpaRepository: FunctionInputJpaRepository,
+    val functionInputTypeJpaRepository: FunctionInputTypeJpaRepository,
     val functionOutputRepository: FunctionOutputRepository,
-    val functionOutputTypeRepository: FunctionOutputTypeRepository,
+    val functionOutputJpaRepository: FunctionOutputJpaRepository,
+    val functionOutputTypeJpaRepository: FunctionOutputTypeJpaRepository,
     val functionPermissionService: FunctionPermissionService,
     val variableRepository: VariableRepository,
     val variableService: VariableService,
-    val roleService: RoleService
+    val roleService: RoleService,
+    val userService: UserService
+
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createFunction(jsonParams: JsonObject): Function {
-    println(jsonParams)
-    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val globalTypes: MutableSet<Type> = typeRepository.findGlobalTypes(organizationName = organization.id) as MutableSet<Type>
+    val organization: Organization = organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
+        ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
+    val globalTypes: MutableSet<Type> = typeRepository.findGlobalTypes(organizationId = organization.id) as MutableSet<Type>
     val symbolPaths: MutableSet<String> = mutableSetOf()
     symbolPaths.apply {
       addAll(getInputSymbolPaths(jsonParams = jsonParams.get("inputs").asJsonObject, globalTypes = globalTypes))
@@ -59,21 +66,21 @@ class FunctionService(
     val symbols: JsonObject = getInputSymbols(inputs = jsonParams.get("inputs").asJsonObject, globalTypes = globalTypes, symbolPaths = symbolPaths)
     val inputs: JsonObject = validateInputs(jsonParams = jsonParams.get("inputs").asJsonObject, globalTypes = globalTypes, symbolPaths = symbolPaths, symbols = symbols)
     val outputs: JsonObject = validateOutputs(jsonParams = jsonParams.get("outputs").asJsonObject, globalTypes = globalTypes, symbolPaths = symbolPaths, symbols = symbols)
-    val function = Function(id = FunctionId(organization = organization, name = validateFunctionName(jsonParams.get("functionName").asString)), symbolPaths = gson.toJson(getSymbolPaths(jsonParams = symbols)))
-    functionRepository.save(function)
+    var function = Function(organization = organization, name = validateFunctionName(jsonParams.get("functionName").asString), symbolPaths = gson.toJson(getSymbolPaths(jsonParams = symbols)))
+    function = functionJpaRepository.save(function)
     inputs.entrySet().forEach { (inputName, input) ->
       val type: Type = if (input.isJsonObject)
-        globalTypes.single { it.id.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString }
+        globalTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString }
       else
-        globalTypes.single { it.id.name == input.asString }
-      val functionInput = FunctionInput(id = FunctionInputId(function = function, name = inputName), type = type,
-          variableName = when (type.id.name) {
+        globalTypes.single { it.name == input.asString }
+      var functionInput = FunctionInput(function = function, name = inputName, type = type,
+          variableName = when (type.name) {
             TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> null
             else -> if (input.asJsonObject.has("variableName"))
               input.asJsonObject.get("variableName").asJsonObject.toString()
             else null
           },
-          variableNameKeyDependencies = when (type.id.name) {
+          variableNameKeyDependencies = when (type.name) {
             TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> mutableSetOf()
             else -> if (input.asJsonObject.has("variableName"))
               getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = input.asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
@@ -81,7 +88,7 @@ class FunctionService(
           }
       )
       if (input.isJsonObject) {
-        when (type.id.name) {
+        when (type.name) {
           TypeConstants.TEXT -> functionInput.defaultStringValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asString else ""
           TypeConstants.NUMBER -> functionInput.defaultLongValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asLong else 0
           TypeConstants.DECIMAL -> functionInput.defaultDoubleValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asDouble else 0.0
@@ -89,40 +96,40 @@ class FunctionService(
           TypeConstants.FORMULA, TypeConstants.LIST -> {
           }
           else -> if (input.asJsonObject.has(KeyConstants.DEFAULT)) {
-            functionInput.referencedVariable = variableRepository.findVariable(organizationName = organization.id, superList = organization.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.id.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
+            functionInput.referencedVariable = variableRepository.findVariable(organizationId = organization.id, superList = organization.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
                 ?: throw CustomJsonException("{inputs: {${inputName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
           }
         }
       }
-      functionInputRepository.save(functionInput)
+      functionInput = functionInputJpaRepository.save(functionInput)
       if (input.isJsonObject && input.asJsonObject.has("values")) {
-        functionInput.values = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = FunctionInput(id = FunctionInputId(function = function, name = inputName), type = type), type = type, values = input.asJsonObject.get("values").asJsonObject)
-        functionInputRepository.save(functionInput)
+        functionInput.values = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = FunctionInput(function = function, name = inputName, type = type), type = type, values = input.asJsonObject.get("values").asJsonObject)
+        functionInputJpaRepository.save(functionInput)
       }
       function.inputs.add(functionInput)
     }
     outputs.entrySet().forEach { (outputName, output) ->
-      val type: Type = globalTypes.single { it.id.name == output.asJsonObject.get(KeyConstants.KEY_TYPE).asString }
-      val functionOutput = FunctionOutput(id = FunctionOutputId(function = function, name = outputName), type = type,
-          variableName = when (type.id.name) {
+      val type: Type = globalTypes.single { it.name == output.asJsonObject.get(KeyConstants.KEY_TYPE).asString }
+      var functionOutput = FunctionOutput(function = function, name = outputName, type = type,
+          variableName = when (type.name) {
             TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
               output.asJsonObject.get("values").asJsonObject.toString()
             TypeConstants.FORMULA, TypeConstants.LIST -> ""
             else -> output.asJsonObject.get("variableName").asJsonObject.toString()
           },
-          variableNameKeyDependencies = when (type.id.name) {
+          variableNameKeyDependencies = when (type.name) {
             TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-              getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = output.asJsonObject.get("values").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", type.id.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
+              getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = output.asJsonObject.get("values").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
             TypeConstants.FORMULA, TypeConstants.LIST -> mutableSetOf()
             else -> getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = output.asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
           })
-      functionOutputRepository.save(functionOutput)
-      when (type.id.name) {
+      functionOutput = functionOutputJpaRepository.save(functionOutput)
+      when (type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else -> {
           functionOutput.values = saveFunctionOutputType(inputs = inputs, globalTypes = globalTypes, functionOutput = functionOutput, type = type, values = output.asJsonObject.get("values").asJsonObject)
-          functionOutputRepository.save(functionOutput)
+          functionOutputJpaRepository.save(functionOutput)
         }
       }
       function.outputs.add(functionOutput)
@@ -138,7 +145,7 @@ class FunctionService(
     for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
       if (jsonPermission.isJsonObject) {
         functionPermissionService.createFunctionPermission(jsonParams = JsonObject().apply {
-          addProperty("organization", jsonParams.get("organization").asString)
+          addProperty("orgId", jsonParams.get("orgId").asString)
           addProperty("functionName", jsonParams.get("functionName").asString)
           try {
             addProperty("permissionName", jsonParams.get("permissionName").asString)
@@ -161,7 +168,7 @@ class FunctionService(
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
           roleService.updateRoleFunctionPermissions(jsonParams = JsonObject().apply {
-            addProperty("organization", jsonParams.get("organization").asString)
+            addProperty("orgId", jsonParams.get("orgId").asString)
             addProperty("functionName", jsonParams.get("functionName").asString)
             addProperty("roleName", roleName)
             try {
@@ -178,63 +185,81 @@ class FunctionService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun executeFunction(jsonParams: JsonObject): JsonObject {
-    println(jsonParams)
-    val organization: Organization = organizationRepository.getById(jsonParams.get("organization").asString)
-        ?: throw CustomJsonException("{organization: 'Organization could not be found'}")
-    val function: Function = functionRepository.findFunction(organizationName = organization.id, name = jsonParams.get("functionName").asString)
-        ?: throw CustomJsonException("{functionName: 'Function could not be determined'}")
-    val inputs: Set<FunctionInput> = functionInputRepository.getFunctionInputs(organizationName = organization.id, functionName = jsonParams.get("functionName").asString)
+    val functionPermission: FunctionPermission =
+        userService.superimposeUserFunctionPermissions(jsonParams = JsonObject().apply {
+          addProperty("orgId", jsonParams.get("orgId").asString)
+          addProperty("username", jsonParams.get("username").asString)
+          addProperty("functionName", jsonParams.get("functionName").asString)
+        })
+    val function: Function = functionPermission.function
+    val inputs: Set<FunctionInput> = functionInputRepository.getFunctionInputs(organizationId = functionPermission.function.organization.id, functionName = jsonParams.get("functionName").asString)
     val args: JsonObject = validateFunctionArgs(args = jsonParams.get("args").asJsonObject, inputs = inputs)
     val symbolPaths: Set<String> = gson.fromJson(function.symbolPaths, JsonArray::class.java).map { it.asString }.toSet()
     val symbols = JsonObject()
-    for (input in inputs) {
-      println("--------INPUT::---${input.id.name}--------")
-      when (input.type.id.name) {
-        TypeConstants.TEXT -> symbols.add(input.id.name, JsonObject().apply {
-          addProperty(KeyConstants.KEY_TYPE, input.type.id.name)
-          addProperty(KeyConstants.VALUE, args.get(input.id.name).asString)
+    for (inputPermission in functionPermission.functionInputPermissions) {
+      val input: FunctionInput = inputPermission.functionInput
+      when (input.type.name) {
+        TypeConstants.TEXT -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asString else try {
+            input.defaultStringValue!!
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")})
         })
-        TypeConstants.NUMBER -> symbols.add(input.id.name, JsonObject().apply {
-          addProperty(KeyConstants.KEY_TYPE, input.type.id.name)
-          addProperty(KeyConstants.VALUE, args.get(input.id.name).asLong)
+        TypeConstants.NUMBER -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asLong else try {
+            input.defaultLongValue!!
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")})
         })
-        TypeConstants.DECIMAL -> symbols.add(input.id.name, JsonObject().apply {
-          addProperty(KeyConstants.KEY_TYPE, input.type.id.name)
-          addProperty(KeyConstants.VALUE, args.get(input.id.name).asDouble)
+        TypeConstants.DECIMAL -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asDouble else try {
+            input.defaultDoubleValue!!
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")})
         })
-        TypeConstants.BOOLEAN -> symbols.add(input.id.name, JsonObject().apply {
-          addProperty(KeyConstants.KEY_TYPE, input.type.id.name)
-          addProperty(KeyConstants.VALUE, args.get(input.id.name).asBoolean)
+        TypeConstants.BOOLEAN -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asBoolean else try {
+            input.defaultBooleanValue!!
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")})
         })
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else -> {
-          val variable: Variable = variableRepository.findVariable(organizationName = organization.id, superTypeName = GLOBAL_TYPE, typeName = input.type.id.name, superList = organization.superList!!.id, name = args.get(input.id.name).asString)
-              ?: throw CustomJsonException("{args: {${input.id.name}: 'Unexpected value for parameter'}}")
-          symbols.add(input.id.name, JsonObject().apply {
+          val variable: Variable = if (inputPermission.accessLevel) variableRepository.findVariable(organizationId = functionPermission.function.organization.id,
+              superTypeName = GLOBAL_TYPE, typeName = input.type.name,
+              superList = functionPermission.function.organization.superList!!.id,
+              name = args.get(input.name).asString)
+              ?: throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
+          else try {
+            input.referencedVariable!!
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          }
+          symbols.add(input.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-            addProperty(KeyConstants.VALUE, variable.id.name)
-            add("values", getSymbolsForFunctionArgs(symbolPaths = symbolPaths, variable = variable, prefix = input.id.name + "."))
+            addProperty(KeyConstants.VALUE, variable.name)
+            add("values", getSymbolsForFunctionArgs(symbolPaths = symbolPaths, variable = variable, prefix = input.name + "."))
           })
         }
       }
     }
-    println("-------SYMBOL---PATHS----------")
-    println(symbolPaths)
-    println("-------------SYMBOLS--------------")
-    println(symbols)
     for (input in inputs) {
-      when (input.type.id.name) {
+      when (input.type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.LIST, TypeConstants.FORMULA -> {
         }
         else -> {
           if (input.variableName != null || input.values != null) {
             try {
               variableService.updateVariable(jsonParams = JsonObject().apply {
-                addProperty("organization", jsonParams.get("organization").asString)
+                addProperty("orgId", jsonParams.get("orgId").asString)
                 addProperty("username", jsonParams.get("username").asString)
-                addProperty("typeName", input.type.id.name)
-                addProperty("variableName", args.get(input.id.name).asString)
+                addProperty("typeName", input.type.name)
+                addProperty("variableName", args.get(input.name).asString)
                 if (input.variableName != null) {
                   addProperty("updatedVariableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(input.variableName, JsonObject::class.java).apply {
                     addProperty("expectedReturnType", TypeConstants.TEXT)
@@ -244,82 +269,82 @@ class FunctionService(
                   add("values", getFunctionInputTypeJson(functionInputType = input.values!!, symbols = symbols))
               })
             } catch (exception: CustomJsonException) {
-              throw CustomJsonException("{inputs: {${input.id.name}: ${exception.message}}}")
+              throw CustomJsonException("{inputs: {${input.name}: ${exception.message}}}")
             }
           }
         }
       }
     }
     val results = JsonObject()
-    val outputs: Set<FunctionOutput> = functionOutputRepository.getFunctionOutputs(organizationName = organization.id, functionName = jsonParams.get("functionName").asString)
-    for (output in outputs) {
-      println("--${output.id.name}--")
-      when (output.type.id.name) {
-        TypeConstants.TEXT -> results.addProperty(output.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
-          addProperty("expectedReturnType", output.type.id.name)
+    for (outputPermission in functionPermission.functionOutputPermissions) {
+      val output = outputPermission.functionOutput
+      when (output.type.name) {
+        TypeConstants.TEXT -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
         }, mode = "evaluate", symbols = symbols) as String)
-        TypeConstants.NUMBER -> results.addProperty(output.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
-          addProperty("expectedReturnType", output.type.id.name)
+        TypeConstants.NUMBER -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
         }, mode = "evaluate", symbols = symbols) as Long)
-        TypeConstants.DECIMAL -> results.addProperty(output.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
-          addProperty("expectedReturnType", output.type.id.name)
+        TypeConstants.DECIMAL -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
         }, mode = "evaluate", symbols = symbols) as Double)
-        TypeConstants.BOOLEAN -> results.addProperty(output.id.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
-          addProperty("expectedReturnType", output.type.id.name)
+        TypeConstants.BOOLEAN -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
         }, mode = "evaluate", symbols = symbols) as Boolean)
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
-        else -> results.add(output.id.name, serialize(try {
-          variableService.createVariable(jsonParams = JsonObject().apply {
-            addProperty("organization", jsonParams.get("organization").asString)
+        else -> {
+          val (variable: Variable, _) = variableService.createVariable(jsonParams = JsonObject().apply {
+            addProperty("orgId", jsonParams.get("orgId").asString)
             addProperty("username", jsonParams.get("username").asString)
-            addProperty("typeName", output.type.id.name)
+            addProperty("typeName", output.type.name)
             addProperty("variableName", validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
               addProperty("expectedReturnType", TypeConstants.TEXT)
             }, mode = "evaluate", symbols = symbols) as String)
             add("values", getFunctionOutputTypeJson(functionOutputType = output.values!!, symbols = symbols))
           })
-        } catch (exception: CustomJsonException) {
-          throw CustomJsonException("{outputs: {${output.id.name}: ${exception.message}}}")
-        }))
+          if (outputPermission.accessLevel) results.add(output.name, serialize(try {
+            variable
+          } catch (exception: CustomJsonException) {
+            throw CustomJsonException("{outputs: {${output.name}: ${exception.message}}}")
+          }))
+        }
       }
     }
     return results
   }
 
   fun saveFunctionInputType(inputs: JsonObject, globalTypes: Set<Type>, functionInput: FunctionInput, type: Type, values: JsonObject): FunctionInputType {
-    println("--------saveFunctionInputType----------")
-    println(values)
-    val functionInputType = FunctionInputType(id = FunctionInputTypeId(functionInput = functionInput, type = type))
+    val functionInputType = FunctionInputType(functionInput = functionInput, type = type)
     for (key in type.keys) {
-      if (values.has(key.id.name)) {
-        when (key.type.id.name) {
+      if (values.has(key.name)) {
+        when (key.type.name) {
           TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-            functionInputType.functionInputKeys.add(FunctionInputKey(id = FunctionInputKeyId(functionInputType = functionInputType, key = key),
-                expression = values.get(key.id.name).asJsonObject.toString(),
-                keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.id.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
+            functionInputType.functionInputKeys.add(FunctionInputKey(functionInputType = functionInputType, key = key,
+                expression = values.get(key.name).asJsonObject.toString(),
+                keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
           TypeConstants.FORMULA, TypeConstants.LIST -> {
           }
           else -> {
-            if (key.type.id.superTypeName == GLOBAL_TYPE) {
-              functionInputType.functionInputKeys.add(FunctionInputKey(id = FunctionInputKeyId(functionInputType = functionInputType, key = key),
-                  expression = values.get(key.id.name).asJsonObject.toString(),
-                  keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
+            if (key.type.superTypeName == GLOBAL_TYPE) {
+              functionInputType.functionInputKeys.add(FunctionInputKey(functionInputType = functionInputType, key = key,
+                  expression = values.get(key.name).asJsonObject.toString(),
+                  keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
             } else {
-              if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                  || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-                functionInputType.functionInputKeys.add(FunctionInputKey(id = FunctionInputKeyId(functionInputType = functionInputType, key = key),
-                    referencedFunctionInputType = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = functionInput, type = key.type, values = values.get(key.id.name).asJsonObject)))
+              if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                  || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
+                functionInputType.functionInputKeys.add(FunctionInputKey(functionInputType = functionInputType, key = key,
+                    referencedFunctionInputType = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = functionInput, type = key.type, values = values.get(key.name).asJsonObject)))
               } else {
                 val symbolPaths: MutableSet<String> = mutableSetOf()
                 symbolPaths.apply {
-                  addAll(validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.get("context").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.NUMBER) },
+                  addAll(validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.get("context").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.NUMBER) },
                       mode = "collect", symbols = JsonObject()) as MutableSet<String>)
-                  addAll(validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) },
+                  addAll(validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) },
                       mode = "collect", symbols = JsonObject()) as MutableSet<String>)
                 }
-                functionInputType.functionInputKeys.add(FunctionInputKey(id = FunctionInputKeyId(functionInputType = functionInputType, key = key),
-                    expression = values.get(key.id.name).asJsonObject.toString(),
+                functionInputType.functionInputKeys.add(FunctionInputKey(functionInputType = functionInputType, key = key,
+                    expression = values.get(key.name).asJsonObject.toString(),
                     keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = symbolPaths).toMutableSet()))
               }
             }
@@ -327,47 +352,45 @@ class FunctionService(
         }
       }
     }
-    return functionInputTypeRepository.save(functionInputType)
+    return functionInputTypeJpaRepository.save(functionInputType)
   }
 
   fun saveFunctionOutputType(inputs: JsonObject, globalTypes: Set<Type>, functionOutput: FunctionOutput, type: Type, values: JsonObject): FunctionOutputType {
-    println("--------saveFunctionOutputType----------")
-    println(values)
-    val functionOutputType = FunctionOutputType(id = FunctionOutputTypeId(functionOutput = functionOutput, type = type))
+    val functionOutputType = FunctionOutputType(functionOutput = functionOutput, type = type)
     for (key in type.keys) {
-      when (key.type.id.name) {
+      when (key.type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-          functionOutputType.functionOutputKeys.add(FunctionOutputKey(id = FunctionOutputKeyId(functionOutputType = functionOutputType, key = key),
-              expression = values.get(key.id.name).asJsonObject.toString(),
-              keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.id.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
+          functionOutputType.functionOutputKeys.add(FunctionOutputKey(functionOutputType = functionOutputType, key = key,
+              expression = values.get(key.name).asJsonObject.toString(),
+              keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else -> {
-          if (key.type.id.superTypeName == GLOBAL_TYPE) {
-            functionOutputType.functionOutputKeys.add(FunctionOutputKey(id = FunctionOutputKeyId(functionOutputType = functionOutputType, key = key),
-                expression = values.get(key.id.name).asJsonObject.toString(),
-                keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
+          if (key.type.superTypeName == GLOBAL_TYPE) {
+            functionOutputType.functionOutputKeys.add(FunctionOutputKey(functionOutputType = functionOutputType, key = key,
+                expression = values.get(key.name).asJsonObject.toString(),
+                keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
           } else {
-            if ((key.id.parentType.id.superTypeName == GLOBAL_TYPE && key.id.parentType.id.name == key.type.id.superTypeName)
-                || (key.id.parentType.id.superTypeName != GLOBAL_TYPE && key.id.parentType.id.superTypeName == key.type.id.superTypeName)) {
-              functionOutputType.functionOutputKeys.add(FunctionOutputKey(id = FunctionOutputKeyId(functionOutputType = functionOutputType, key = key),
-                  referencedFunctionOutputType = saveFunctionOutputType(inputs = inputs, globalTypes = globalTypes, functionOutput = functionOutput, type = key.type, values = values.get(key.id.name).asJsonObject)))
+            if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
+                || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
+              functionOutputType.functionOutputKeys.add(FunctionOutputKey(functionOutputType = functionOutputType, key = key,
+                  referencedFunctionOutputType = saveFunctionOutputType(inputs = inputs, globalTypes = globalTypes, functionOutput = functionOutput, type = key.type, values = values.get(key.name).asJsonObject)))
             } else {
               val symbolPaths: MutableSet<String> = mutableSetOf()
               symbolPaths.apply {
-                addAll(validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.get("context").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.NUMBER) },
+                addAll(validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.get("context").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.NUMBER) },
                     mode = "collect", symbols = JsonObject()) as MutableSet<String>)
-                addAll(validateOrEvaluateExpression(jsonParams = values.get(key.id.name).asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) },
+                addAll(validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) },
                     mode = "collect", symbols = JsonObject()) as MutableSet<String>)
               }
-              functionOutputType.functionOutputKeys.add(FunctionOutputKey(id = FunctionOutputKeyId(functionOutputType = functionOutputType, key = key),
-                  expression = values.get(key.id.name).asJsonObject.toString(),
+              functionOutputType.functionOutputKeys.add(FunctionOutputKey(functionOutputType = functionOutputType, key = key,
+                  expression = values.get(key.name).asJsonObject.toString(),
                   keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = symbolPaths).toMutableSet()))
             }
           }
         }
       }
     }
-    return functionOutputTypeRepository.save(functionOutputType)
+    return functionOutputTypeJpaRepository.save(functionOutputType)
   }
 }

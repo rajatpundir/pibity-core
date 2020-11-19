@@ -8,19 +8,34 @@
 
 package com.pibity.erp.entities.function
 
-import com.pibity.erp.entities.function.embeddables.FunctionOutputTypeId
+import com.pibity.erp.entities.Type
 import java.io.Serializable
+import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_output_type", schema = "inventory")
+@Table(name = "function_output_type", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_output_id", "type_id"])])
 data class FunctionOutputType(
 
-    @EmbeddedId
-    val id: FunctionOutputTypeId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_output_type_generator")
+    @SequenceGenerator(name = "function_output_type_generator", sequenceName = "function_output_type_sequence")
+    val id: Long = -1,
 
-    @OneToMany(mappedBy = "id.functionOutputType", cascade = [CascadeType.ALL])
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "function_output_id", referencedColumnName = "id")])
+    val functionOutput: FunctionOutput,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+    val type: Type,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @OneToMany(mappedBy = "functionOutputType", cascade = [CascadeType.ALL])
     val functionOutputKeys: MutableSet<FunctionOutputKey> = HashSet()
 
 ) : Serializable {
@@ -29,7 +44,7 @@ data class FunctionOutputType(
     other ?: return false
     if (this === other) return true
     other as FunctionOutputType
-    return this.id == other.id
+    return this.functionOutput == other.functionOutput && this.type == other.type
   }
 
   override fun hashCode(): Int = Objects.hash(id)

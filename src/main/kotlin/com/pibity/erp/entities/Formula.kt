@@ -9,22 +9,24 @@
 package com.pibity.erp.entities
 
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "formula", schema = "inventory")
 data class Formula(
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "formula_generator")
+    @SequenceGenerator(name="formula_generator", sequenceName = "formula_sequence")
     val id: Long = -1,
 
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "return_type_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "return_type_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "return_type_name", referencedColumnName = "type_name")])
+    @JoinColumns(*[JoinColumn(name = "return_type_id", referencedColumnName = "id")])
     var returnType: Type,
 
     @Column(name = "symbol_paths", nullable = false)
@@ -34,13 +36,12 @@ data class Formula(
     var expression: String,
 
     @ManyToMany
-    @JoinTable(name = "mapping_formula_dependencies", schema = "inventory",
-        joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")],
-        inverseJoinColumns = [JoinColumn(name = "key_parent_type_organization_id", referencedColumnName = "parent_type_organization_id"),
-          JoinColumn(name = "key_parent_super_type_name", referencedColumnName = "parent_super_type_name"),
-          JoinColumn(name = "key_parent_type_name", referencedColumnName = "parent_type_name"),
-          JoinColumn(name = "key_name", referencedColumnName = "key_name")])
-    val keyDependencies: MutableSet<Key> = HashSet()
+    @JoinTable(name = "mapping_formula_key_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
+    val keyDependencies: MutableSet<Key> = HashSet(),
+
+    @ManyToMany
+    @JoinTable(name = "mapping_formula_type_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "type_id", referencedColumnName = "id")])
+    val typeDependencies: MutableSet<Type> = HashSet()
 
 ) : Serializable {
 
@@ -51,5 +52,5 @@ data class Formula(
     return this.id == other.id
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

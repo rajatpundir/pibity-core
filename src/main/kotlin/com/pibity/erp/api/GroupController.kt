@@ -11,6 +11,7 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.GroupService
@@ -44,8 +45,8 @@ class GroupController(val groupService: GroupService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -58,8 +59,8 @@ class GroupController(val groupService: GroupService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -72,8 +73,8 @@ class GroupController(val groupService: GroupService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getGroupDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }

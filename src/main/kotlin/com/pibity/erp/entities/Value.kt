@@ -8,67 +8,64 @@
 
 package com.pibity.erp.entities
 
-import com.pibity.erp.entities.embeddables.ValueId
 import java.io.Serializable
-import java.util.*
+import java.sql.Timestamp
 import javax.persistence.*
-import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "value", schema = "inventory")
+@Table(name = "value", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["parent_variable_id", "key_id"])])
 data class Value(
 
-    @EmbeddedId
-    val id: ValueId,
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "value_generator")
+    @SequenceGenerator(name = "value_generator", sequenceName = "value_sequence")
+    val id: Long = -1,
 
-    @Column(name = "string_value" ,length=1024)
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "parent_variable_id", referencedColumnName = "id")])
+    val variable: Variable,
+
+    @ManyToOne
+    @JoinColumns(*[JoinColumn(name = "key_id", referencedColumnName = "id")])
+    val key: Key,
+
+    @Version
+    @Column(name = "version", nullable = false)
+    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "value_string", length = 1024)
     var stringValue: String? = null,
 
-    @Column(name = "long_value")
+    @Column(name = "value_long")
     var longValue: Long? = null,
 
-    @Column(name = "double_value")
+    @Column(name = "value_double")
     var doubleValue: Double? = null,
 
-    @Column(name = "boolean_value")
+    @Column(name = "value_boolean")
     var booleanValue: Boolean? = null,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "referenced_variable_organization_id", referencedColumnName = "organization_id"),
-      JoinColumn(name = "referenced_variable_super_list_id", referencedColumnName = "super_list_id"),
-      JoinColumn(name = "referenced_variable_super_type_name", referencedColumnName = "super_type_name"),
-      JoinColumn(name = "referenced_variable_type_name", referencedColumnName = "type_name"),
-      JoinColumn(name = "referenced_variable_name", referencedColumnName = "variable_name")])
+    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null,
 
     @OneToOne(cascade = [CascadeType.ALL])
-    @JoinColumn(name = "list_variable_id")
+    @JoinColumn(name = "value_variable_list_id")
     var list: VariableList? = null,
 
     @ManyToMany
-    @JoinTable(name = "mapping_value_dependencies", schema = "inventory"
-        , joinColumns = [JoinColumn(name = "value_variable_organization_id", referencedColumnName = "variable_organization_id"),
-      JoinColumn(name = "value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
-      JoinColumn(name = "value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
-      JoinColumn(name = "value_variable_type_name", referencedColumnName = "variable_type_name"),
-      JoinColumn(name = "value_variable_name", referencedColumnName = "variable_name"),
-      JoinColumn(name = "value_key_organization_id", referencedColumnName = "key_organization_id"),
-      JoinColumn(name = "value_key_super_type_name", referencedColumnName = "key_super_type_name"),
-      JoinColumn(name = "value_key_type_name", referencedColumnName = "key_type_name"),
-      JoinColumn(name = "value_key_name", referencedColumnName = "key_name")]
-        , inverseJoinColumns = [JoinColumn(name = "dependency_value_variable_organization_id", referencedColumnName = "variable_organization_id"),
-      JoinColumn(name = "dependency_value_variable_super_list_id", referencedColumnName = "variable_super_list_id"),
-      JoinColumn(name = "dependency_value_variable_super_type_name", referencedColumnName = "variable_super_type_name"),
-      JoinColumn(name = "dependency_value_variable_type_name", referencedColumnName = "variable_type_name"),
-      JoinColumn(name = "dependency_value_variable_name", referencedColumnName = "variable_name"),
-      JoinColumn(name = "dependency_value_key_organization_id", referencedColumnName = "key_organization_id"),
-      JoinColumn(name = "dependency_value_key_super_type_name", referencedColumnName = "key_super_type_name"),
-      JoinColumn(name = "dependency_value_key_type_name", referencedColumnName = "key_type_name"),
-      JoinColumn(name = "dependency_value_key_name", referencedColumnName = "key_name")])
+    @JoinTable(name = "mapping_value_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_value_id", referencedColumnName = "id")])
     var valueDependencies: MutableSet<Value> = HashSet(),
 
     @ManyToMany(mappedBy = "valueDependencies")
-    val dependentValues: MutableSet<Value> = HashSet()
+    val dependentValues: MutableSet<Value> = HashSet(),
+
+    @ManyToMany
+    @JoinTable(name = "mapping_value_variable_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_variable_id", referencedColumnName = "id")])
+    val variableDependencies: MutableSet<Variable> = HashSet(),
+
+    @ManyToMany(mappedBy = "valueDependencies")
+    val dependentVariableAssertions: MutableSet<VariableAssertion> = HashSet()
 
 ) : Serializable {
 
@@ -76,8 +73,8 @@ data class Value(
     other ?: return false
     if (this === other) return true
     other as Value
-    return this.id == other.id
+    return this.variable == other.variable && this.key == other.key
   }
 
-  override fun hashCode(): Int = Objects.hash(id)
+  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

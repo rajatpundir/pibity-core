@@ -11,13 +11,16 @@ package com.pibity.erp.api
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
+import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.FunctionPermissionService
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
+import org.keycloak.representations.AccessToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -44,8 +47,8 @@ class FunctionPermissionController(val functionPermissionService: FunctionPermis
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(functionPermissionService.createFunctionPermission(jsonParams = jsonParams).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -55,11 +58,12 @@ class FunctionPermissionController(val functionPermissionService: FunctionPermis
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
   fun updatePermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
+      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(functionPermissionService.updateFunctionPermission(jsonParams = jsonParams).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
@@ -72,8 +76,8 @@ class FunctionPermissionController(val functionPermissionService: FunctionPermis
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getPermissionDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(functionPermissionService.getFunctionPermissionDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
-    } catch (exception: Exception) {
-      val message: String = exception.message ?: "Unable to process your request"
+    } catch (exception: CustomJsonException) {
+      val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
       ResponseEntity(message, HttpStatus.BAD_REQUEST)
     }
