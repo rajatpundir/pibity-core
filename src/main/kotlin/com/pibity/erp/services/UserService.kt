@@ -8,11 +8,15 @@
 
 package com.pibity.erp.services
 
+import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.createKeycloakUser
 import com.pibity.erp.commons.utils.getKeycloakId
+import com.pibity.erp.commons.utils.gson
+import com.pibity.erp.commons.utils.joinKeycloakGroups
 import com.pibity.erp.entities.Group
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
@@ -57,6 +61,11 @@ class UserService(
     } catch (exception: Exception) {
       createKeycloakUser(jsonParams = jsonParams)
     }
+    joinKeycloakGroups(jsonParams = jsonParams.apply {
+      addProperty("keycloakUserId", keycloakId)
+      if (!jsonParams.has("subGroups"))
+        jsonParams.add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.USER)), JsonArray::class.java))
+    })
     var user = User(organization = organization, username = keycloakId,
         active = jsonParams.get("active").asBoolean,
         email = jsonParams.get("email").asString,

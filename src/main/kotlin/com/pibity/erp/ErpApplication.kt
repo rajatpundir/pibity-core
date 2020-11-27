@@ -8,15 +8,24 @@
 
 package com.pibity.erp
 
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.pibity.erp.commons.utils.gson
 import org.keycloak.KeycloakSecurityContext
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import java.io.File
+import java.io.FileReader
 import javax.servlet.http.HttpServletRequest
 
 @SpringBootApplication
 class ErpApplication
 
 fun main(args: Array<String>) {
+  File("src/main/resources/postmaster.json").writeText(
+      GsonBuilder().setPrettyPrinting().create().toJson(
+          gson.fromJson(FileReader("src/main/resources/postmaster.json"), JsonObject::class.java).apply {
+            addProperty("runCount", get("runCount").asInt + 1) }))
   runApplication<ErpApplication>(*args)
 }
 

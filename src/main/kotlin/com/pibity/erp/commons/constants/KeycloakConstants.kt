@@ -8,8 +8,11 @@
 
 package com.pibity.erp.commons.constants
 
+import com.google.gson.JsonObject
+import com.pibity.erp.commons.utils.gson
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.RealmResource
+import java.io.FileReader
 
 object KeycloakConstants {
   const val ROLE_SUPERUSER = "SUPERUSER"
@@ -19,7 +22,7 @@ object KeycloakConstants {
   const val SERVER_URL = "http://localhost:8081/auth"
   const val REALM = ApplicationConstants.SCHEMA
   const val CLIENT_ID = "pibity-erp-admin"
-  const val CLIENT_SECRET = "d17bad78-12a6-46d6-b53a-2df61ad75d99"
+  val CLIENT_SECRET: String = gson.fromJson(FileReader("src/main/resources/postmaster.json"), JsonObject::class.java).get("keycloakClientSecret").asString
 }
 
 val keycloak: Keycloak = Keycloak.getInstance(

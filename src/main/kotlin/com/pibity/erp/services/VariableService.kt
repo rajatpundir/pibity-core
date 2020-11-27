@@ -9,7 +9,6 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonArray
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
@@ -193,7 +192,7 @@ class VariableService(
         val variableAssertion = VariableAssertion(variable = variable,
             typeAssertion = typeAssertion,
             result = validateOrEvaluateExpression(jsonParams = gson.fromJson(typeAssertion.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) },
-            symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = false), mode = "evaluate") as Boolean)
+                symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = false), mode = "evaluate") as Boolean)
         if (!variableAssertion.result)
           throw CustomJsonException("{variableName: 'Failed to assert ${typeAssertion.name}'}")
         try {
@@ -825,7 +824,7 @@ class VariableService(
 
   fun evaluateAssertions(dependentAssertions: Map<VariableAssertion, MutableSet<Value>>) {
     println("-------------------------------")
-    for((assertion, _) in dependentAssertions)
+    for ((assertion, _) in dependentAssertions)
       println(assertion.typeAssertion.name)
     println("-------------------------------")
   }
