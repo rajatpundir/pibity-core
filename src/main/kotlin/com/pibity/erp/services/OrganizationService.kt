@@ -68,6 +68,11 @@ class OrganizationService(
     } catch (exception: Exception) {
       createKeycloakUser(jsonParams = jsonParams.apply { addProperty("email", KeycloakConstants.SUPERUSER_USERNAME) })
     }
+    joinKeycloakGroups(jsonParams = jsonParams.apply {
+      addProperty("orgId", organization.id)
+      addProperty("keycloakUserId", superuserId)
+      add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.ADMIN, RoleConstants.USER)), JsonArray::class.java))
+    })
     var superuser = User(organization = organization, username = superuserId,
         active = true,
         email = KeycloakConstants.SUPERUSER_USERNAME,
@@ -105,6 +110,7 @@ class OrganizationService(
       addProperty("password", jsonParams.get("password").asString)
       add("roles", JsonArray().apply { add(RoleConstants.ADMIN) })
       add("details", jsonParams.get("details").asJsonObject)
+      add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.ADMIN, RoleConstants.USER)), JsonArray::class.java))
     })
     return organization
   }

@@ -22,6 +22,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-devtools")
   implementation("org.jetbrains.kotlin:kotlin-reflect")
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
   implementation("org.liquibase:liquibase-core")
@@ -29,7 +30,6 @@ dependencies {
   implementation("org.keycloak:keycloak-spring-security-adapter:11.0.2")
   implementation("org.keycloak:keycloak-admin-client:11.0.2")
 
-  runtimeOnly("com.h2database:h2")
   runtimeOnly("org.postgresql:postgresql")
 
   testImplementation("org.springframework.boot:spring-boot-starter-test") {

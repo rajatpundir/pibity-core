@@ -13,11 +13,11 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.keycloak.representations.AccessToken
-import java.io.FileReader
+import java.io.File
 
 val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
-fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(FileReader("src/main/resources/requests/$controller/$filename.json"), JsonObject::class.java)
+fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(File("src/main/resources/requests/$controller/$filename.json").readText(), JsonObject::class.java)
 
 // Parses JSON from request to generate JSON Object with whitelisted properties
 // Raises exception if expected property is missing or of incorrect type

@@ -8,7 +8,11 @@ spring:
   profiles:
     active: pg
   main:
-    banner-mode: "off"
+    banner-mode: off
+  devtools:
+    restart:
+      poll-interval: 2s
+      quiet-period: 1s
 
 ---
 
@@ -45,36 +49,3 @@ logging:
           sql: trace
     liquibase: INFO
     org.keycloak: DEBUG
-
----
-
-spring:
-  profiles: h2
-  h2:
-    console:
-      path: /h2-console
-      enabled: true
-      settings:
-        web-allow-others: true
-  jpa:
-    hibernate:
-      ddl-auto: none
-      database-platform: "org.hibernate.dialect.H2Dialect"
-    show-sql: false
-    properties:
-      hibernate:
-        use_sql_comments: true
-        format_sql: true
-  datasource:
-    name: test
-    driver-class-name: "org.h2.Driver"
-    url: "jdbc:h2:mem:testDB;INIT=CREATE SCHEMA IF NOT EXISTS inventory"
-    username: sa
-    password: sa
-  liquibase:
-    enabled: true
-    change-log: "classpath:/db/changelog/inventory-master.json"
-    url: "jdbc:h2:mem:testDB;INIT=CREATE SCHEMA IF NOT EXISTS liquibase"
-    user: sa
-    password: sa
-    default-schema: liquibase

@@ -48,3 +48,17 @@ fun createKeycloakUser(jsonParams: JsonObject): String {
   userResource.joinGroup(subGroupId)
   return keycloakUserId
 }
+
+fun joinKeycloakGroups(jsonParams: JsonObject): String {
+  val keycloakUserId = jsonParams.get("keycloakUserId").asString
+  val userResource: UserResource = realmResource.users()!!.get(keycloakUserId)
+  val subGroups: List<String> = jsonParams.get("subGroups").asJsonArray.map { it.asString }
+  println("@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  println(keycloakUserId)
+  println(subGroups)
+  for (subGroup in subGroups) {
+    val subGroupId: String = realmResource.getGroupByPath(listOf(jsonParams.get("orgId").asString, subGroup).joinToString(separator = "/")).id
+    userResource.joinGroup(subGroupId)
+  }
+  return keycloakUserId
+}
