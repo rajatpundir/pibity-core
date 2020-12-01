@@ -1,0 +1,178 @@
+PackageHeader(com.pibity.erp.entities)
+importList
+  Import(com.pibity.erp.entities.mappings.GroupRole)
+  Import(com.pibity.erp.entities.mappings.RoleFunctionPermission)
+  Import(com.pibity.erp.entities.mappings.RoleTypePermission)
+  Import(com.pibity.erp.entities.mappings.UserRole)
+  Import(com.pibity.erp.serializers.serialize)
+  Import(java.io.Serializable)
+  Import(java.sql.Timestamp)
+  Import(javax.persistence.*)
+KlassDeclaration(class Role)
+  KlassAnnotation(Entity)
+  KlassAnnotation(Table)
+    KlassDeclaration(argument name)
+      KlassString
+        "role"
+    KlassDeclaration(argument schema)
+      KlassString
+        "inventory"
+    KlassDeclaration(argument uniqueConstraints)
+      collectionLiteral
+        LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+        expression
+          postfixUnaryExpression
+            KlassIdentifier(UniqueConstraint)
+            postfixUnarySuffix
+              callSuffix
+                KlassDeclaration(argument columnNames)
+                  collectionLiteral
+                    LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "organization_id"
+                    COMMA >>>,<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "name"
+                    RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val id Long)
+      KlassAnnotation(Id)
+      KlassAnnotation(GeneratedValue)
+        KlassDeclaration(argument strategy)
+          postfixUnaryExpression
+            KlassIdentifier(GenerationType)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SEQUENCE)
+        KlassDeclaration(argument generator)
+          KlassString
+            "role_generator"
+      KlassAnnotation(SequenceGenerator)
+        KlassDeclaration(argument name)
+          KlassString
+            "role_generator"
+        KlassDeclaration(argument sequenceName)
+          KlassString
+            "role_sequence"
+      prefixUnaryExpression
+        unaryPrefix
+          prefixUnaryOperator
+            SUB >>>-<<< (DEFAULT_TOKEN_CHANNEL)
+        literalConstant
+          IntegerLiteral >>>1<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val organization Organization)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumn)
+        KlassDeclaration(argument name)
+          KlassString
+            "organization_id"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val name String)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "name"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val version Timestamp)
+      KlassAnnotation(Version)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "version"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(Timestamp)
+        postfixUnarySuffix
+          callSuffix
+            KlassDeclaration(argument)
+              postfixUnaryExpression
+                KlassIdentifier(System)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(currentTimeMillis)
+                postfixUnarySuffix
+                  callSuffix
+    KlassDeclaration(val roleTypePermissions MutableSet<RoleTypePermission>)
+      KlassAnnotation(OneToMany)
+        KlassDeclaration(argument mappedBy)
+          KlassString
+            "id.role"
+        KlassDeclaration(argument cascade)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(CascadeType)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(ALL)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+    KlassDeclaration(val roleFunctionPermissions MutableSet<RoleFunctionPermission>)
+      KlassAnnotation(OneToMany)
+        KlassDeclaration(argument mappedBy)
+          KlassString
+            "id.role"
+        KlassDeclaration(argument cascade)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(CascadeType)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(ALL)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+    KlassDeclaration(val roleGroups Set<GroupRole>)
+      KlassAnnotation(OneToMany)
+        KlassDeclaration(argument mappedBy)
+          KlassString
+            "id.role"
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+    KlassDeclaration(val roleUsers Set<UserRole>)
+      KlassAnnotation(OneToMany)
+        KlassDeclaration(argument mappedBy)
+          KlassString
+            "id.role"
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)
+    KlassDeclaration(fun toString String)
+      KlassModifier(override, memberModifier)

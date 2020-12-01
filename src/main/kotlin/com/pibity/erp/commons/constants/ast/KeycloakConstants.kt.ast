@@ -1,0 +1,84 @@
+PackageHeader(com.pibity.erp.commons.constants)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.utils.gson)
+  Import(org.keycloak.admin.client.Keycloak)
+  Import(org.keycloak.admin.client.resource.RealmResource)
+  Import(java.io.FileReader)
+KlassDeclaration(object KeycloakConstants)
+KlassDeclaration(val keycloak Keycloak)
+  postfixUnaryExpression
+    KlassIdentifier(Keycloak)
+    postfixUnarySuffix
+      navigationSuffix
+        memberAccessOperator
+          DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassIdentifier(getInstance)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SERVER_URL)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(REALM)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SUPERUSER_USERNAME)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SUPERUSER_PASSWORD)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(CLIENT_ID)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(CLIENT_SECRET)
+KlassDeclaration(val realmResource RealmResource)
+  postfixUnaryExpression
+    KlassIdentifier(keycloak)
+    postfixUnarySuffix
+      navigationSuffix
+        memberAccessOperator
+          DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassIdentifier(realm)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(KeycloakConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(REALM)

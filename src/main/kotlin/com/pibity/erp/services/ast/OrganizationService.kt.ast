@@ -1,0 +1,74 @@
+PackageHeader(com.pibity.erp.services)
+importList
+  Import(com.google.gson.JsonArray)
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.constants.GLOBAL_TYPE)
+  Import(com.pibity.erp.commons.constants.KeycloakConstants)
+  Import(com.pibity.erp.commons.constants.RoleConstants)
+  Import(com.pibity.erp.commons.constants.primitiveTypes)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.commons.utils.*)
+  Import(com.pibity.erp.entities.*)
+  Import(com.pibity.erp.entities.mappings.UserRole)
+  Import(com.pibity.erp.entities.mappings.embeddables.UserRoleId)
+  Import(com.pibity.erp.repositories.jpa.*)
+  Import(com.pibity.erp.repositories.query.RoleRepository)
+  Import(org.springframework.stereotype.Service)
+  Import(org.springframework.transaction.annotation.Transactional)
+  Import(java.io.FileReader)
+KlassDeclaration(class OrganizationService)
+  KlassAnnotation(Service)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val organizationJpaRepository OrganizationJpaRepository)
+    KlassDeclaration(val typeJpaRepository TypeJpaRepository)
+    KlassDeclaration(val typeListJpaRepository TypeListJpaRepository)
+    KlassDeclaration(val variableListJpaRepository VariableListJpaRepository)
+    KlassDeclaration(val typeService TypeService)
+    KlassDeclaration(val userJpaRepository UserJpaRepository)
+    KlassDeclaration(val userService UserService)
+    KlassDeclaration(val roleService RoleService)
+    KlassDeclaration(val roleRepository RoleRepository)
+    KlassDeclaration(val variableService VariableService)
+  classBody
+    KlassDeclaration(fun createOrganization Organization)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+    KlassDeclaration(fun createDefaultRoles)
+      KlassDeclaration(parameter organization Organization)
+    KlassDeclaration(fun createPrimitiveTypes Type)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter organization Organization)
+    KlassDeclaration(fun createCustomTypes)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter organization Organization)
+      KlassDeclaration(parameter username String)

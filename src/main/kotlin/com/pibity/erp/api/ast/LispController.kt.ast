@@ -1,0 +1,86 @@
+PackageHeader(com.pibity.erp.api)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.commons.logger.Logger)
+  Import(com.pibity.erp.commons.utils.getExpectedParams)
+  Import(com.pibity.erp.commons.utils.getJsonParams)
+  Import(com.pibity.erp.commons.utils.validateOrEvaluateExpression)
+  Import(org.springframework.http.HttpStatus)
+  Import(org.springframework.http.MediaType)
+  Import(org.springframework.http.ResponseEntity)
+  Import(org.springframework.web.bind.annotation.*)
+KlassDeclaration(class LispController)
+  KlassAnnotation(CrossOrigin)
+  KlassAnnotation(RestController)
+  KlassAnnotation(RequestMapping)
+    KlassDeclaration(argument path)
+      collectionLiteral
+        LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+        expression
+          KlassString
+            "/api/lisp"
+        RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(argument consumes)
+      collectionLiteral
+        LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+        expression
+          postfixUnaryExpression
+            KlassIdentifier(MediaType)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(APPLICATION_JSON_VALUE)
+        RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+  classBody
+    KlassDeclaration(val logger)
+      KlassModifier(private, visibilityModifier)
+      postfixUnaryExpression
+        KlassIdentifier(Logger)
+        postfixUnarySuffix
+          callSuffix
+    KlassDeclaration(val expectedParams Map<String, JsonObject>)
+      KlassModifier(private, visibilityModifier)
+      postfixUnaryExpression
+        KlassIdentifier(mapOf)
+        postfixUnarySuffix
+          callSuffix
+            KlassDeclaration(argument)
+              infixFunctionCall
+                KlassString
+                  "evaluateExpression"
+                KlassIdentifier(to)
+                postfixUnaryExpression
+                  KlassIdentifier(getExpectedParams)
+                  postfixUnarySuffix
+                    callSuffix
+                      KlassDeclaration(argument)
+                        KlassString
+                          "lisp"
+                      KlassDeclaration(argument)
+                        KlassString
+                          "evaluateExpression"
+    KlassDeclaration(fun evaluateLispExpression ResponseEntity<String>)
+      KlassAnnotation(PostMapping)
+        KlassDeclaration(argument path)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              KlassString
+                "/evaluate"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument produces)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(MediaType)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(APPLICATION_JSON_VALUE)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter request String)
+        KlassAnnotation(RequestBody)

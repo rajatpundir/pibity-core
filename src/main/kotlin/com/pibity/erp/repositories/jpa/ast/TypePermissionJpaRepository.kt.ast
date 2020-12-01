@@ -1,0 +1,9 @@
+PackageHeader(com.pibity.erp.repositories.jpa)
+importList
+  Import(com.pibity.erp.entities.permission.TypePermission)
+  Import(org.springframework.data.jdbc.repository.query.Query)
+  Import(org.springframework.data.repository.CrudRepository)
+  Import(org.springframework.transaction.annotation.Transactional)
+KlassDeclaration(interface TypePermissionJpaRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<TypePermission, Long>)

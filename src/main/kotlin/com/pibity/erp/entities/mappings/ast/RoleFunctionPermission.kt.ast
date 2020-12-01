@@ -1,0 +1,29 @@
+PackageHeader(com.pibity.erp.entities.mappings)
+importList
+  Import(com.pibity.erp.entities.mappings.embeddables.RoleFunctionPermissionId)
+  Import(java.io.Serializable)
+  Import(java.util.*)
+  Import(javax.persistence.EmbeddedId)
+  Import(javax.persistence.Entity)
+  Import(javax.persistence.Table)
+KlassDeclaration(class RoleFunctionPermission)
+  KlassAnnotation(Entity)
+  KlassAnnotation(Table)
+    KlassDeclaration(argument name)
+      KlassString
+        "mapping_role_function_permissions"
+    KlassDeclaration(argument schema)
+      KlassString
+        "inventory"
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val id RoleFunctionPermissionId)
+      KlassAnnotation(EmbeddedId)
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)

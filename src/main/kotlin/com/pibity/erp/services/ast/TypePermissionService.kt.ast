@@ -1,0 +1,96 @@
+PackageHeader(com.pibity.erp.services)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.constants.GLOBAL_TYPE)
+  Import(com.pibity.erp.commons.constants.PermissionConstants)
+  Import(com.pibity.erp.commons.constants.TypeConstants)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.commons.utils.validateKeyPermissions)
+  Import(com.pibity.erp.entities.Organization)
+  Import(com.pibity.erp.entities.Type)
+  Import(com.pibity.erp.entities.permission.KeyPermission)
+  Import(com.pibity.erp.entities.permission.TypePermission)
+  Import(com.pibity.erp.repositories.jpa.OrganizationJpaRepository)
+  Import(com.pibity.erp.repositories.jpa.TypePermissionJpaRepository)
+  Import(com.pibity.erp.repositories.query.TypePermissionRepository)
+  Import(com.pibity.erp.repositories.query.TypeRepository)
+  Import(org.springframework.stereotype.Service)
+  Import(org.springframework.transaction.annotation.Transactional)
+  Import(kotlin.math.min)
+KlassDeclaration(class TypePermissionService)
+  KlassAnnotation(Service)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val organizationJpaRepository OrganizationJpaRepository)
+    KlassDeclaration(val typeRepository TypeRepository)
+    KlassDeclaration(val typePermissionRepository TypePermissionRepository)
+    KlassDeclaration(val typePermissionJpaRepository TypePermissionJpaRepository)
+  classBody
+    KlassDeclaration(fun createTypePermission Pair<TypePermission, Int>)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+      KlassDeclaration(parameter permissionOrganization Organization)
+        literalConstant
+          NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter permissionType Type)
+        literalConstant
+          NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter permissionName String)
+        literalConstant
+          NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(fun updateTypePermission Pair<TypePermission, Int>)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+      KlassDeclaration(parameter keyTypePermission TypePermission)
+        literalConstant
+          NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(fun createDefaultTypePermission TypePermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter type Type)
+      KlassDeclaration(parameter permissionName String)
+      KlassDeclaration(parameter accessLevel Int)
+    KlassDeclaration(fun getTypePermissionDetails TypePermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+    KlassDeclaration(fun superimposeTypePermissions TypePermission)
+      KlassDeclaration(parameter typePermissions Set<TypePermission>)
+      KlassDeclaration(parameter type Type)

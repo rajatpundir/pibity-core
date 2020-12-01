@@ -1,0 +1,186 @@
+PackageHeader(com.pibity.erp.entities.function)
+importList
+  Import(com.pibity.erp.entities.Key)
+  Import(java.io.Serializable)
+  Import(java.sql.Timestamp)
+  Import(java.util.*)
+  Import(javax.persistence.*)
+KlassDeclaration(class FunctionInputKey)
+  KlassAnnotation(Entity)
+  KlassAnnotation(Table)
+    KlassDeclaration(argument name)
+      KlassString
+        "function_input_key"
+    KlassDeclaration(argument schema)
+      KlassString
+        "inventory"
+    KlassDeclaration(argument uniqueConstraints)
+      collectionLiteral
+        LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+        expression
+          postfixUnaryExpression
+            KlassIdentifier(UniqueConstraint)
+            postfixUnarySuffix
+              callSuffix
+                KlassDeclaration(argument columnNames)
+                  collectionLiteral
+                    LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "function_input_type_id"
+                    COMMA >>>,<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "key_id"
+                    RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val id Long)
+      KlassAnnotation(Id)
+      KlassAnnotation(GeneratedValue)
+        KlassDeclaration(argument strategy)
+          postfixUnaryExpression
+            KlassIdentifier(GenerationType)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SEQUENCE)
+        KlassDeclaration(argument generator)
+          KlassString
+            "function_input_key_generator"
+      KlassAnnotation(SequenceGenerator)
+        KlassDeclaration(argument name)
+          KlassString
+            "function_input_key_generator"
+        KlassDeclaration(argument sequenceName)
+          KlassString
+            "function_input_key_sequence"
+      prefixUnaryExpression
+        unaryPrefix
+          prefixUnaryOperator
+            SUB >>>-<<< (DEFAULT_TOKEN_CHANNEL)
+        literalConstant
+          IntegerLiteral >>>1<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val functionInputType FunctionInputType)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "function_input_type_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val key Key)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "key_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val version Timestamp)
+      KlassAnnotation(Version)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "version"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(Timestamp)
+        postfixUnarySuffix
+          callSuffix
+            KlassDeclaration(argument)
+              postfixUnaryExpression
+                KlassIdentifier(System)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(currentTimeMillis)
+                postfixUnarySuffix
+                  callSuffix
+    KlassDeclaration(var expression String)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "expression"
+      literalConstant
+        NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val referencedFunctionInputType FunctionInputType)
+      KlassAnnotation(OneToOne)
+      literalConstant
+        NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val keyDependencies MutableSet<Key>)
+      KlassAnnotation(ManyToMany)
+      KlassAnnotation(JoinTable)
+        KlassDeclaration(argument name)
+          KlassString
+            "mapping_function_input_key_dependencies"
+        KlassDeclaration(argument schema)
+          KlassString
+            "inventory"
+        KlassDeclaration(argument joinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "function_input_key_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument inverseJoinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "dependency_key_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)

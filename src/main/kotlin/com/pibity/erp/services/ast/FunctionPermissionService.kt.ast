@@ -1,0 +1,76 @@
+PackageHeader(com.pibity.erp.services)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.commons.utils.validateFunctionPermissions)
+  Import(com.pibity.erp.entities.function.Function)
+  Import(com.pibity.erp.entities.permission.FunctionInputPermission)
+  Import(com.pibity.erp.entities.permission.FunctionOutputPermission)
+  Import(com.pibity.erp.entities.permission.FunctionPermission)
+  Import(com.pibity.erp.repositories.query.FunctionPermissionRepository)
+  Import(com.pibity.erp.repositories.function.FunctionRepository)
+  Import(com.pibity.erp.repositories.jpa.FunctionPermissionJpaRepository)
+  Import(org.springframework.stereotype.Service)
+  Import(org.springframework.transaction.annotation.Transactional)
+KlassDeclaration(class FunctionPermissionService)
+  KlassAnnotation(Service)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val functionRepository FunctionRepository)
+    KlassDeclaration(val functionPermissionRepository FunctionPermissionRepository)
+    KlassDeclaration(val functionPermissionJpaRepository FunctionPermissionJpaRepository)
+  classBody
+    KlassDeclaration(fun createFunctionPermission FunctionPermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+    KlassDeclaration(fun updateFunctionPermission FunctionPermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+    KlassDeclaration(fun createDefaultFunctionPermission FunctionPermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter function Function)
+    KlassDeclaration(fun getFunctionPermissionDetails FunctionPermission)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument rollbackFor)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              callableReference
+                receiverType
+                  KlassIdentifier(CustomJsonException)
+                COLONCOLON >>>::<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(class)
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter jsonParams JsonObject)
+    KlassDeclaration(fun superimposeFunctionPermissions FunctionPermission)
+      KlassDeclaration(parameter functionPermissions Set<FunctionPermission>)
+      KlassDeclaration(parameter function Function)

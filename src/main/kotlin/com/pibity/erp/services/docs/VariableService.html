@@ -1,0 +1,22 @@
+<h1>Functions</h1>
+<ul>
+    <li>
+        <h2>createVariable</h2>
+        <ol>
+            <li>
+                Get permissions for type of variable to e created conditioned on roles accessible(directly or indirectly) to the requesting user
+            </li>
+            <li>
+                If creatable field is not true, then throw CustomJsonException()
+            </li>
+            <li>Validate data associated with variable and values. Create entity representing Variable.</li>
+            <li>
+                Process non-formula type key permissions and associated key
+                <ol>
+                    <li>If key type is TEXT, NUMBER, DECIMAL or BOOLEAN, then assign the value to corresponding field.</li>
+                    <li>If element is of type LIST, then ...</li>
+                </ol>
+            </li>
+        </ol>
+    </li>
+</ul>

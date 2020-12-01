@@ -25,7 +25,27 @@ fun main(args: Array<String>) {
   File("src/main/resources/postmaster.json").writeText(
       GsonBuilder().setPrettyPrinting().create().toJson(
           gson.fromJson(FileReader("src/main/resources/postmaster.json"), JsonObject::class.java).apply {
-            addProperty("runCount", get("runCount").asInt + 1) }))
+            addProperty("runCount", get("runCount").asInt + 1)
+          }))
+//  File("src/main/kotlin/com/pibity/erp/").walk()
+//      .filter {
+//        it.absolutePath.matches(Regex("^.*\\.kt$"))
+//      }.forEach { file ->
+//        if (file.isFile) {
+//          println("PROCESSING AST")
+//          println("PATH: " + file.parent)
+//          println("FILE: " + file.path)
+//          val kotlinFile = KotlinGrammarAntlrKotlinParser.parseKotlinFile(AstSource.File(file.path))
+//          kotlinFile.summary(attachRawAst = false)
+//              .onSuccess { astList ->
+//                var ast = ""
+//                astList.forEach { ast += it.printString() }
+//                File(file.parent + "/ast/" + file.name + ".ast").also { it.parentFile.mkdirs() }.writeText(ast)
+//              }.onFailure { errors ->
+//                errors.forEach(::println)
+//              }
+//        }
+//      }
   runApplication<ErpApplication>(*args)
 }
 

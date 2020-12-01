@@ -1,0 +1,15 @@
+PackageHeader(com.pibity.erp.repositories.jpa)
+importList
+  Import(com.pibity.erp.entities.Organization)
+  Import(org.springframework.data.repository.CrudRepository)
+  Import(org.springframework.transaction.annotation.Transactional)
+KlassDeclaration(interface OrganizationJpaRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<Organization, Long>)
+  classBody
+    KlassDeclaration(fun getById Organization)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument readOnly)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter id Long)

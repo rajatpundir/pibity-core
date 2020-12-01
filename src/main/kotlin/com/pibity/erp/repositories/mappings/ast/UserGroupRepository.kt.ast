@@ -1,0 +1,8 @@
+PackageHeader(com.pibity.erp.repositories.mappings)
+importList
+  Import(com.pibity.erp.entities.mappings.UserGroup)
+  Import(com.pibity.erp.entities.mappings.embeddables.UserGroupId)
+  Import(org.springframework.data.repository.CrudRepository)
+KlassDeclaration(interface UserGroupRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<UserGroup, UserGroupId>)
