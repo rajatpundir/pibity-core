@@ -1,0 +1,7 @@
+PackageHeader(com.pibity.erp.repositories.jpa)
+importList
+  Import(com.pibity.erp.entities.Variable)
+  Import(org.springframework.data.repository.CrudRepository)
+KlassDeclaration(interface VariableJpaRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<Variable, Long>)

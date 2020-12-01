@@ -1,0 +1,69 @@
+PackageHeader(com.pibity.erp.commons.utils)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.constants.GLOBAL_TYPE)
+  Import(com.pibity.erp.commons.constants.KeyConstants)
+  Import(com.pibity.erp.commons.constants.TypeConstants)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.entities.Key)
+  Import(com.pibity.erp.entities.Type)
+  Import(java.util.regex.Pattern)
+KlassDeclaration(val typeIdentifierPattern Pattern)
+  postfixUnaryExpression
+    KlassIdentifier(Pattern)
+    postfixUnarySuffix
+      navigationSuffix
+        memberAccessOperator
+          DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassIdentifier(compile)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          KlassString
+            "^[A-Z][a-zA-Z0-9]*"
+            "$"
+KlassDeclaration(val keyIdentifierPattern Pattern)
+  postfixUnaryExpression
+    KlassIdentifier(Pattern)
+    postfixUnarySuffix
+      navigationSuffix
+        memberAccessOperator
+          DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassIdentifier(compile)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          KlassString
+            "^[a-z][a-zA-Z0-9]*"
+            "$"
+KlassDeclaration(val keyTypeIdentifierPattern Pattern)
+  postfixUnaryExpression
+    KlassIdentifier(Pattern)
+    postfixUnarySuffix
+      navigationSuffix
+        memberAccessOperator
+          DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassIdentifier(compile)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          KlassString
+            "^([A-Z][a-zA-Z0-9]*)(::[A-Z][a-zA-Z0-9]*)?"
+            Escape("\$")
+KlassDeclaration(fun validateTypeName String)
+  KlassDeclaration(parameter typeName String)
+KlassDeclaration(fun validateSuperTypeName String)
+  KlassDeclaration(parameter typeName String)
+KlassDeclaration(fun validateTypeKeys JsonObject)
+  KlassDeclaration(parameter keys JsonObject)
+KlassDeclaration(fun getSymbols JsonObject)
+  KlassDeclaration(parameter type Type)
+  KlassDeclaration(parameter symbolPaths MutableSet<String>)
+  KlassDeclaration(parameter prefix String)
+    KlassString
+  KlassDeclaration(parameter level Int)
+  KlassDeclaration(parameter keyDependencies MutableSet<Key>)
+  KlassDeclaration(parameter typeDependencies MutableSet<Type>)
+  KlassDeclaration(parameter symbolsForFormula Boolean)
+    literalConstant
+      BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)

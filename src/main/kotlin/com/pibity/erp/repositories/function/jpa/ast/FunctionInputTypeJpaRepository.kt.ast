@@ -1,0 +1,7 @@
+PackageHeader(com.pibity.erp.repositories.function.jpa)
+importList
+  Import(com.pibity.erp.entities.function.FunctionInputType)
+  Import(org.springframework.data.repository.CrudRepository)
+KlassDeclaration(interface FunctionInputTypeJpaRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<FunctionInputType, Long>)

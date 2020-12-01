@@ -1,0 +1,58 @@
+PackageHeader(com.pibity.erp.entities.mappings.embeddables)
+importList
+  Import(com.pibity.erp.entities.Group)
+  Import(com.pibity.erp.entities.Role)
+  Import(java.io.Serializable)
+  Import(java.util.*)
+  Import(javax.persistence.Embeddable)
+  Import(javax.persistence.JoinColumn)
+  Import(javax.persistence.JoinColumns)
+  Import(javax.persistence.ManyToOne)
+KlassDeclaration(class GroupRoleId)
+  KlassAnnotation(Embeddable)
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val group Group)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "group_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val role Role)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "role_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)

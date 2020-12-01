@@ -1,0 +1,97 @@
+PackageHeader(com.pibity.erp.commons.constants)
+importList
+KlassDeclaration(val GLOBAL_TYPE)
+  KlassModifier(const, propertyModifier)
+  KlassString
+    "Any"
+KlassDeclaration(val primitiveTypes)
+  postfixUnaryExpression
+    KlassIdentifier(listOf)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(TEXT)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(NUMBER)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(DECIMAL)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(BOOLEAN)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(LIST)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(FORMULA)
+KlassDeclaration(val formulaReturnTypes)
+  postfixUnaryExpression
+    KlassIdentifier(listOf)
+    postfixUnarySuffix
+      callSuffix
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(TEXT)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(NUMBER)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(DECIMAL)
+        KlassDeclaration(argument)
+          postfixUnaryExpression
+            KlassIdentifier(TypeConstants)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(BOOLEAN)
+KlassDeclaration(object TypeConstants)

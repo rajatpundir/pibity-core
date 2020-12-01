@@ -4,7 +4,8 @@ plugins {
   id("org.springframework.boot") version "2.3.0.RELEASE"
   id("io.spring.dependency-management") version "1.0.9.RELEASE"
   id("com.diffplug.gradle.spotless") version "3.26.1"
-  kotlin("jvm") version "1.3.72"
+  id("org.jetbrains.kotlin.jvm") version "1.3.72"
+//  kotlin("jvm") version "1.3.72"
   kotlin("plugin.spring") version "1.3.72"
   kotlin("plugin.jpa") version "1.3.72"
 }
@@ -15,6 +16,8 @@ java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
   mavenCentral()
+  jcenter()
+  maven("https://jitpack.io")
 }
 
 dependencies {
@@ -29,6 +32,7 @@ dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("org.keycloak:keycloak-spring-security-adapter:11.0.2")
   implementation("org.keycloak:keycloak-admin-client:11.0.2")
+  api("com.github.kotlinx.ast:grammar-kotlin-parser-antlr-kotlin-jvm:c35b50fa44")
 
   runtimeOnly("org.postgresql:postgresql")
 

@@ -1,0 +1,3 @@
+PackageHeader(com.pibity.erp.commons.constants)
+importList
+KlassDeclaration(object KeyConstants)

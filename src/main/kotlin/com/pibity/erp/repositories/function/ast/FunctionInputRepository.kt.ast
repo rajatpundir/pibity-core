@@ -1,0 +1,20 @@
+PackageHeader(com.pibity.erp.repositories.function)
+importList
+  Import(com.pibity.erp.entities.function.FunctionInput)
+  Import(org.springframework.stereotype.Repository)
+  Import(org.springframework.transaction.annotation.Transactional)
+  Import(javax.persistence.EntityManager)
+  Import(javax.persistence.LockModeType)
+  Import(javax.persistence.TypedQuery)
+KlassDeclaration(class FunctionInputRepository)
+  KlassAnnotation(Repository)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val entityManager EntityManager)
+  classBody
+    KlassDeclaration(fun getFunctionInputs Set<FunctionInput>)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument readOnly)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter organizationId Long)
+      KlassDeclaration(parameter functionName String)

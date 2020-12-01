@@ -1,0 +1,8 @@
+PackageHeader(com.pibity.erp.commons.utils)
+importList
+  Import(com.google.gson.JsonObject)
+  Import(com.pibity.erp.commons.exceptions.CustomJsonException)
+  Import(com.pibity.erp.entities.function.Function)
+KlassDeclaration(fun validateFunctionPermissions JsonObject)
+  KlassDeclaration(parameter jsonParams JsonObject)
+  KlassDeclaration(parameter function Function)

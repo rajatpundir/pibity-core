@@ -1,0 +1,25 @@
+PackageHeader(com.pibity.erp.commons.logger)
+importList
+  Import(kotlin.properties.ReadOnlyProperty)
+  Import(kotlin.reflect.KProperty)
+  Import(kotlin.reflect.full.companionObject)
+  Import(org.slf4j.Logger)
+  Import(org.slf4j.LoggerFactory)
+KlassDeclaration(fun getLogger Logger)
+  KlassDeclaration(parameter forClass Class<*>)
+KlassDeclaration(fun getClassForLogging Class<*>)
+  KlassDeclaration(parameter javaClass Class<T>)
+  KlassTypeParameter
+    KlassIdentifier(T)
+    KlassIdentifier(Any)
+KlassDeclaration(class Logger)
+  KlassTypeParameter
+    KlassIdentifier(R)
+    KlassIdentifier(Any)
+  KlassInheritance
+    KlassIdentifier(ReadOnlyProperty<R, Logger>)
+  classBody
+    KlassDeclaration(fun getValue)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter thisRef R)
+      KlassDeclaration(parameter property KProperty<*>)

@@ -1,0 +1,102 @@
+PackageHeader(com.pibity.erp.entities)
+importList
+  Import(com.google.gson.annotations.Expose)
+  Import(java.io.Serializable)
+  Import(java.sql.Timestamp)
+  Import(javax.persistence.*)
+KlassDeclaration(class Organization)
+  KlassAnnotation(Entity)
+  KlassAnnotation(Table)
+    KlassDeclaration(argument name)
+      KlassString
+        "organization"
+    KlassDeclaration(argument schema)
+      KlassString
+        "inventory"
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val id Long)
+      KlassAnnotation(Expose)
+      KlassAnnotation(Id)
+      KlassAnnotation(GeneratedValue)
+        KlassDeclaration(argument strategy)
+          postfixUnaryExpression
+            KlassIdentifier(GenerationType)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SEQUENCE)
+        KlassDeclaration(argument generator)
+          KlassString
+            "organization_generator"
+      KlassAnnotation(SequenceGenerator)
+        KlassDeclaration(argument name)
+          KlassString
+            "organization_generator"
+        KlassDeclaration(argument sequenceName)
+          KlassString
+            "organization_sequence"
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "id"
+        KlassDeclaration(argument updatable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+      prefixUnaryExpression
+        unaryPrefix
+          prefixUnaryOperator
+            SUB >>>-<<< (DEFAULT_TOKEN_CHANNEL)
+        literalConstant
+          LongLiteral >>>1L<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(var name String)
+      KlassAnnotation(Expose)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "name"
+        KlassDeclaration(argument unique)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val version Timestamp)
+      KlassAnnotation(Version)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "version"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(Timestamp)
+        postfixUnarySuffix
+          callSuffix
+            KlassDeclaration(argument)
+              postfixUnaryExpression
+                KlassIdentifier(System)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(currentTimeMillis)
+                postfixUnarySuffix
+                  callSuffix
+    KlassDeclaration(var superList VariableList)
+      KlassAnnotation(OneToOne)
+      literalConstant
+        NullLiteral >>>null<<< (DEFAULT_TOKEN_CHANNEL)
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)

@@ -1,0 +1,32 @@
+PackageHeader(com.pibity.erp.repositories.query)
+importList
+  Import(com.pibity.erp.entities.Type)
+  Import(com.pibity.erp.entities.Variable)
+  Import(com.pibity.erp.entities.VariableList)
+  Import(org.springframework.stereotype.Repository)
+  Import(org.springframework.transaction.annotation.Transactional)
+  Import(javax.persistence.EntityManager)
+KlassDeclaration(class VariableRepository)
+  KlassAnnotation(Repository)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val entityManager EntityManager)
+  classBody
+    KlassDeclaration(fun findByTypeAndName Variable)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument readOnly)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter superList VariableList)
+      KlassDeclaration(parameter type Type)
+      KlassDeclaration(parameter name String)
+    KlassDeclaration(fun findVariable Variable)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument readOnly)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter organizationId Long)
+      KlassDeclaration(parameter superTypeName String)
+      KlassDeclaration(parameter typeName String)
+      KlassDeclaration(parameter superList Long)
+      KlassDeclaration(parameter name String)
+        KlassString

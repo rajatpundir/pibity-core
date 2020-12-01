@@ -193,6 +193,8 @@ class VariableService(
             typeAssertion = typeAssertion,
             result = validateOrEvaluateExpression(jsonParams = gson.fromJson(typeAssertion.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) },
                 symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = false), mode = "evaluate") as Boolean)
+        println("-----------------------------")
+        println("valueDependencies.size=${valueDependencies.size}")
         if (!variableAssertion.result)
           throw CustomJsonException("{variableName: 'Failed to assert ${typeAssertion.name}'}")
         try {
@@ -202,6 +204,7 @@ class VariableService(
         }
       }
     }
+    println("-----------------------------")
     return try {
       Pair(variable, typePermission)
     } catch (exception: Exception) {
@@ -263,7 +266,11 @@ class VariableService(
                     dependentFormulaValues[it]!!.add(value)
                 }
               }
+              println("#############################")
+              println("KEY = ${value.key.name}")
+              println("ASSERTION DEPENDENCY = ${value.key.isAssertionDependency}")
               if (value.key.isAssertionDependency) {
+                println("value.dependentVariableAssertions.size = ${value.dependentVariableAssertions.size}")
                 value.dependentVariableAssertions.forEach {
                   if (!dependentAssertions.containsKey(it))
                     dependentAssertions[it] = mutableSetOf(value)
@@ -824,6 +831,7 @@ class VariableService(
 
   fun evaluateAssertions(dependentAssertions: Map<VariableAssertion, MutableSet<Value>>) {
     println("-------------------------------")
+    println("Number of Assertions: ${dependentAssertions.size}")
     for ((assertion, _) in dependentAssertions)
       println(assertion.typeAssertion.name)
     println("-------------------------------")

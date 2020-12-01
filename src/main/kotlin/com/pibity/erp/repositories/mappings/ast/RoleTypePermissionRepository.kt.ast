@@ -1,0 +1,8 @@
+PackageHeader(com.pibity.erp.repositories.mappings)
+importList
+  Import(com.pibity.erp.entities.mappings.RoleTypePermission)
+  Import(com.pibity.erp.entities.mappings.embeddables.RoleTypePermissionId)
+  Import(org.springframework.data.repository.CrudRepository)
+KlassDeclaration(interface RoleTypePermissionRepository)
+  KlassInheritance
+    KlassIdentifier(CrudRepository<RoleTypePermission, RoleTypePermissionId>)

@@ -1,0 +1,224 @@
+PackageHeader(com.pibity.erp.entities)
+importList
+  Import(java.io.Serializable)
+  Import(java.sql.Timestamp)
+  Import(javax.persistence.*)
+KlassDeclaration(class VariableAssertion)
+  KlassAnnotation(Entity)
+  KlassAnnotation(Table)
+    KlassDeclaration(argument name)
+      KlassString
+        "variable_assertion"
+    KlassDeclaration(argument schema)
+      KlassString
+        "inventory"
+    KlassDeclaration(argument uniqueConstraints)
+      collectionLiteral
+        LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+        expression
+          postfixUnaryExpression
+            KlassIdentifier(UniqueConstraint)
+            postfixUnarySuffix
+              callSuffix
+                KlassDeclaration(argument columnNames)
+                  collectionLiteral
+                    LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "type_assertion_id"
+                    COMMA >>>,<<< (DEFAULT_TOKEN_CHANNEL)
+                    expression
+                      KlassString
+                        "variable_id"
+                    RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+  KlassModifier(data, classModifier)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val id Long)
+      KlassAnnotation(Id)
+      KlassAnnotation(GeneratedValue)
+        KlassDeclaration(argument strategy)
+          postfixUnaryExpression
+            KlassIdentifier(GenerationType)
+            postfixUnarySuffix
+              navigationSuffix
+                memberAccessOperator
+                  DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                KlassIdentifier(SEQUENCE)
+        KlassDeclaration(argument generator)
+          KlassString
+            "variable_assertion_generator"
+      KlassAnnotation(SequenceGenerator)
+        KlassDeclaration(argument name)
+          KlassString
+            "variable_assertion_generator"
+        KlassDeclaration(argument sequenceName)
+          KlassString
+            "variable_assertion_sequence"
+      prefixUnaryExpression
+        unaryPrefix
+          prefixUnaryOperator
+            SUB >>>-<<< (DEFAULT_TOKEN_CHANNEL)
+        literalConstant
+          IntegerLiteral >>>1<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val typeAssertion TypeAssertion)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "type_assertion_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val variable Variable)
+      KlassAnnotation(ManyToOne)
+      KlassAnnotation(JoinColumns)
+        KlassDeclaration(argument)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "variable_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val version Timestamp)
+      KlassAnnotation(Version)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "version"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(Timestamp)
+        postfixUnarySuffix
+          callSuffix
+            KlassDeclaration(argument)
+              postfixUnaryExpression
+                KlassIdentifier(System)
+                postfixUnarySuffix
+                  navigationSuffix
+                    memberAccessOperator
+                      DOT >>>.<<< (DEFAULT_TOKEN_CHANNEL)
+                    KlassIdentifier(currentTimeMillis)
+                postfixUnarySuffix
+                  callSuffix
+    KlassDeclaration(var result Boolean)
+      KlassAnnotation(Column)
+        KlassDeclaration(argument name)
+          KlassString
+            "result"
+        KlassDeclaration(argument nullable)
+          literalConstant
+            BooleanLiteral >>>false<<< (DEFAULT_TOKEN_CHANNEL)
+    KlassDeclaration(val valueDependencies MutableSet<Value>)
+      KlassAnnotation(ManyToMany)
+      KlassAnnotation(JoinTable)
+        KlassDeclaration(argument name)
+          KlassString
+            "mapping_variable_assertion_value_dependencies"
+        KlassDeclaration(argument schema)
+          KlassString
+            "inventory"
+        KlassDeclaration(argument joinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "variable_assertion_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument inverseJoinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "dependency_value_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+    KlassDeclaration(val variableDependencies MutableSet<Variable>)
+      KlassAnnotation(ManyToMany)
+      KlassAnnotation(JoinTable)
+        KlassDeclaration(argument name)
+          KlassString
+            "mapping_variable_assertion_variable_dependencies"
+        KlassDeclaration(argument schema)
+          KlassString
+            "inventory"
+        KlassDeclaration(argument joinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "variable_assertion_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+        KlassDeclaration(argument inverseJoinColumns)
+          collectionLiteral
+            LSQUARE >>>[<<< (DEFAULT_TOKEN_CHANNEL)
+            expression
+              postfixUnaryExpression
+                KlassIdentifier(JoinColumn)
+                postfixUnarySuffix
+                  callSuffix
+                    KlassDeclaration(argument name)
+                      KlassString
+                        "dependency_variable_id"
+                    KlassDeclaration(argument referencedColumnName)
+                      KlassString
+                        "id"
+            RSQUARE >>>]<<< (DEFAULT_TOKEN_CHANNEL)
+      postfixUnaryExpression
+        KlassIdentifier(HashSet)
+        postfixUnarySuffix
+          callSuffix
+  KlassInheritance
+    KlassIdentifier(Serializable)
+  classBody
+    KlassDeclaration(fun equals Boolean)
+      KlassModifier(override, memberModifier)
+      KlassDeclaration(parameter other Any)
+    KlassDeclaration(fun hashCode Int)
+      KlassModifier(override, memberModifier)

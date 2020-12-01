@@ -1,0 +1,20 @@
+PackageHeader(com.pibity.erp.repositories.query)
+importList
+  Import(com.pibity.erp.entities.Role)
+  Import(org.springframework.stereotype.Repository)
+  Import(org.springframework.transaction.annotation.Transactional)
+  Import(javax.persistence.EntityManager)
+  Import(javax.persistence.LockModeType)
+  Import(javax.persistence.TypedQuery)
+KlassDeclaration(class RoleRepository)
+  KlassAnnotation(Repository)
+  KlassDeclaration(constructor)
+    KlassDeclaration(val entityManager EntityManager)
+  classBody
+    KlassDeclaration(fun findRole Role)
+      KlassAnnotation(Transactional)
+        KlassDeclaration(argument readOnly)
+          literalConstant
+            BooleanLiteral >>>true<<< (DEFAULT_TOKEN_CHANNEL)
+      KlassDeclaration(parameter organizationId Long)
+      KlassDeclaration(parameter name String)
