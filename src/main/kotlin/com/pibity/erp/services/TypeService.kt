@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -17,9 +17,7 @@ import com.pibity.erp.commons.lisp.validateSymbols
 import com.pibity.erp.commons.utils.*
 import com.pibity.erp.entities.*
 import com.pibity.erp.entities.permission.TypePermission
-import com.pibity.erp.repositories.jpa.KeyJpaRepository
-import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
-import com.pibity.erp.repositories.jpa.TypeJpaRepository
+import com.pibity.erp.repositories.jpa.*
 import com.pibity.erp.repositories.query.TypeRepository
 import com.pibity.erp.repositories.query.VariableRepository
 import org.springframework.stereotype.Service
@@ -31,6 +29,8 @@ class TypeService(
     val typeRepository: TypeRepository,
     val typeJpaRepository: TypeJpaRepository,
     val keyJpaRepository: KeyJpaRepository,
+    val typeListJpaRepository: TypeListJpaRepository,
+    val variableListJpaRepository: VariableListJpaRepository,
     val variableRepository: VariableRepository,
     val variableService: VariableService,
     val typePermissionService: TypePermissionService,
@@ -47,15 +47,15 @@ class TypeService(
     val organization: Organization = typeOrganization
         ?: organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
         ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
-    var type = Type(organization = organization, superTypeName = superTypeName, name = typeName, autoAssignId = autoAssignId, multiplicity = multiplicity)
-    type = typeJpaRepository.save(type)
     val validGlobalTypes: MutableSet<Type> = globalTypes
-        ?: typeRepository.findGlobalTypes(organizationId = type.organization.id) as MutableSet<Type>
+        ?: typeRepository.findGlobalTypes(organizationId = organization.id) as MutableSet<Type>
     val validLocalTypes: MutableSet<Type> = localTypes ?: mutableSetOf()
-    // Raise exception if type with same name already exists
-//    # We should ensure global type name is not referenced as type of any key
-//    if (superTypeName == GLOBAL_TYPE && validGlobalTypes.any { it.name == typeName })
-//      throw CustomJsonException("{typeName: 'Type with same name already exists'}")
+    var type = Type(organization = organization, superTypeName = superTypeName, name = typeName, autoAssignId = autoAssignId, multiplicity = multiplicity)
+    type = try {
+      typeJpaRepository.save(type)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{typeName: 'Unable to create Type'}")
+    }
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
       val keyType: Type =
@@ -137,7 +137,11 @@ class TypeService(
         type.keys.add(keyJpaRepository.save(key))
       }
     }
-    type = typeJpaRepository.save(type)
+    type = try {
+      typeJpaRepository.save(type)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{typeName: 'Unable to create Type'}")
+    }
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
       if (!keyJson.get(KeyConstants.KEY_TYPE).isJsonObject && keyJson.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
@@ -175,8 +179,28 @@ class TypeService(
       }
     }
     type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
-    type = typeJpaRepository.save(type)
+    type = try {
+      typeJpaRepository.save(type)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{typeName: 'Unable to create Type'}")
+    }
     if (type.superTypeName == GLOBAL_TYPE) {
+      val typeList: TypeList =  try {
+        typeListJpaRepository.save(TypeList(type = type, max = 0, min = 0))
+      } catch (exception: Exception) {
+        throw CustomJsonException("{typeName: 'Unable to create Type'}")
+      }
+      val superList: VariableList =  try {
+        variableListJpaRepository.save(VariableList(listType = typeList))
+      } catch (exception: Exception) {
+        throw CustomJsonException("{typeName: 'Unable to create Type'}")
+      }
+      type.superList = superList
+      type = try {
+        typeJpaRepository.save(type)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{typeName: 'Unable to create Type'}")
+      }
       type.permissions.addAll(createDefaultPermissionsForType(type))
       createPermissionsForType(jsonParams = jsonParams)
       assignTypePermissionsToRoles(jsonParams = jsonParams)
@@ -198,7 +222,7 @@ class TypeService(
       else -> {
         // Default values for variable references only makes sense when they refer a Global variable
         if (key.type.superTypeName == GLOBAL_TYPE && defaultValue != null) {
-          key.referencedVariable = variableRepository.findByTypeAndName(superList = key.parentType.organization.superList!!, type = key.type, name = defaultValue.asString)
+          key.referencedVariable = variableRepository.findByTypeAndName(superList = key.type.superList!!, type = key.type, name = defaultValue.asString)
               ?: throw CustomJsonException("{keys: {${key.name}: {default: 'Variable reference is not correct'}}}")
         }
       }

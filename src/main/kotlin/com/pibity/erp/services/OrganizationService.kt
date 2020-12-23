@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -29,8 +29,6 @@ import java.io.FileReader
 class OrganizationService(
     val organizationJpaRepository: OrganizationJpaRepository,
     val typeJpaRepository: TypeJpaRepository,
-    val typeListJpaRepository: TypeListJpaRepository,
-    val variableListJpaRepository: VariableListJpaRepository,
     val typeService: TypeService,
     val userJpaRepository: UserJpaRepository,
     val userService: UserService,
@@ -54,15 +52,7 @@ class OrganizationService(
       println("Keycloak Group already exists")
     }
     createDefaultRoles(organization = organization)
-    try {
-      val anyType: Type = createPrimitiveTypes(organization = organization)
-      val tl: TypeList = typeListJpaRepository.save(TypeList(type = anyType, min = 0, max = 0))
-      val vl: VariableList = variableListJpaRepository.save(VariableList(listType = tl))
-      organization.superList = vl
-      organizationJpaRepository.save(organization)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
-    }
+    createPrimitiveTypes(organization = organization)
     val superuserId: String = try {
       getKeycloakId(KeycloakConstants.SUPERUSER_USERNAME)
     } catch (exception: Exception) {

@@ -1,12 +1,17 @@
 version: '3'
 
+volumes:
+  postgres_data:
+      driver: local
+
 services:
   postgres:
       image: postgres
       restart: always
       volumes:
-        - $HOME/pibity/postgres/data:/var/lib/postgresql/data
+        - postgres_data:/var/lib/postgresql/data
         - ./dbscripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+        - $HOME/Documents/postgres_home:/root
       environment:
         POSTGRES_DB: erp
         POSTGRES_USER: pibity

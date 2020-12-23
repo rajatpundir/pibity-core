@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -23,8 +23,6 @@ import com.pibity.erp.entities.function.*
 import com.pibity.erp.entities.function.Function
 import com.pibity.erp.entities.permission.FunctionPermission
 import com.pibity.erp.repositories.function.FunctionInputRepository
-import com.pibity.erp.repositories.function.FunctionOutputRepository
-import com.pibity.erp.repositories.function.FunctionRepository
 import com.pibity.erp.repositories.function.jpa.*
 import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
@@ -37,12 +35,10 @@ import org.springframework.transaction.annotation.Transactional
 class FunctionService(
     val organizationJpaRepository: OrganizationJpaRepository,
     val typeRepository: TypeRepository,
-    val functionRepository: FunctionRepository,
     val functionJpaRepository: FunctionJpaRepository,
     val functionInputRepository: FunctionInputRepository,
     val functionInputJpaRepository: FunctionInputJpaRepository,
     val functionInputTypeJpaRepository: FunctionInputTypeJpaRepository,
-    val functionOutputRepository: FunctionOutputRepository,
     val functionOutputJpaRepository: FunctionOutputJpaRepository,
     val functionOutputTypeJpaRepository: FunctionOutputTypeJpaRepository,
     val functionPermissionService: FunctionPermissionService,
@@ -50,7 +46,6 @@ class FunctionService(
     val variableService: VariableService,
     val roleService: RoleService,
     val userService: UserService
-
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -85,8 +80,7 @@ class FunctionService(
             else -> if (input.asJsonObject.has("variableName"))
               getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = input.asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
             else mutableSetOf()
-          }
-      )
+          })
       if (input.isJsonObject) {
         when (type.name) {
           TypeConstants.TEXT -> functionInput.defaultStringValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asString else ""
@@ -96,7 +90,7 @@ class FunctionService(
           TypeConstants.FORMULA, TypeConstants.LIST -> {
           }
           else -> if (input.asJsonObject.has(KeyConstants.DEFAULT)) {
-            functionInput.referencedVariable = variableRepository.findVariable(organizationId = organization.id, superList = organization.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
+            functionInput.referencedVariable = variableRepository.findVariable(organizationId = organization.id, superList = type.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
                 ?: throw CustomJsonException("{inputs: {${inputName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
           }
         }
@@ -204,35 +198,39 @@ class FunctionService(
           addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asString else try {
             input.defaultStringValue!!
           } catch (exception: Exception) {
-            throw CustomJsonException("{error: 'Unauthorized Access'}")})
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
         })
         TypeConstants.NUMBER -> symbols.add(input.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, input.type.name)
           addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asLong else try {
             input.defaultLongValue!!
           } catch (exception: Exception) {
-            throw CustomJsonException("{error: 'Unauthorized Access'}")})
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
         })
         TypeConstants.DECIMAL -> symbols.add(input.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, input.type.name)
           addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asDouble else try {
             input.defaultDoubleValue!!
           } catch (exception: Exception) {
-            throw CustomJsonException("{error: 'Unauthorized Access'}")})
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
         })
         TypeConstants.BOOLEAN -> symbols.add(input.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, input.type.name)
           addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asBoolean else try {
             input.defaultBooleanValue!!
           } catch (exception: Exception) {
-            throw CustomJsonException("{error: 'Unauthorized Access'}")})
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
         })
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else -> {
           val variable: Variable = if (inputPermission.accessLevel) variableRepository.findVariable(organizationId = functionPermission.function.organization.id,
               superTypeName = GLOBAL_TYPE, typeName = input.type.name,
-              superList = functionPermission.function.organization.superList!!.id,
+              superList = input.type.superList!!.id,
               name = args.get(input.name).asString)
               ?: throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
           else try {

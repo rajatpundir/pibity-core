@@ -20,7 +20,7 @@ spring:
   profiles: pg
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: create
       database-platform: "org.hibernate.dialect.PostgreSQLDialect"
     show-sql: false
     properties:

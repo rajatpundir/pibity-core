@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -38,11 +38,11 @@ data class VariableAssertion(
 
     @ManyToMany
     @JoinTable(name = "mapping_variable_assertion_value_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "variable_assertion_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_value_id", referencedColumnName = "id")])
-    val valueDependencies: MutableSet<Value> = HashSet(),
+    var valueDependencies: MutableSet<Value> = HashSet(),
 
     @ManyToMany
     @JoinTable(name = "mapping_variable_assertion_variable_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "variable_assertion_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_variable_id", referencedColumnName = "id")])
-    val variableDependencies: MutableSet<Variable> = HashSet()
+    var variableDependencies: MutableSet<Variable> = HashSet()
 
 ) : Serializable {
 

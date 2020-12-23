@@ -1,0 +1,8 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "queue": {
+    "type": "Array"
+  }
+}

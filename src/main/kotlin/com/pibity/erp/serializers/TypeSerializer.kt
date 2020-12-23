@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -14,8 +14,10 @@ import com.pibity.erp.entities.Type
 
 fun serialize(type: Type): JsonObject {
   val json = JsonObject()
-  if (type.superTypeName == "Any")
+  if (type.superTypeName == "Any") {
     json.addProperty("orgId", type.organization.id)
+    json.addProperty("autoId", type.autoAssignId)
+  }
   else
     json.addProperty("superTypeName", type.superTypeName)
   json.addProperty("typeName", type.name)

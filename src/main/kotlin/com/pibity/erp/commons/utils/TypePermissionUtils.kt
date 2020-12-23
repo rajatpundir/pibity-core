@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -61,7 +61,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
                     throw CustomJsonException("{permissions: {${key.name}: {creatable: 'Unexpected value for parameter'}}}")
                   }
                 } else throw CustomJsonException("{permissions: {${key.name}: {creatable: 'Field is missing in request body'}}}")
-                val deletable: Boolean = if (jsonParams.get(key.name).asJsonObject.has("creatable")) {
+                val deletable: Boolean = if (jsonParams.get(key.name).asJsonObject.has("deletable")) {
                   try {
                     jsonParams.get(key.name).asJsonObject.get("deletable").asBoolean
                   } catch (exception: Exception) {

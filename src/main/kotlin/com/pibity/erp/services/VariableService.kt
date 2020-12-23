@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -11,6 +11,7 @@ package com.pibity.erp.services
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.GLOBAL_TYPE
+import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.*
@@ -34,22 +35,92 @@ class VariableService(
     val variableAssertionJpaRepository: VariableAssertionJpaRepository
 ) {
 
+  fun executeQueue(jsonParams: JsonObject): JsonArray {
+    val multiLevelQueue = JsonArray()
+    for (queue in jsonParams.get("queue").asJsonArray)
+      if (!queue.isJsonArray)
+        throw CustomJsonException("{queue: 'Unexpected value for parameter'}")
+    for (queue in jsonParams.get("queue").asJsonArray) {
+      try {
+        multiLevelQueue.apply {
+          add(mutateVariablesAtomically(jsonParams = queue.asJsonArray, orgId = jsonParams.get("orgId").asLong, username = jsonParams.get("username").asString))
+          add(JsonObject())
+        }
+      } catch (exception: CustomJsonException) {
+          multiLevelQueue.add(JsonArray().apply { add(gson.fromJson(exception.message, JsonObject::class.java)) })
+      }
+    }
+    return multiLevelQueue
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun mutateVariablesAtomically(jsonParams: JsonArray, orgId: Long, username: String): JsonArray {
+    var step = 0
+    val mutatedVariables = JsonArray()
+    try {
+      for (variableJson in validateMutatedVariables(jsonParams = jsonParams)) {
+        when(variableJson.asJsonObject.get("op").asString) {
+          "update" -> {
+            val (variable, typePermission, _, _) = updateVariable(jsonParams = variableJson.asJsonObject.apply {
+              addProperty("orgId", orgId)
+              addProperty("username", username)
+            })
+            mutatedVariables.add(serialize(variable = variable, typePermission = typePermission, username = username))
+          }
+          "create" -> {
+            val (variable, typePermission) = createVariable(jsonParams = variableJson.asJsonObject.apply {
+              addProperty("orgId", orgId)
+              addProperty("username", username)
+            })
+            mutatedVariables.add(serialize(variable = variable, typePermission = typePermission, username = username))
+          }
+          "delete" -> {
+            val (variable, typePermission) = deleteVariable(jsonParams = variableJson.asJsonObject.apply {
+              addProperty("orgId", orgId)
+              addProperty("username", username)
+            })
+            mutatedVariables.add(serialize(variable = variable, typePermission = typePermission, username = username))
+          }
+          else -> throw CustomJsonException("{op: 'Unexpected value for parameter'}")
+        }
+        step += 1
+      }
+    } catch (exception: CustomJsonException) {
+      throw CustomJsonException(gson.fromJson(exception.message, JsonObject::class.java).apply { addProperty("step", step) }.toString())
+    }
+    return mutatedVariables
+  }
+
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createVariable(jsonParams: JsonObject, variableSuperList: VariableList? = null, variableSubList: VariableList? = null, variableTypePermission: TypePermission? = null): Pair<Variable, TypePermission> {
-    val typePermission: TypePermission = variableTypePermission
-        ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-          addProperty("orgId", jsonParams.get("orgId").asString)
-          addProperty("username", jsonParams.get("username").asString)
-          addProperty("typeName", jsonParams.get("typeName").asString)
-        })
+    val superList: VariableList
+    val type: Type
+    val typePermission: TypePermission
+    if (jsonParams.has("context?")) {
+      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      type = superList.listType.type
+      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("superTypeName", type.superTypeName)
+        addProperty("typeName", type.name)
+      })
+    }
+    else {
+      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("typeName", jsonParams.get("typeName").asString)
+      })
+      type = typePermission.type
+      superList = variableSuperList ?: type.superList!!
+    }
     if (typePermission.type.superTypeName == GLOBAL_TYPE && !typePermission.creatable)
       throw CustomJsonException("{error: 'Unauthorized Access'}")
     val variableName: String = jsonParams.get("variableName").asString
-    val type: Type = typePermission.type
-    val superList: VariableList = variableSuperList ?: type.organization.superList!!
     val values: JsonObject = validateVariableValues(values = jsonParams.get("values").asJsonObject, typePermission = typePermission)
     var variable = Variable(superList = superList, type = type, name = if (type.superTypeName == GLOBAL_TYPE && type.autoAssignId) (type.autoIncrementId + 1).toString() else variableName, autoGeneratedId = type.autoIncrementId + 1, subList = variableSubList
-        ?: variableListJpaRepository.save(VariableList(listType = type.organization.superList!!.listType)))
+        ?: variableListJpaRepository.save(VariableList(listType = superList.listType)))
     variable.type.autoIncrementId += 1
     variable.type.variableCount += 1
     // Process non-formula type values
@@ -69,7 +140,7 @@ class VariableService(
           }
           for (ref in jsonArray.iterator()) {
             if (key.list!!.type.superTypeName == GLOBAL_TYPE) {
-              val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.organization.superList!!, type = key.list!!.type, name = ref.asString)
+              val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = key.list!!.type.superList!!, type = key.list!!.type, name = ref.asString)
                   ?: throw CustomJsonException("{${key.name}: 'Unable to find referenced global variable'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.type.multiplicity)
@@ -115,7 +186,7 @@ class VariableService(
         }
         else -> {
           if (key.type.superTypeName == GLOBAL_TYPE) {
-            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = type.organization.superList!!, type = key.type, name = values.get(key.name).asString)
+            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = key.type.superList!!, type = key.type, name = values.get(key.name).asString)
                 ?: throw CustomJsonException("{${key.name}: 'Unable to find referenced global variable'}")
             referencedVariable.referenceCount += 1
             if (referencedVariable.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.type.multiplicity)
@@ -193,10 +264,10 @@ class VariableService(
             typeAssertion = typeAssertion,
             result = validateOrEvaluateExpression(jsonParams = gson.fromJson(typeAssertion.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) },
                 symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = false), mode = "evaluate") as Boolean)
-        println("-----------------------------")
-        println("valueDependencies.size=${valueDependencies.size}")
+        variableAssertion.valueDependencies = valueDependencies
+        variableAssertion.variableDependencies = variableDependencies
         if (!variableAssertion.result)
-          throw CustomJsonException("{variableName: 'Failed to assert ${typeAssertion.name}'}")
+          throw CustomJsonException("{variableName: 'Failed to assert ${variableAssertion.variable.type.name}:${typeAssertion.name}'}")
         try {
           variable.variableAssertions.add(variableAssertionJpaRepository.save(variableAssertion))
         } catch (exception: Exception) {
@@ -204,7 +275,6 @@ class VariableService(
         }
       }
     }
-    println("-----------------------------")
     return try {
       Pair(variable, typePermission)
     } catch (exception: Exception) {
@@ -213,15 +283,29 @@ class VariableService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Triple<Variable, Map<Value, MutableSet<Value>>, Map<VariableAssertion, MutableSet<Value>>> {
-    val typePermission: TypePermission = variableTypePermission
-        ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-          addProperty("orgId", jsonParams.get("orgId").asString)
-          addProperty("username", jsonParams.get("username").asString)
-          addProperty("typeName", jsonParams.get("typeName").asString)
-        })
-    val type: Type = typePermission.type
-    val superList: VariableList = variableSuperList ?: type.organization.superList!!
+  fun updateVariable(jsonParams: JsonObject, referencedKeyVariable: Variable? = null, variableTypePermission: TypePermission? = null, variableSuperList: VariableList? = null): Quadruple<Variable, TypePermission, Map<Value, MutableSet<Value>>, Map<VariableAssertion, MutableSet<Value>>> {
+    val superList: VariableList
+    val type: Type
+    val typePermission: TypePermission
+    if (jsonParams.has("context?")) {
+      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      type = superList.listType.type
+      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("superTypeName", type.superTypeName)
+        addProperty("typeName", type.name)
+      })
+    }
+    else {
+      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("typeName", jsonParams.get("typeName").asString)
+      })
+      type = typePermission.type
+      superList = variableSuperList ?: type.superList!!
+    }
     val variable: Variable = referencedKeyVariable
         ?: variableRepository.findVariable(organizationId = type.organization.id, superTypeName = type.superTypeName, typeName = type.name, superList = superList.id, name = jsonParams.get("variableName").asString)
         ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
@@ -266,11 +350,7 @@ class VariableService(
                     dependentFormulaValues[it]!!.add(value)
                 }
               }
-              println("#############################")
-              println("KEY = ${value.key.name}")
-              println("ASSERTION DEPENDENCY = ${value.key.isAssertionDependency}")
               if (value.key.isAssertionDependency) {
-                println("value.dependentVariableAssertions.size = ${value.dependentVariableAssertions.size}")
                 value.dependentVariableAssertions.forEach {
                   if (!dependentAssertions.containsKey(it))
                     dependentAssertions[it] = mutableSetOf(value)
@@ -329,7 +409,7 @@ class VariableService(
             if (value.list!!.listType.type.superTypeName == GLOBAL_TYPE) {
               if (listValues.has("add")) {
                 listValues.get("add").asJsonArray.forEach {
-                  val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.list!!.listType.type.superTypeName, typeName = value.list!!.listType.type.name, superList = type.organization.superList!!.id, name = it.asString)
+                  val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.list!!.listType.type.superTypeName, typeName = value.list!!.listType.type.name, superList = value.list!!.listType.type.superList!!.id, name = it.asString)
                       ?: throw CustomJsonException("{${value.key.name}: {add: 'Unable to insert ${it.asString} referenced in list'}}")
                   if (!value.list!!.variables.contains(referencedVariable)) {
                     referencedVariable.referenceCount += 1
@@ -344,7 +424,7 @@ class VariableService(
               }
               if (listValues.has("remove")) {
                 listValues.get("remove").asJsonArray.forEach {
-                  val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.list!!.listType.type.superTypeName, typeName = value.list!!.listType.type.name, superList = type.organization.superList!!.id, name = it.asString)
+                  val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.list!!.listType.type.superTypeName, typeName = value.list!!.listType.type.name, superList = value.list!!.listType.type.superList!!.id, name = it.asString)
                       ?: throw CustomJsonException("{${value.key.name}: {remove: 'Unable to remove ${it.asString} referenced in list'}}")
                   if (value.list!!.variables.contains(referencedVariable)) {
                     referencedVariable.referenceCount -= 1
@@ -395,7 +475,7 @@ class VariableService(
                         ?: throw CustomJsonException("{${value.key.name}: {update: 'Unable to find referenced variable in list'}}")
                     value.list!!.variables.remove(variableToUpdate)
                     val updatedVariable: Variable = try {
-                      val (subVariable, subDependentFormulaValues, subDependentAssertions) = updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.key.name == value.key.name }.referencedTypePermission!!, variableSuperList = value.list!!)
+                      val (subVariable, _, subDependentFormulaValues, subDependentAssertions) = updateVariable(jsonParams = it.asJsonObject, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.key.name == value.key.name }.referencedTypePermission!!, variableSuperList = value.list!!)
                       subDependentFormulaValues.forEach { (k, v) ->
                         if (!dependentFormulaValues.containsKey(k))
                           dependentFormulaValues[k] = v
@@ -463,7 +543,7 @@ class VariableService(
             if (value.key.type.superTypeName == GLOBAL_TYPE) {
               value.referencedVariable!!.referenceCount -= 1
               variableJpaRepository.save(value.referencedVariable!!)
-              val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.key.type.superTypeName, typeName = value.key.type.name, superList = type.organization.superList!!.id, name = values.get(value.key.name).asString)
+              val referencedVariable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = value.key.type.superTypeName, typeName = value.key.type.name, superList = value.key.type.superList!!.id, name = values.get(value.key.name).asString)
                   ?: throw CustomJsonException("{${value.key.name}: 'Unable to find referenced variable ${values.get(value.key.name).asString}'}")
               referencedVariable.referenceCount += 1
               if (referencedVariable.type.multiplicity != 0L && referencedVariable.referenceCount > referencedVariable.type.multiplicity)
@@ -491,7 +571,7 @@ class VariableService(
               if ((value.key.parentType.superTypeName == GLOBAL_TYPE && value.key.parentType.name == value.key.type.superTypeName)
                   || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.type.superTypeName)) {
                 value.referencedVariable = try {
-                  val (subVariable, subDependentFormulaValues, subDependentAssertions) = updateVariable(jsonParams = values.get(value.key.name).asJsonObject, referencedKeyVariable = value.referencedVariable!!, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.key.name == value.key.name }.referencedTypePermission!!, variableSuperList = value.referencedVariable!!.superList)
+                  val (subVariable, _, subDependentFormulaValues, subDependentAssertions) = updateVariable(jsonParams = values.get(value.key.name).asJsonObject, referencedKeyVariable = value.referencedVariable!!, variableTypePermission = typePermission.keyPermissions.single { keyPermission -> keyPermission.key.name == value.key.name }.referencedTypePermission!!, variableSuperList = value.referencedVariable!!.superList)
                   subDependentFormulaValues.forEach { (k, v) ->
                     if (!dependentFormulaValues.containsKey(k))
                       dependentFormulaValues[k] = v
@@ -673,19 +753,16 @@ class VariableService(
     if (variable.type.superTypeName == GLOBAL_TYPE) {
       if (dependentFormulaValues.isNotEmpty())
         recomputeDependentFormulaValues(dependentFormulaValues, dependentAssertions)
-      else
+      else if (dependentAssertions.isNotEmpty())
         evaluateAssertions(dependentAssertions)
     }
-    return Triple(variable, dependentFormulaValues, dependentAssertions)
+    return Quadruple(variable, typePermission, dependentFormulaValues, dependentAssertions)
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun recomputeDependentFormulaValues(dependentFormulaValues: MutableMap<Value, MutableSet<Value>>, dependentAssertions: Map<VariableAssertion, MutableSet<Value>>) {
-    println("####################")
     val higherDependentFormulaValues: MutableMap<Value, MutableSet<Value>> = mutableMapOf()
     dependentFormulaValues.forEach { (value, dependencies) ->
-      println(value.key.parentType.name)
-      println(value.key.name)
       when (value.key.formula!!.returnType.name) {
         TypeConstants.TEXT -> {
           val reconstructDependencies: Boolean = dependencies.fold(false) { acc, v -> acc || v.key.isVariableDependency }
@@ -825,15 +902,154 @@ class VariableService(
     valueJpaRepository.saveAll(dependentFormulaValues.keys)
     if (higherDependentFormulaValues.isNotEmpty())
       recomputeDependentFormulaValues(higherDependentFormulaValues, dependentAssertions)
-    else
+    else if (dependentAssertions.isNotEmpty())
       evaluateAssertions(dependentAssertions)
   }
 
   fun evaluateAssertions(dependentAssertions: Map<VariableAssertion, MutableSet<Value>>) {
-    println("-------------------------------")
-    println("Number of Assertions: ${dependentAssertions.size}")
-    for ((assertion, _) in dependentAssertions)
-      println(assertion.typeAssertion.name)
-    println("-------------------------------")
+    for ((variableAssertion, _) in dependentAssertions) {
+      val valueDependencies: MutableSet<Value> = mutableSetOf()
+      val variableDependencies: MutableSet<Variable> = mutableSetOf()
+      variableAssertion.result = validateOrEvaluateExpression(jsonParams = gson.fromJson(variableAssertion.typeAssertion.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) },
+          symbols = getSymbolValuesAndUpdateDependencies(variable = variableAssertion.variable, symbolPaths = gson.fromJson(variableAssertion.typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = false), mode = "evaluate") as Boolean
+      if (!variableAssertion.result)
+        throw CustomJsonException("{variableName: 'Failed to assert ${variableAssertion.variable.type.name}:${variableAssertion.typeAssertion.name}'}")
+      try {
+        variableAssertion.valueDependencies = valueDependencies
+        variableAssertion.variableDependencies = variableDependencies
+        variableAssertionJpaRepository.save(variableAssertion)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{variableName: 'Variable could not be updated'}")
+      }
+    }
+  }
+
+  fun deleteVariable(jsonParams: JsonObject): Pair<Variable, TypePermission> {
+    val superList: VariableList
+    val type: Type
+    val typePermission: TypePermission
+    if (jsonParams.has("context?")) {
+      superList = variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      type = superList.listType.type
+      typePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("superTypeName", type.superTypeName)
+        addProperty("typeName", type.name)
+      })
+    }
+    else {
+      typePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("username", jsonParams.get("username").asString)
+        addProperty("typeName", jsonParams.get("typeName").asString)
+      })
+      type = typePermission.type
+      superList = type.superList!!
+    }
+    val variable: Variable = variableRepository.findVariable(organizationId = type.organization.id, superTypeName = type.superTypeName, typeName = type.name, superList = superList.id, name = jsonParams.get("variableName").asString)
+        ?: throw CustomJsonException("{variableName: 'Unable to find referenced variable'}")
+    if (!typePermission.deletable)
+      throw CustomJsonException("{variableName: 'Unable to delete referenced variable'}")
+    return try {
+      variableJpaRepository.delete(variable)
+      variableListJpaRepository.save(superList.apply { size -= 1 })
+      Pair(variable, typePermission)
+    } catch (exception: Exception) {
+      throw CustomJsonException("{variableName: 'Unable to delete referenced variable'}")
+    }
+  }
+
+  fun serialize(variable: Variable, typePermission: TypePermission, username: String): JsonObject {
+    val json = JsonObject()
+    if (variable.type.superTypeName == "Any") {
+      json.addProperty("organization", variable.type.organization.id)
+      json.addProperty("typeName", variable.type.name)
+      json.addProperty("active", variable.active)
+    } else
+      json.addProperty("context", variable.superList.id)
+    json.addProperty("variableName", variable.name)
+    val jsonValues = JsonObject()
+    for (value in variable.values) {
+      when (value.key.type.name) {
+        TypeConstants.TEXT -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.stringValue!!)
+        }
+        TypeConstants.NUMBER -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.longValue!!)
+        }
+        TypeConstants.DECIMAL -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.doubleValue!!)
+        }
+        TypeConstants.BOOLEAN -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.booleanValue!!)
+        }
+        TypeConstants.FORMULA -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS) {
+            when (value.key.formula!!.returnType.name) {
+              TypeConstants.TEXT -> jsonValues.addProperty(value.key.name, value.stringValue!!)
+              TypeConstants.NUMBER -> jsonValues.addProperty(value.key.name, value.longValue!!)
+              TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.doubleValue!!)
+              TypeConstants.BOOLEAN -> jsonValues.addProperty(value.key.name, value.booleanValue!!)
+            }
+          }
+        }
+        TypeConstants.LIST -> {
+          if (value.list!!.listType.type.superTypeName == "Any") {
+            if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS) {
+              val jsonArray = JsonArray()
+              value.list!!.variables.forEach {
+                jsonArray.add(it.name)
+              }
+              jsonValues.add(value.key.name, jsonArray)
+            }
+          } else {
+            if ((value.key.parentType.superTypeName == GLOBAL_TYPE && value.key.parentType.name == value.key.list!!.type.superTypeName)
+                || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.list!!.type.superTypeName)) {
+              jsonValues.add(value.key.name, serialize(value.list!!.variables, typePermission.keyPermissions.single { it.key == value.key }.referencedTypePermission!!, username))
+            } else {
+              if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+                jsonValues.add(value.key.name, serialize(value.list!!.variables, userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+                  addProperty("orgId", variable.type.organization.id)
+                  addProperty("username", username)
+                  addProperty("superTypeName", value.list!!.listType.type.superTypeName)
+                  addProperty("typeName", value.list!!.listType.type.name)
+                }), username))
+            }
+          }
+        }
+        else -> {
+          if (value.referencedVariable!!.type.superTypeName == "Any") {
+            if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS) {
+              jsonValues.addProperty(value.key.name, value.referencedVariable!!.name)
+            }
+          } else {
+            if ((value.key.parentType.superTypeName == GLOBAL_TYPE && value.key.parentType.name == value.key.type.superTypeName)
+                || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.type.superTypeName)) {
+              val variableJson: JsonObject = serialize(value.referencedVariable!!, typePermission.keyPermissions.single { it.key == value.key }.referencedTypePermission!!, username)
+              if (variableJson.get("values").asJsonObject.size() != 0)
+                jsonValues.add(value.key.name, variableJson)
+            } else {
+              if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS) {
+                jsonValues.add(value.key.name, com.pibity.erp.serializers.serialize(value.referencedVariable!!))
+              }
+            }
+          }
+        }
+      }
+    }
+    json.add("values", jsonValues)
+    return json
+  }
+
+  fun serialize(variables: Set<Variable>, typePermission: TypePermission, username: String): JsonArray {
+    val json = JsonArray()
+    for (variable in variables)
+      json.add(serialize(variable = variable, typePermission = typePermission, username = username))
+    return json
   }
 }

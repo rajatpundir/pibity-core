@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -27,5 +27,15 @@ class FunctionRepository(val entityManager: EntityManager) {
       setParameter("name", name)
     }
     return query.singleResult
+  }
+
+  @Transactional(readOnly = true)
+  fun findFunctions(organizationId: Long): Set<Function> {
+    val hql = "SELECT DISTINCT f FROM Function f WHERE f.organization.id = :organizationId"
+    val query: TypedQuery<Function> = entityManager.createQuery(hql, Function::class.java).apply {
+      lockMode = LockModeType.OPTIMISTIC_FORCE_INCREMENT
+      setParameter("organizationId", organizationId)
+    }
+    return query.resultList.toSet()
   }
 }

@@ -1,9 +1,0 @@
-PackageHeader(com.pibity.erp.serializers)
-importList
-  Import(com.google.gson.JsonArray)
-  Import(com.google.gson.JsonObject)
-  Import(com.pibity.erp.entities.Type)
-KlassDeclaration(fun serialize JsonObject)
-  KlassDeclaration(parameter type Type)
-KlassDeclaration(fun serialize JsonArray)
-  KlassDeclaration(parameter entities Set<Type>)

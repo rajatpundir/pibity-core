@@ -1,0 +1,11 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "circuitName": {
+    "type": "String"
+  },
+  "args": {
+    "type": "Object"
+  }
+}
