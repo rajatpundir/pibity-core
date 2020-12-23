@@ -28,7 +28,7 @@ fun serialize(typePermission: TypePermission): JsonObject {
   val jsonKeyPermissions = JsonObject()
   for (keyPermission in typePermission.keyPermissions) {
     when (keyPermission.key.type.name) {
-      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA -> {
+      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIME, TypeConstants.TIMESTAMP, TypeConstants.FORMULA -> {
         jsonKeyPermissions.addProperty(
             keyPermission.key.name,
             when (keyPermission.accessLevel) {

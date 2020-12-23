@@ -16,7 +16,12 @@ val primitiveTypes = listOf(
     TypeConstants.DECIMAL,
     TypeConstants.BOOLEAN,
     TypeConstants.LIST,
-    TypeConstants.FORMULA)
+    TypeConstants.FORMULA,
+    TypeConstants.DATE,
+    TypeConstants.TIMESTAMP,
+    TypeConstants.TIME,
+    TypeConstants.BLOB
+)
 
 val formulaReturnTypes = listOf(
     TypeConstants.TEXT,
@@ -32,4 +37,7 @@ object TypeConstants {
   const val LIST = "List"
   const val FORMULA = "Formula"
   const val DATE = "Date"
+  const val TIMESTAMP = "Timestamp"
+  const val TIME = "Time"
+  const val BLOB = "Blob"
 }

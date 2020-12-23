@@ -1,0 +1,47 @@
+[
+  {
+    "typeName": "DebitNote",
+    "displayName": "Debit Note ",
+    "keys": {
+      "supplier": {
+        "type": "Supplier",
+        "displayName": "Supplier",
+        "order": 0
+      },
+      "date": {
+        "type": "Date",
+        "displayName": "Date ",
+        "order": 1
+      },
+      "purchaseOrder": {
+        "type": "PurchaseOrder",
+        "displayName": "PurchaseOrder",
+        "order": 3
+      },
+      "creditNote": {
+        "type": "CreditNote",
+        "displayName": "Credit Note",
+        "order": 4
+      },
+      "account": {
+        "type": "Text",
+        "displayName": "Account",
+        "order": 5
+      },
+      "paidAmount": {
+        "type": "Decimal",
+        "displayName": "Paid Amount",
+        "order": 6
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  }
+]

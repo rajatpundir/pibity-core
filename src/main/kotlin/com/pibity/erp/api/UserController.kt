@@ -12,9 +12,9 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
-import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.validateOrganizationClaim
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.UserService
@@ -49,7 +49,9 @@ class UserController(val userService: UserService) {
   @RolesAllowed(KeycloakConstants.ROLE_USER)
   fun createUser(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"] ?: JsonObject())
+      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"]
+          ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
       ResponseEntity(serialize(userService.createUser(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -92,7 +94,7 @@ class UserController(val userService: UserService) {
   fun getUserDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
       ResponseEntity(serialize(userService.getUserDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

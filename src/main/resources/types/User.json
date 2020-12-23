@@ -7,6 +7,26 @@
         "type": "Number",
         "order": 1,
         "default": 0
+      },
+      "country": {
+        "type": "Country",
+        "order": 2,
+        "default": "India"
+      },
+      "state": {
+        "type": "States",
+        "order": 3,
+        "default": "Uttar Pradesh"
+      },
+      "pinCode": {
+        "type": "PinCode",
+        "order": 4,
+        "default": "241001"
+      },
+      "address": {
+        "type": "Text",
+        "order": 5,
+        "default": ""
       }
     },
     "permissions": [],

@@ -1,0 +1,345 @@
+[
+  {
+    "functionName": "createAccountTransaction",
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "DEFAULT"
+      ],
+      "USER": [
+        "DEFAULT"
+      ]
+    },
+    "inputs": {
+      "voucher": {
+        "type": "Voucher"
+      },
+      "amount": "Decimal",
+      "date": "Timestamp",
+      "account": {
+        "type": "Account"
+      },
+      "invoice": {
+        "type": "PurchaseInvoice",
+        "values": {
+          "balanceDue": {
+            "op": "-",
+            "types": [
+              "Decimal"
+            ],
+            "args": [
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "invoice",
+                  "balanceDue"
+                ]
+              },
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "amount"
+                ]
+              }
+            ]
+          },
+          "paymentStatus": {
+            "op": "if",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              {
+                "op": "==",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  {
+                    "op": ".",
+                    "types": [
+                      "Decimal"
+                    ],
+                    "args": [
+                      "invoice",
+                      "balanceDue"
+                    ]
+                  },
+                  {
+                    "op": ".",
+                    "types": [
+                      "Decimal"
+                    ],
+                    "args": [
+                      "amount"
+                    ]
+                  }
+                ]
+              },
+              "Paid",
+              "Due"
+            ]
+          }
+        }
+      }
+    },
+    "outputs": {
+      "firstTransactionRecord": {
+        "type": "AccountTransaction",
+        "variableName": {
+          "op": "id",
+          "types": [
+            "Text"
+          ],
+          "args": [
+            ""
+          ]
+        },
+        "values": {
+          "voucherType": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "voucher"
+            ]
+          },
+          "date": {
+            "op": ".",
+            "types": [
+              "Timestamp"
+            ],
+            "args": [
+              "date"
+            ]
+          },
+          "account": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "account"
+            ]
+          },
+          "refAccount": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "invoice",
+              "account"
+            ]
+          },
+          "creditAmount": {
+            "op": "if",
+            "types": [
+              "Decimal"
+            ],
+            "args": [
+              {
+                "op": "==",
+                "types": [
+                  "Text"
+                ],
+                "args": [
+                  {
+                    "op": ".",
+                    "types": [
+                      "Text"
+                    ],
+                    "args": [
+                      "voucher",
+                      "amountType"
+                    ]
+                  },
+                  "Credit"
+                ]
+              },
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "amount"
+                ]
+              },
+              0
+            ]
+          },
+          "debitAmount": {
+            "op": "if",
+            "types": [
+              "Decimal"
+            ],
+            "args": [
+              {
+                "op": "==",
+                "types": [
+                  "Text"
+                ],
+                "args": [
+                  {
+                    "op": ".",
+                    "types": [
+                      "Text"
+                    ],
+                    "args": [
+                      "voucher",
+                      "amountType"
+                    ]
+                  },
+                  "Debit"
+                ]
+              },
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "amount"
+                ]
+              },
+              0
+            ]
+          }
+        }
+      },
+      "secondTransactionRecord": {
+        "type": "AccountTransaction",
+        "variableName": {
+          "op": "id",
+          "types": [
+            "Text"
+          ],
+          "args": [
+            ""
+          ]
+        },
+        "values": {
+          "voucherType": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "voucher"
+            ]
+          },
+          "date": {
+            "op": ".",
+            "types": [
+              "Timestamp"
+            ],
+            "args": [
+              "date"
+            ]
+          },
+          "account": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "invoice",
+              "account"
+            ]
+          },
+          "refAccount": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "account"
+            ]
+          },
+          "debitAmount": {
+            "op": "if",
+            "types": [
+              "Decimal"
+            ],
+            "args": [
+              {
+                "op": "==",
+                "types": [
+                  "Text"
+                ],
+                "args": [
+                  {
+                    "op": ".",
+                    "types": [
+                      "Text"
+                    ],
+                    "args": [
+                      "voucher",
+                      "amountType"
+                    ]
+                  },
+                  "Credit"
+                ]
+              },
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "amount"
+                ]
+              },
+              0
+            ]
+          },
+          "creditAmount": {
+            "op": "if",
+            "types": [
+              "Decimal"
+            ],
+            "args": [
+              {
+                "op": "==",
+                "types": [
+                  "Text"
+                ],
+                "args": [
+                  {
+                    "op": ".",
+                    "types": [
+                      "Text"
+                    ],
+                    "args": [
+                      "voucher",
+                      "amountType"
+                    ]
+                  },
+                  "Debit"
+                ]
+              },
+              {
+                "op": ".",
+                "types": [
+                  "Decimal"
+                ],
+                "args": [
+                  "amount"
+                ]
+              },
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+]

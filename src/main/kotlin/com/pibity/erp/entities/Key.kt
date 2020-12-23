@@ -15,6 +15,8 @@ import com.pibity.erp.entities.function.FunctionOutputKey
 import com.pibity.erp.entities.permission.KeyPermission
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
+import java.math.BigDecimal
+import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 import javax.persistence.*
@@ -59,11 +61,24 @@ data class Key(
     @Column(name = "value_long")
     var defaultLongValue: Long? = null,
 
-    @Column(name = "value_double")
-    var defaultDoubleValue: Double? = null,
+    @Column(name = "value_decimal")
+    var defaultDecimalValue: BigDecimal? = null,
 
     @Column(name = "value_boolean")
     var defaultBooleanValue: Boolean? = null,
+
+    @Column(name = "value_date")
+    var defaultDateValue: Date? = null,
+
+    @Column(name = "value_time")
+    var defaultTimeValue: Time? = null,
+
+    @Column(name = "value_timestamp")
+    var defaultTimestampValue: Timestamp? = null,
+
+    @Lob
+    @Column(name = "value_blob")
+    var defaultBlobValue: ByteArray? = null,
 
     @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])

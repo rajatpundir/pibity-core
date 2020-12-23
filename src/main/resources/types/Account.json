@@ -1,0 +1,196 @@
+[
+  {
+    "typeName": "AccountStatus",
+    "displayName": "Account Status ",
+    "keys": {},
+    "variables": {
+      "Active": {},
+      "Archived": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "AccountCategory",
+    "displayName": "Account Category ",
+    "keys": {},
+    "variables": {
+      "ASSET": {},
+      "EQUITY": {},
+      "LIABILITY": {},
+      "EXPENSE": {},
+      "REVENUE": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "AccountType",
+    "displayName": "Account Type",
+    "keys": {
+      "category": {
+        "type": "AccountCategory",
+        "order": 0
+      }
+    },
+    "variables": {
+      "Creditor": {
+        "category": "LIABILITY"
+      },
+      "Debtor": {
+        "category": "ASSET"
+      },
+      "Bank Account": {
+        "category": "ASSET"
+      },
+      "Current Assets": {
+        "category": "ASSET"
+      },
+      "Fixed Assets": {
+        "category": "ASSET"
+      },
+      "Inventory": {
+        "category": "ASSET"
+      },
+      "Non-Current Assets": {
+        "category": "ASSET"
+      },
+      "Prepayment": {
+        "category": "ASSET"
+      },
+      "Equity": {
+        "category": "EQUITY"
+      },
+      "Depreciation": {
+        "category": "EXPENSE"
+      },
+      "Direct Cost": {
+        "category": "EXPENSE"
+      },
+      "Expense": {
+        "category": "EXPENSE"
+      },
+      "Overhead": {
+        "category": "EXPENSE"
+      },
+      "Superannuation Expense Account": {
+        "category": "EXPENSE"
+      },
+      "Wages Expense Account": {
+        "category": "EXPENSE"
+      },
+      "Current Liability": {
+        "category": "LIABILITY"
+      },
+      "Liability": {
+        "category": "LIABILITY"
+      },
+      "PAYG Liability Account": {
+        "category": "LIABILITY"
+      },
+      "Superannuation Liability Account": {
+        "category": "LIABILITY"
+      },
+      "Non-Current Liability": {
+        "category": "LIABILITY"
+      },
+      "Wages Payable Liability Account": {
+        "category": "LIABILITY"
+      },
+      "Other Income": {
+        "category": "REVENUE"
+      },
+      "Revenue": {
+        "category": "REVENUE"
+      },
+      "Sale": {
+        "category": "REVENUE"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "Account",
+    "displayName": "Account",
+    "autoId": true,
+    "keys": {
+      "name": {
+        "type": "Text",
+        "order": 0
+      },
+      "accountType": {
+        "type": "AccountType",
+        "order": 1
+      },
+      "balance": {
+        "type": "Decimal",
+        "order": 2
+      },
+      "openingBalance": {
+        "type": "Decimal",
+        "order": 3
+      },
+      "code": {
+        "type": "Text",
+        "order": 4
+      },
+      "accountCategory": {
+        "type": "AccountCategory",
+        "order": 5
+      },
+      "description": {
+        "type": "Text",
+        "default": "",
+        "order": 6
+      },
+      "status": {
+        "type": "AccountStatus",
+        "default": "Active",
+        "order": 7
+      }
+    },
+    "variables": {
+      "Inventory": {
+        "name": "Inventory",
+        "code":"1000",
+        "status": "Active",
+        "balance": 200000,
+        "openingBalance": 200000,
+        "accountType": "Inventory",
+        "accountCategory": "ASSET",
+        "description": "Account For Inventory Purchase"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  }
+]

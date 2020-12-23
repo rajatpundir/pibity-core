@@ -18,6 +18,10 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Value
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.permission.TypePermission
+import java.sql.Timestamp
+import java.text.SimpleDateFormat
+
+val dateFormat = SimpleDateFormat("yyyy-MM-dd")
 
 data class Quadruple<T1, T2, T3, T4>(val t1: T1, val t2: T2, val t3: T3, val t4: T4)
 
@@ -86,10 +90,17 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
             ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
         TypeConstants.NUMBER -> expectedValues.addProperty(key.name, key.defaultLongValue
             ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
-        TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDoubleValue
+        TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDecimalValue
             ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
         TypeConstants.BOOLEAN -> expectedValues.addProperty(key.name, key.defaultBooleanValue
             ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.DATE -> expectedValues.addProperty(key.name, key.defaultDateValue?.toString()
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.TIMESTAMP -> expectedValues.addProperty(key.name, key.defaultTimestampValue?.time
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.TIME -> expectedValues.addProperty(key.name, key.defaultTimeValue?.time
+            ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+        TypeConstants.BLOB -> throw CustomJsonException("{${key.name}: 'Key value is not provided'}")
         TypeConstants.LIST -> expectedValues.add(key.name, JsonArray())
         TypeConstants.FORMULA -> {
         }
@@ -114,17 +125,24 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
         }
       }
     } else {
-      if (key.type.name in listOf(TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN) && keyPermission.accessLevel != PermissionConstants.WRITE_ACCESS) {
+      if (key.type.name in listOf(TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME) && keyPermission.accessLevel != PermissionConstants.WRITE_ACCESS) {
         // Default value is used as Write permission is not present
         when (key.type.name) {
           TypeConstants.TEXT -> expectedValues.addProperty(key.name, key.defaultStringValue
               ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
           TypeConstants.NUMBER -> expectedValues.addProperty(key.name, key.defaultLongValue
               ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
-          TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDoubleValue
+          TypeConstants.DECIMAL -> expectedValues.addProperty(key.name, key.defaultDecimalValue
               ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
           TypeConstants.BOOLEAN -> expectedValues.addProperty(key.name, key.defaultBooleanValue
               ?: throw CustomJsonException("{${key.name}: 'Key default value is not defined'}"))
+          TypeConstants.DATE -> expectedValues.addProperty(key.name, key.defaultDateValue?.toString()
+              ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+          TypeConstants.TIMESTAMP -> expectedValues.addProperty(key.name, key.defaultTimestampValue?.time
+              ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+          TypeConstants.TIME -> expectedValues.addProperty(key.name, key.defaultTimeValue?.time
+              ?: throw CustomJsonException("{${key.name}: 'Key value is not provided'}"))
+          TypeConstants.BLOB -> throw CustomJsonException("{${key.name}: 'Key value is not provided'}")
         }
       } else {
         if (values.get(key.name).isJsonObject) {
@@ -133,6 +151,10 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
             TypeConstants.NUMBER,
             TypeConstants.DECIMAL,
             TypeConstants.BOOLEAN,
+            TypeConstants.DATE,
+            TypeConstants.TIMESTAMP,
+            TypeConstants.TIME,
+            TypeConstants.BLOB,
             TypeConstants.LIST -> throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             TypeConstants.FORMULA -> {
             }
@@ -185,12 +207,32 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission): 
               throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.DECIMAL -> try {
-              expectedValues.addProperty(key.name, values.get(key.name).asDouble)
+              expectedValues.addProperty(key.name, values.get(key.name).asBigDecimal)
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
             TypeConstants.BOOLEAN -> try {
               expectedValues.addProperty(key.name, values.get(key.name).asBoolean)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+            TypeConstants.DATE -> try {
+              expectedValues.addProperty(key.name, java.sql.Date(dateFormat.parse(values.get(key.name).asString).time).toString())
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+            TypeConstants.TIMESTAMP -> try {
+              expectedValues.addProperty(key.name, Timestamp(values.get(key.name).asLong).time)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+            TypeConstants.TIME -> try {
+              expectedValues.addProperty(key.name, java.sql.Time(values.get(key.name).asLong).time)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+            TypeConstants.BLOB -> try {
+              expectedValues.addProperty(key.name, values.get(key.name).asByte)
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
@@ -301,7 +343,7 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
         TypeConstants.DECIMAL -> {
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
-              expectedValues.addProperty(key.name, values.get(key.name).asDouble)
+              expectedValues.addProperty(key.name, values.get(key.name).asBigDecimal)
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
@@ -311,6 +353,42 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
           if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
             try {
               expectedValues.addProperty(key.name, values.get(key.name).asBoolean)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+          }
+        }
+        TypeConstants.DATE -> {
+          if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
+            try {
+              expectedValues.addProperty(key.name, values.get(key.name).asString)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+          }
+        }
+        TypeConstants.TIME -> {
+          if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
+            try {
+              expectedValues.addProperty(key.name, values.get(key.name).asLong)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+          }
+        }
+        TypeConstants.TIMESTAMP -> {
+          if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
+            try {
+              expectedValues.addProperty(key.name, values.get(key.name).asLong)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
+            }
+          }
+        }
+        TypeConstants.BLOB -> {
+          if (keyPermission.accessLevel == PermissionConstants.WRITE_ACCESS) {
+            try {
+              expectedValues.addProperty(key.name, values.get(key.name).asByte)
             } catch (exception: Exception) {
               throw CustomJsonException("{${key.name}: 'Unexpected value for parameter'}")
             }
@@ -595,7 +673,7 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix:
         if (symbolPaths.contains(prefix + value.key.name)) {
           symbols.add(value.key.name, JsonObject().apply {
             addProperty("type", value.key.type.name)
-            addProperty("value", value.doubleValue!!)
+            addProperty("value", value.decimalValue!!)
           })
           symbolPaths.remove(prefix + value.key.name)
         }
@@ -609,7 +687,34 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix:
           symbolPaths.remove(prefix + value.key.name)
         }
       }
-      TypeConstants.LIST -> {
+      TypeConstants.DATE -> {
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.dateValue.toString())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+        }
+      }
+      TypeConstants.TIME -> {
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.timeValue.toString().toLong())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+        }
+      }
+      TypeConstants.TIMESTAMP -> {
+        if (symbolPaths.contains(prefix + value.key.name)) {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.timestampValue.toString().toLong())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+        }
+      }
+      TypeConstants.LIST, TypeConstants.BLOB -> {
       }
       TypeConstants.FORMULA -> {
         if ((!symbolsForFormula || level != 0) && symbolPaths.contains(prefix + value.key.name)) {
@@ -625,7 +730,7 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, prefix:
             })
             TypeConstants.DECIMAL -> symbols.add(value.key.name, JsonObject().apply {
               addProperty("type", value.key.formula!!.returnType.name)
-              addProperty("value", value.doubleValue!!)
+              addProperty("value", value.decimalValue!!)
             })
             TypeConstants.BOOLEAN -> symbols.add(value.key.name, JsonObject().apply {
               addProperty("type", value.key.formula!!.returnType.name)
@@ -699,7 +804,7 @@ fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: Mutabl
         TypeConstants.DECIMAL -> {
           symbols.add(value.key.name, JsonObject().apply {
             addProperty("type", value.key.type.name)
-            addProperty("value", value.doubleValue!!)
+            addProperty("value", value.decimalValue!!)
           })
           symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
@@ -712,7 +817,31 @@ fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: Mutabl
           symbolPaths.remove(prefix + value.key.name)
           valueDependencies.add(value)
         }
-        TypeConstants.LIST -> {
+        TypeConstants.DATE -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.dateValue.toString())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+          valueDependencies.add(value)
+        }
+        TypeConstants.TIME -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.timeValue.toString().toLong())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+          valueDependencies.add(value)
+        }
+        TypeConstants.TIMESTAMP -> {
+          symbols.add(value.key.name, JsonObject().apply {
+            addProperty("type", value.key.type.name)
+            addProperty("value", value.timestampValue.toString().toLong())
+          })
+          symbolPaths.remove(prefix + value.key.name)
+          valueDependencies.add(value)
+        }
+        TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         TypeConstants.FORMULA -> if (!symbolsForFormula || level != 0) {
           symbols.add(value.key.name, JsonObject().apply { addProperty("type", value.key.formula!!.returnType.name) })
@@ -727,7 +856,7 @@ fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: Mutabl
             })
             TypeConstants.DECIMAL -> symbols.add(value.key.name, JsonObject().apply {
               addProperty("type", value.key.formula!!.returnType.name)
-              addProperty("value", value.doubleValue!!)
+              addProperty("value", value.decimalValue!!)
             })
             TypeConstants.BOOLEAN -> symbols.add(value.key.name, JsonObject().apply {
               addProperty("type", value.key.formula!!.returnType.name)

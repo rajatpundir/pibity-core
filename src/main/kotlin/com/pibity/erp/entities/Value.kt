@@ -9,6 +9,9 @@
 package com.pibity.erp.entities
 
 import java.io.Serializable
+import java.math.BigDecimal
+import java.sql.Date
+import java.sql.Time
 import java.sql.Timestamp
 import javax.persistence.*
 
@@ -39,11 +42,24 @@ data class Value(
     @Column(name = "value_long")
     var longValue: Long? = null,
 
-    @Column(name = "value_double")
-    var doubleValue: Double? = null,
+    @Column(name = "value_decimal")
+    var decimalValue: BigDecimal? = null,
 
     @Column(name = "value_boolean")
     var booleanValue: Boolean? = null,
+
+    @Column(name = "value_date")
+    var dateValue: Date? = null,
+
+    @Column(name = "value_time")
+    var timeValue: Time? = null,
+
+    @Column(name = "value_timestamp")
+    var timestampValue: Timestamp? = null,
+
+    @Lob
+    @Column(name = "value_blob")
+    var blobValue: ByteArray? = null,
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])

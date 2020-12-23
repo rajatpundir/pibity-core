@@ -20,6 +20,8 @@ import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.function.FunctionInput
 import com.pibity.erp.entities.function.FunctionInputType
 import com.pibity.erp.entities.function.FunctionOutputType
+import java.math.BigDecimal
+import java.sql.Timestamp
 
 fun validateFunctionName(functionName: String): String {
   if (!keyIdentifierPattern.matcher(functionName).matches())
@@ -43,14 +45,14 @@ fun getValueSymbolPaths(values: JsonObject, type: Type, paramsAreInputs: Boolean
         }
       }
       when (key.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN,  TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> {
           try {
             symbolPaths.addAll(validateOrEvaluateExpression(jsonParams = keyExpression.deepCopy().apply { addProperty("expectedReturnType", key.type.name) }, mode = "collect", symbols = JsonObject()) as Set<String>)
           } catch (exception: CustomJsonException) {
             throw CustomJsonException("{${key.name}: ${exception.message}}")
           }
         }
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           if (key.type.superTypeName == GLOBAL_TYPE) {
@@ -367,7 +369,7 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
               throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
             }
             TypeConstants.DECIMAL -> try {
-              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asDouble)
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asBigDecimal)
             } catch (exception: Exception) {
               throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
             }
@@ -376,7 +378,22 @@ fun validateInputsOrOutputs(jsonParams: JsonObject, globalTypes: Set<Type>, symb
             } catch (exception: Exception) {
               throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
             }
-            TypeConstants.FORMULA, TypeConstants.LIST -> {
+            TypeConstants.DATE -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, java.sql.Date(dateFormat.parse(keyJson.get(KeyConstants.DEFAULT).asString).time).toString())
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.TIMESTAMP -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, Timestamp(keyJson.get(KeyConstants.DEFAULT).asLong).time)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.TIME -> try {
+              expectedKeyJson.addProperty(KeyConstants.DEFAULT, java.sql.Time(keyJson.get(KeyConstants.DEFAULT).asLong).time)
+            } catch (exception: Exception) {
+              throw CustomJsonException("{${keyName}: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}")
+            }
+            TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
             }
             else -> try {
               expectedKeyJson.addProperty(KeyConstants.DEFAULT, keyJson.get(KeyConstants.DEFAULT).asString)
@@ -496,10 +513,10 @@ fun getInputSymbols(inputs: JsonObject, globalTypes: Set<Type>, symbolPaths: Set
       else
         inputType.asString
       when (typeName) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> {
           symbols.add(inputName, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, typeName) })
         }
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           val subSymbols: JsonObject = getInputTypeSymbols(type = globalTypes.single { it.name == typeName }, symbolPaths = symbolPaths, prefix = "$inputName.")
@@ -520,11 +537,11 @@ fun getInputTypeSymbols(type: Type, symbolPaths: Set<String>, prefix: String): J
   for (key in type.keys) {
     if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
       when (key.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME ->
           symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.type.name) })
         TypeConstants.FORMULA ->
           symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.formula!!.returnType.name) })
-        TypeConstants.LIST -> {
+        TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           if (key.type.superTypeName == GLOBAL_TYPE) {
@@ -616,7 +633,7 @@ fun getInputKeyDependencies(inputs: JsonObject, globalTypes: Set<Type>, symbolPa
   return keyDependencies
 }
 
-fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInput>): JsonObject {
+fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInput>, defaultTimestamp: Timestamp): JsonObject {
   val expectedJson = JsonObject()
   for (input in inputs) {
     when (input.type.name) {
@@ -631,7 +648,7 @@ fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInput>): JsonObje
         throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
       }
       TypeConstants.DECIMAL -> try {
-        expectedJson.addProperty(input.name, if (args.has(input.name)) args.get(input.name).asDouble else input.defaultDoubleValue!!)
+        expectedJson.addProperty(input.name, if (args.has(input.name)) args.get(input.name).asBigDecimal else input.defaultDecimalValue!!)
       } catch (exception: Exception) {
         throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
       }
@@ -640,7 +657,28 @@ fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInput>): JsonObje
       } catch (exception: Exception) {
         throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
       }
-      TypeConstants.LIST, TypeConstants.FORMULA -> {
+      TypeConstants.DATE -> try {
+        expectedJson.addProperty(input.name, if (args.has(input.name)) java.sql.Date(dateFormat.parse(args.get(input.name).asString).time).toString()
+        else if (input.defaultDateValue != null) input.defaultDateValue!!.toString()
+        else java.sql.Date(defaultTimestamp.time).toString())
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.TIMESTAMP -> try {
+        expectedJson.addProperty(input.name, if (args.has(input.name)) Timestamp(args.get(input.name).asLong).time
+        else if (input.defaultTimestampValue != null) input.defaultTimestampValue!!.time
+        else defaultTimestamp.time)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.TIME -> try {
+        expectedJson.addProperty(input.name, if (args.has(input.name)) java.sql.Time(args.get(input.name).asLong).time
+        else if (input.defaultTimeValue != null) input.defaultTimeValue!!.time
+        else java.sql.Time(defaultTimestamp.time).time)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
+      }
+      TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
       }
       else -> try {
         expectedJson.addProperty(input.name, if (args.has(input.name)) args.get(input.name).asString else input.referencedVariable!!.name)
@@ -667,7 +705,7 @@ fun getSymbolsForFunctionArgs(symbolPaths: Set<String>, variable: Variable, pref
         })
         TypeConstants.DECIMAL -> expectedSymbols.add(value.key.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, value.key.type.name)
-          addProperty(KeyConstants.VALUE, value.doubleValue!!)
+          addProperty(KeyConstants.VALUE, value.decimalValue!!)
         })
         TypeConstants.BOOLEAN -> expectedSymbols.add(value.key.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, value.key.type.name)
@@ -684,7 +722,7 @@ fun getSymbolsForFunctionArgs(symbolPaths: Set<String>, variable: Variable, pref
           })
           TypeConstants.DECIMAL -> expectedSymbols.add(value.key.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, value.key.formula!!.returnType.name)
-            addProperty(KeyConstants.VALUE, value.doubleValue!!)
+            addProperty(KeyConstants.VALUE, value.decimalValue!!)
           })
           TypeConstants.BOOLEAN -> expectedSymbols.add(value.key.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, value.key.formula!!.returnType.name)
@@ -746,11 +784,20 @@ fun getFunctionOutputTypeJson(functionOutputType: FunctionOutputType, symbols: J
       }, mode = "evaluate", symbols = symbols) as Long)
       TypeConstants.DECIMAL -> expectedJson.addProperty(key.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.name)
-      }, mode = "evaluate", symbols = symbols) as Double)
+      }, mode = "evaluate", symbols = symbols) as BigDecimal)
       TypeConstants.BOOLEAN -> expectedJson.addProperty(key.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.name)
       }, mode = "evaluate", symbols = symbols) as Boolean)
-      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      TypeConstants.DATE -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as java.sql.Date).toString())
+      TypeConstants.TIMESTAMP -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as Timestamp).time)
+      TypeConstants.TIME -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionOutputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as java.sql.Time).time)
+      TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
       }
       else -> {
         if (key.type.superTypeName == GLOBAL_TYPE) {
@@ -793,11 +840,20 @@ fun getFunctionInputTypeJson(functionInputType: FunctionInputType, symbols: Json
       }, mode = "evaluate", symbols = symbols) as Long)
       TypeConstants.DECIMAL -> expectedJson.addProperty(key.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.name)
-      }, mode = "evaluate", symbols = symbols) as Double)
+      }, mode = "evaluate", symbols = symbols) as BigDecimal)
       TypeConstants.BOOLEAN -> expectedJson.addProperty(key.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
         addProperty("expectedReturnType", key.type.name)
       }, mode = "evaluate", symbols = symbols) as Boolean)
-      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      TypeConstants.DATE -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as java.sql.Date).toString())
+      TypeConstants.TIMESTAMP -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as Timestamp).time)
+      TypeConstants.TIME -> expectedJson.addProperty(key.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(functionInputKey.expression!!, JsonObject::class.java).apply {
+        addProperty("expectedReturnType", key.type.name)
+      }, mode = "evaluate", symbols = symbols) as java.sql.Time).time)
+      TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
       }
       else -> {
         if (key.type.superTypeName == GLOBAL_TYPE) {

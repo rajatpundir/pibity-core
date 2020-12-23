@@ -20,7 +20,7 @@ fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
   for (key in type.keys) {
     if (jsonParams.has(key.name)) {
       when (key.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIME, TypeConstants.TIMESTAMP, TypeConstants.BLOB -> {
           val accessLevel: Int = try {
             jsonParams.get(key.name).asInt
           } catch (exception: Exception) {

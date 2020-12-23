@@ -13,11 +13,21 @@
                 {
                   "column": {
                     "name": "id",
-                    "type": "NVARCHAR(255)",
+                    "type": "BIGINT",
                     "constraints": {
                       "primaryKey": "true",
                       "nullable": false,
                       "primaryKeyName": "inventory_organization_pk"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "VARCHAR",
+                    "constraints": {
+                      "nullable": false
+
                     }
                   }
                 },
@@ -29,8 +39,8 @@
                 },
                 {
                   "column": {
-                    "name": "display_name",
-                    "type": "NVARCHAR(255)",
+                    "name": "version",
+                    "type": "TIMESTAMP",
                     "constraints": {
                       "nullable": false
                     }
@@ -40,6 +50,43 @@
             }
           }
         ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_organization_2",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "name",
+              "constraintName": "inventory_organization_uk_1",
+              "deferrable": true,
+              "disabled": false,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "organization",
+              "validate": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory-organization_3",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_organization_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "organization",
+          "baseColumnNames": "super_list_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "variable_list",
+          "referencedColumnNames": "id"
+        }
       }
     }
   ]

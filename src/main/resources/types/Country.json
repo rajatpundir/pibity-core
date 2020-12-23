@@ -1,253 +1,1203 @@
 [
   {
-    "typeName": "Country",
-    "displayName": "Country",
-    "keys": {},
+    "typeName": "Timezone",
+    "displayName": "Time Zone",
+    "keys": {
+      "offset": {
+        "type": "Number",
+        "order": "1"
+      }
+    },
     "variables": {
-      "Afghanistan": {},
-      "Albania": {},
-      "Algeria": {},
-      "American Samoa": {},
-      "Andorra": {},
-      "Angola": {},
-      "Anguilla": {},
-      "Antarctica": {},
-      "Antigua and Barbuda": {},
-      "Argentina": {},
-      "Armenia": {},
-      "Aruba": {},
-      "Australia": {},
-      "Austria": {},
-      "Azerbaijan": {},
-      "Bahamas": {},
-      "Bahrain": {},
-      "Bangladesh": {},
-      "Barbados": {},
-      "Belarus": {},
-      "Belgium": {},
-      "Belize": {},
-      "Benin": {},
-      "Bermuda": {},
-      "Bhutan": {},
-      "Bolivia": {},
-      "Bosnia and Herzegovina": {},
-      "Botswana": {},
-      "Brazil": {},
-      "British Indian Ocean Territory": {},
-      "British Virgin Islands": {},
-      "Brunei Darussalam": {},
-      "Bulgaria": {},
-      "Burkina Faso": {},
-      "Burma (Myanmar)": {},
-      "Burundi": {},
-      "Cambodia": {},
-      "Cameroon": {},
-      "Canada": {},
-      "Cape Verde": {},
-      "Cayman Islands": {},
-      "Central African Republic": {},
-      "Chad": {},
-      "Chile": {},
-      "China": {},
-      "Christmas Island": {},
-      "Cocos (Keeling) Islands": {},
-      "Colombia": {},
-      "Comoros": {},
-      "Cook Islands": {},
-      "Costa Rica": {},
-      "Croatia": {},
-      "Cuba": {},
-      "Curaçao": {},
-      "Cyprus": {},
-      "Czech Republic": {},
-      "Democratic Republic of the Congo": {},
-      "Denmark": {},
-      "Djibouti": {},
-      "Dominica": {},
-      "Dominican Republic": {},
-      "Ecuador": {},
-      "Egypt": {},
-      "El Salvador": {},
-      "Equatorial Guinea": {},
-      "Eritrea": {},
-      "Estonia": {},
-      "Ethiopia": {},
-      "Falkland Islands": {},
-      "Faroe Islands": {},
-      "Fiji": {},
-      "Finland": {},
-      "France": {},
-      "French Guiana": {},
-      "French Polynesia": {},
-      "French Southern Territories": {},
-      "Gabon": {},
-      "Gambia": {},
-      "Georgia": {},
-      "Germany": {},
-      "Ghana": {},
-      "Gibraltar": {},
-      "Greece": {},
-      "Greenland": {},
-      "Grenada": {},
-      "Guam": {},
-      "Guatemala": {},
-      "Guernsey": {},
-      "Guinea": {},
-      "Guinea-Bissau": {},
-      "Guyana": {},
-      "Haiti": {},
-      "Holy See (Vatican City)": {},
-      "Honduras": {},
-      "Hong Kong": {},
-      "Hungary": {},
-      "Iceland": {},
-      "India": {},
-      "Indonesia": {},
-      "Iran": {},
-      "Iraq": {},
-      "Ireland": {},
-      "Isle of Man": {},
-      "Israel": {},
-      "Italy": {},
-      "Ivory Coast": {},
-      "Jamaica": {},
-      "Japan": {},
-      "Jersey": {},
-      "Jordan": {},
-      "Kazakhstan": {},
-      "Kenya": {},
-      "Kiribati": {},
-      "Kuwait": {},
-      "Kyrgyzstan": {},
-      "Laos": {},
-      "Latvia": {},
-      "Lebanon": {},
-      "Lesotho": {},
-      "Liberia": {},
-      "Libya": {},
-      "Liechtenstein": {},
-      "Lithuania": {},
-      "Luxembourg": {},
-      "Macau": {},
-      "Macedonia": {},
-      "Madagascar": {},
-      "Malawi": {},
-      "Malaysia": {},
-      "Maldives": {},
-      "Mali": {},
-      "Malta": {},
-      "Marshall Islands": {},
-      "Mauritania": {},
-      "Mauritius": {},
-      "Mayotte": {},
-      "Mexico": {},
-      "Micronesia": {},
-      "Moldova": {},
-      "Monaco": {},
-      "Mongolia": {},
-      "Montenegro": {},
-      "Montserrat": {},
-      "Morocco": {},
-      "Mozambique": {},
-      "Namibia": {},
-      "Nauru": {},
-      "Nepal": {},
-      "Netherlands": {},
-      "Netherlands Antilles": {},
-      "New Caledonia": {},
-      "New Zealand": {},
-      "Nicaragua": {},
-      "Niger": {},
-      "Nigeria": {},
-      "Niue": {},
-      "Norfolk Island": {},
-      "North Korea": {},
-      "Northern Mariana Islands": {},
-      "Norway": {},
-      "Oman": {},
-      "Pakistan": {},
-      "Palau": {},
-      "Panama": {},
-      "Papua New Guinea": {},
-      "Paraguay": {},
-      "Peru": {},
-      "Philippines": {},
-      "Pitcairn Islands": {},
-      "Poland": {},
-      "Portugal": {},
-      "Puerto Rico": {},
-      "Qatar": {},
-      "Republic of the Congo": {},
-      "Romania": {},
-      "Russia": {},
-      "Rwanda": {},
-      "Saint Barthelemy": {},
-      "Saint Helena": {},
-      "Saint Kitts and Nevis": {},
-      "Saint Lucia": {},
-      "Saint Martin": {},
-      "Saint Pierre and Miquelon": {},
-      "Saint Vincent and the Grenadines": {},
-      "Samoa": {},
-      "San Marino": {},
-      "Sao Tome and Principe": {},
-      "Saudi Arabia": {},
-      "Senegal": {},
-      "Serbia": {},
-      "Seychelles": {},
-      "Sierra Leone": {},
-      "Singapore": {},
-      "Slovakia": {},
-      "Slovenia": {},
-      "Solomon Islands": {},
-      "Somalia": {},
-      "South Africa": {},
-      "South Korea": {},
-      "South Sudan": {},
-      "Spain": {},
-      "Sri Lanka": {},
-      "Sudan": {},
-      "Suriname": {},
-      "Svalbard": {},
-      "Swaziland": {},
-      "Sweden": {},
-      "Switzerland": {},
-      "Syria": {},
-      "Taiwan": {},
-      "Tajikistan": {},
-      "Tanzania": {},
-      "Thailand": {},
-      "Timor-Leste": {},
-      "Togo": {},
-      "Tokelau": {},
-      "Tonga": {},
-      "Trinidad and Tobago": {},
-      "Tunisia": {},
-      "Turkey": {},
-      "Turkmenistan": {},
-      "Turks and Caicos Islands": {},
-      "Tuvalu": {},
-      "Uganda": {},
-      "Ukraine": {},
-      "United Arab Emirates": {},
-      "United Kingdom": {},
-      "United States": {},
-      "Uruguay": {},
-      "US Virgin Islands": {},
-      "Uzbekistan": {},
-      "Vanuatu": {},
-      "Venezuela": {},
-      "Vietnam": {},
-      "Wallis and Futuna": {},
-      "Western Sahara": {},
-      "Yemen": {},
-      "Zambia": {},
-      "Zimbabwe": {}
+      "UTC +14:00": {
+        "offset": 50400000
+      },
+      "UTC +13:45": {
+        "offset": 49500000
+      },
+      "UTC +13:00": {
+        "offset": 49800000
+      },
+      "UTC +12:45": {
+        "offset": 45900000
+      },
+      "UTC +12:00": {
+        "offset": 43200000
+      },
+      "UTC +11:00": {
+        "offset": 39600000
+      },
+      "UTC +10:30": {
+        "offset": 37800000
+      },
+      "UTC +10:00": {
+        "offset": 36000000
+      },
+      "UTC +09:30": {
+        "offset": 34200000
+      },
+      "UTC +09:00": {
+        "offset": 32400000
+      },
+      "UTC +08:45": {
+        "offset": 31500000
+      },
+      "UTC +08:00": {
+        "offset": 28800000
+      },
+      "UTC +07:00": {
+        "offset": 25200000
+      },
+      "UTC +06:30": {
+        "offset": 23400000
+      },
+      "UTC +06:00": {
+        "offset": 21600000
+      },
+      "UTC +05:45": {
+        "offset": 20700000
+      },
+      "UTC +05:30": {
+        "offset": 19800000
+      },
+      "UTC +05:00": {
+        "offset": 18000000
+      },
+      "UTC +04:30": {
+        "offset": 16200000
+      },
+      "UTC +04:00": {
+        "offset": 14400000
+      },
+      "UTC +03:30": {
+        "offset": 12600000
+      },
+      "UTC +03:00": {
+        "offset": 10800000
+      },
+      "UTC +02:00": {
+        "offset": 7200000
+      },
+      "UTC +01:00": {
+        "offset": 3600000
+      },
+      "UTC ±00:00": {
+        "offset": 0
+      },
+      "UTC -01:00": {
+        "offset": -3600000
+      },
+      "UTC -02:00": {
+        "offset": -7200000
+      },
+      "UTC -03:00": {
+        "offset": -10800000
+      },
+      "UTC -03:30": {
+        "offset": -12600000
+      },
+      "UTC -04:00": {
+        "offset": -14400000
+      },
+      "UTC -05:00": {
+        "offset": -18000000
+      },
+      "UTC -06:00": {
+        "offset": -21600000
+      },
+      "UTC -07:00": {
+        "offset": -25200000
+      },
+      "UTC -08:00": {
+        "offset": -28800000
+      },
+      "UTC -09:00": {
+        "offset": 32400000
+      },
+      "UTC -09:30": {
+        "offset": -34200000
+      },
+      "UTC -10:00": {
+        "offset": -36000000
+      },
+      "UTC -11:00": {
+        "offset": -39600000
+      },
+      "UTC -12:00": {
+        "offset": -43200000
+      }
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "Country",
+    "displayName": "Country",
+    "keys": {
+      "timezone": {
+        "type": "Timezone",
+        "order": 1
+      }
+    },
+    "variables": {
+      "Afghanistan": {
+        "timezone": "UTC +04:30"
+      },
+      "Aland Islands (Finland)": {
+        "timezone": "UTC +02:00"
+      },
+      "Albania": {
+        "timezone": "UTC +01:00"
+      },
+      "Algeria": {
+        "timezone": "UTC +01:00"
+      },
+      "American Samoa (USA)": {
+        "timezone": "UTC -11:00"
+      },
+      "Andorra": {
+        "timezone": "UTC +01:00"
+      },
+      "Angola": {
+        "timezone": "UTC +01:00"
+      },
+      "Anguilla (UK)": {
+        "timezone": "UTC -04:00"
+      },
+      "Antigua and Barbuda": {
+        "timezone": "UTC -04:00"
+      },
+      "Argentina": {
+        "timezone": "UTC -03:00"
+      },
+      "Armenia": {
+        "timezone": "UTC +04:00"
+      },
+      "Aruba (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Ascension Island (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Australia, Western Australia (WA)": {
+        "timezone": "UTC +08:00"
+      },
+      "Australia, South Australia (SA)": {
+        "timezone": "UTC +09:30"
+      },
+      "Australia, Northern Territory (NT)": {
+        "timezone": "UTC +09:30"
+      },
+      "Australia, New South Wales (NSW), Tasmania (TAS), Victoria (VIC), Australian Capital Territory (ACT) with Canberra capital city": {
+        "timezone": "UTC +10:00"
+      },
+      "Australia, Queensland (QLD)": {
+        "timezone": "UTC +10:00"
+      },
+      "Australia, Lord Howe Island (New South Wales)": {
+        "timezone": "UTC +10:30"
+      },
+      "Australia, Macquarie Island (Tasmania)": {
+        "timezone": "UTC +11:00"
+      },
+      "Austria": {
+        "timezone": "UTC +01:00"
+      },
+      "Azerbaijan": {
+        "timezone": "UTC +04:00"
+      },
+      "Bahamas": {
+        "timezone": "UTC -05:00"
+      },
+      "Bahrain": {
+        "timezone": "UTC +03:00"
+      },
+      "Bangladesh": {
+        "timezone": "UTC +06:00"
+      },
+      "Barbados": {
+        "timezone": "UTC -04:00"
+      },
+      "Belarus": {
+        "timezone": "UTC +03:00"
+      },
+      "Belgium": {
+        "timezone": "UTC +01:00"
+      },
+      "Belize": {
+        "timezone": "UTC -06:00"
+      },
+      "Benin": {
+        "timezone": "UTC +01:00"
+      },
+      "Bermuda (UK)": {
+        "timezone": "UTC -04:00"
+      },
+      "Bhutan": {
+        "timezone": "UTC +06:00"
+      },
+      "Bolivia": {
+        "timezone": "UTC -04:00"
+      },
+      "Bonaire (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Bosnia and Herzegovina": {
+        "timezone": "UTC +01:00"
+      },
+      "Botswana": {
+        "timezone": "UTC +02:00"
+      },
+      "Brazil, Acre, Southwest Amazonas": {
+        "timezone": "UTC -05:00"
+      },
+      "Brazil, Most of Amazonas, Rondonia, Roraima": {
+        "timezone": "UTC -04:00"
+      },
+      "Brazil, Mato Grosso do Sul, Mato Grosso": {
+        "timezone": "UTC -04:00"
+      },
+      "Brazil, Alagoas, Amapa, Maranhao, Para, Piaui, Ceara, Sergipe, Paraiba, Pernambuco, Rio Grande do Norte, Bahia, Tocantins": {
+        "timezone": "UTC -03:00"
+      },
+      "Brazil, Distrito Federal, Espirito Santo, Goias, Minas Gerais, Parana, Rio de Janeiro, Rio Grande do Sul, Santa Catarina, Sao Paulo": {
+        "timezone": "UTC -03:00"
+      },
+      "Brazil, small islands in Atlantic (Fernando de Noronha, Trindade)": {
+        "timezone": "UTC -02:00"
+      },
+      "British Indian Ocean Territory (UK)": {
+        "timezone": "UTC +06:00"
+      },
+      "British Virgin Islands (UK)": {
+        "timezone": "UTC -04:00"
+      },
+      "Brunei": {
+        "timezone": "UTC +08:00"
+      },
+      "Bulgaria": {
+        "timezone": "UTC +02:00"
+      },
+      "Burkina Faso": {
+        "timezone": "UTC ±00:00"
+      },
+      "Burundi": {
+        "timezone": "UTC +02:00"
+      },
+      "Cabo Verde": {
+        "timezone": "UTC -01:00"
+      },
+      "Cambodia": {
+        "timezone": "UTC +07:00"
+      },
+      "Cameroon": {
+        "timezone": "UTC +01:00"
+      },
+      "Caribbean Netherlands (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Cayman Islands (UK)": {
+        "timezone": "UTC -05:00"
+      },
+      "Central African Republic": {
+        "timezone": "UTC +01:00"
+      },
+      "Chad": {
+        "timezone": "UTC +01:00"
+      },
+      "Chatham Islands (New Zealand)": {
+        "timezone": "UTC +12:45"
+      },
+      "Chile, main territory": {
+        "timezone": "UTC -04:00"
+      },
+      "Chile, Magallanes Region": {
+        "timezone": "UTC -03:00"
+      },
+      "Chile, Easter Island": {
+        "timezone": "UTC -06:00"
+      },
+      "China": {
+        "timezone": "UTC +08:00"
+      },
+      "Christmas Island (Australia)": {
+        "timezone": "UTC +07:00"
+      },
+      "Cocos (Keeling) Islands (Australia)": {
+        "timezone": "UTC +06:30"
+      },
+      "Colombia": {
+        "timezone": "UTC -05:00"
+      },
+      "Comoros": {
+        "timezone": "UTC +03:00"
+      },
+      "Congo, Republic of the": {
+        "timezone": "UTC +01:00"
+      },
+      "Congo, Dem. Rep., western part": {
+        "timezone": "UTC +01:00"
+      },
+      "Congo, Dem. Rep., eastern part": {
+        "timezone": "UTC +02:00"
+      },
+      "Cook Islands (New Zealand)": {
+        "timezone": "UTC -10:00"
+      },
+      "Costa Rica": {
+        "timezone": "UTC -06:00"
+      },
+      "Cote d'Ivoire": {
+        "timezone": "UTC ±00:00"
+      },
+      "Croatia": {
+        "timezone": "UTC +01:00"
+      },
+      "Cuba": {
+        "timezone": "UTC -05:00"
+      },
+      "Curacao (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Cyprus": {
+        "timezone": "UTC +02:00"
+      },
+      "Czechia": {
+        "timezone": "UTC +01:00"
+      },
+      "Denmark": {
+        "timezone": "UTC +01:00"
+      },
+      "Djibouti": {
+        "timezone": "UTC +03:00"
+      },
+      "Dominica": {
+        "timezone": "UTC -04:00"
+      },
+      "Dominican Republic": {
+        "timezone": "UTC -04:00"
+      },
+      "Ecuador, main territory": {
+        "timezone": "UTC -05:00"
+      },
+      "Ecuador, Galapagos Province": {
+        "timezone": "UTC -06:00"
+      },
+      "Egypt": {
+        "timezone": "UTC +02:00"
+      },
+      "El Salvador": {
+        "timezone": "UTC -06:00"
+      },
+      "Equatorial Guinea": {
+        "timezone": "UTC +01:00"
+      },
+      "Eritrea": {
+        "timezone": "UTC +03:00"
+      },
+      "Estonia": {
+        "timezone": "UTC +02:00"
+      },
+      "Eswatini (formerly Swaziland)": {
+        "timezone": "UTC +02:00"
+      },
+      "Ethiopia": {
+        "timezone": "UTC +03:00"
+      },
+      "Falkland Islands (UK)": {
+        "timezone": "UTC -03:00"
+      },
+      "Faroe Islands (Denmark)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Fiji": {
+        "timezone": "UTC +12:00"
+      },
+      "Finland": {
+        "timezone": "UTC +02:00"
+      },
+      "France": {
+        "timezone": "UTC +01:00"
+      },
+      "French Guiana (France)": {
+        "timezone": "UTC -03:00"
+      },
+      "French Polynesia, Tahiti Island (France)": {
+        "timezone": "UTC -10:00"
+      },
+      "French Polynesia, Marquesas Islands (France)": {
+        "timezone": "UTC -09:30"
+      },
+      "French Polynesia, Gambier Islands (France)": {
+        "timezone": "UTC -09:00"
+      },
+      "Gabon": {
+        "timezone": "UTC +01:00"
+      },
+      "Gambia": {
+        "timezone": "UTC ±00:00"
+      },
+      "Georgia": {
+        "timezone": "UTC +04:00"
+      },
+      "Germany": {
+        "timezone": "UTC +01:00"
+      },
+      "Ghana": {
+        "timezone": "UTC ±00:00"
+      },
+      "Gibraltar (UK)": {
+        "timezone": "UTC +01:00"
+      },
+      "Greece": {
+        "timezone": "UTC +02:00"
+      },
+      "Greenland (Denmark), most of": {
+        "timezone": "UTC -03:00"
+      },
+      "Greenland (Denmark), Thule Air Base": {
+        "timezone": "UTC -04:00"
+      },
+      "Greenland (Denmark), Ittoqqortoormiit": {
+        "timezone": "UTC -01:00"
+      },
+      "Grenada": {
+        "timezone": "UTC -04:00"
+      },
+      "Guadeloupe (France)": {
+        "timezone": "UTC -04:00"
+      },
+      "Guam (USA)": {
+        "timezone": "UTC +10:00"
+      },
+      "Guatemala": {
+        "timezone": "UTC -06:00"
+      },
+      "Guernsey (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Guinea": {
+        "timezone": "UTC ±00:00"
+      },
+      "Guinea-Bissau": {
+        "timezone": "UTC ±00:00"
+      },
+      "Guyana": {
+        "timezone": "UTC -04:00"
+      },
+      "Haiti": {
+        "timezone": "UTC -05:00"
+      },
+      "Honduras": {
+        "timezone": "UTC -06:00"
+      },
+      "Hong Kong (China)": {
+        "timezone": "UTC +08:00"
+      },
+      "Hungary": {
+        "timezone": "UTC +01:00"
+      },
+      "Iceland": {
+        "timezone": "UTC ±00:00"
+      },
+      "India": {
+        "timezone": "UTC +05:30"
+      },
+      "Indonesia, Sumatra Island, Java Island, West Kalimantan, Central Kalimantan ": {
+        "timezone": "UTC +07:00"
+      },
+      "Indonesia, Sulawesi Island, Lesser Sunda Islands, North Kalimantan, East Kalimantan, South Kalimantan": {
+        "timezone": "UTC +08:00"
+      },
+      "Indonesia, Maluku Islands, Papua, West Papua": {
+        "timezone": "UTC +09:00"
+      },
+      "Iran": {
+        "timezone": "UTC +03:30"
+      },
+      "Iraq": {
+        "timezone": "UTC +03:00"
+      },
+      "Ireland": {
+        "timezone": "UTC ±00:00"
+      },
+      "Isle of Man (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Israel": {
+        "timezone": "UTC +02:00"
+      },
+      "Italy": {
+        "timezone": "UTC +01:00"
+      },
+      "Jamaica": {
+        "timezone": "UTC -05:00"
+      },
+      "Japan": {
+        "timezone": "UTC +09:00"
+      },
+      "Jersey (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Jordan": {
+        "timezone": "UTC +02:00"
+      },
+      "Kazakhstan, western part": {
+        "timezone": "UTC +05:00"
+      },
+      "Kazakhstan, eastern part": {
+        "timezone": "UTC +06:00"
+      },
+      "Kenya": {
+        "timezone": "UTC +03:00"
+      },
+      "Kerguelen Islands (France)": {
+        "timezone": "UTC +05:00"
+      },
+      "Kiribati, Gilbert Islands": {
+        "timezone": "UTC +12:00"
+      },
+      "Kiribati, Phoenix Islands": {
+        "timezone": "UTC +13:00"
+      },
+      "Kiribati, Line Islands": {
+        "timezone": "UTC +14:00"
+      },
+      "Kosovo": {
+        "timezone": "UTC +01:00"
+      },
+      "Kuwait": {
+        "timezone": "UTC +03:00"
+      },
+      "Kyrgyzstan": {
+        "timezone": "UTC +06:00"
+      },
+      "Laos": {
+        "timezone": "UTC +07:00"
+      },
+      "Latvia": {
+        "timezone": "UTC +02:00"
+      },
+      "Lebanon": {
+        "timezone": "UTC +02:00"
+      },
+      "Lesotho": {
+        "timezone": "UTC +02:00"
+      },
+      "Liberia": {
+        "timezone": "UTC ±00:00"
+      },
+      "Libya": {
+        "timezone": "UTC +02:00"
+      },
+      "Liechtenstein": {
+        "timezone": "UTC +01:00"
+      },
+      "Lithuania": {
+        "timezone": "UTC +02:00"
+      },
+      "Luxembourg": {
+        "timezone": "UTC +01:00"
+      },
+      "Macau (China)": {
+        "timezone": "UTC +08:00"
+      },
+      "Madagascar": {
+        "timezone": "UTC +03:00"
+      },
+      "Malawi": {
+        "timezone": "UTC +02:00"
+      },
+      "Malaysia": {
+        "timezone": "UTC +08:00"
+      },
+      "Maldives": {
+        "timezone": "UTC +05:00"
+      },
+      "Mali": {
+        "timezone": "UTC ±00:00"
+      },
+      "Malta": {
+        "timezone": "UTC +01:00"
+      },
+      "Marshall Islands": {
+        "timezone": "UTC +12:00"
+      },
+      "Martinique (France)": {
+        "timezone": "UTC -04:00"
+      },
+      "Mauritania": {
+        "timezone": "UTC ±00:00"
+      },
+      "Mauritius": {
+        "timezone": "UTC +04:00"
+      },
+      "Mayotte (France)": {
+        "timezone": "UTC +03:00"
+      },
+      "Mexico, most of": {
+        "timezone": "UTC -06:00"
+      },
+      "Mexico, state of Quintana Roo": {
+        "timezone": "UTC -05:00"
+      },
+      "Mexico, states of Baja California Sur, Chihuahua, Nayarit, Sinaloa": {
+        "timezone": "UTC -07:00"
+      },
+      "Mexico, state of Sonora": {
+        "timezone": "UTC -07:00"
+      },
+      "Mexico, state of Baja California": {
+        "timezone": "UTC -08:00"
+      },
+      "Micronesia, states of Chuuk and Yap": {
+        "timezone": "UTC +10:00"
+      },
+      "Micronesia, states of Kosrae and Pohnpei": {
+        "timezone": "UTC +11:00"
+      },
+      "Moldova": {
+        "timezone": "UTC +02:00"
+      },
+      "Monaco": {
+        "timezone": "UTC +01:00"
+      },
+      "Mongolia, most of": {
+        "timezone": "UTC +08:00"
+      },
+      "Mongolia, provinces of Khovd, Uvs, Bayan-Olgii": {
+        "timezone": "UTC +07:00"
+      },
+      "Montenegro": {
+        "timezone": "UTC +01:00"
+      },
+      "Montserrat (UK)": {
+        "timezone": "UTC -04:00"
+      },
+      "Morocco": {
+        "timezone": "UTC +01:00"
+      },
+      "Mozambique": {
+        "timezone": "UTC +02:00"
+      },
+      "Myanmar (formerly Burma)": {
+        "timezone": "UTC +06:30"
+      },
+      "Namibia": {
+        "timezone": "UTC +02:00"
+      },
+      "Nauru": {
+        "timezone": "UTC +12:00"
+      },
+      "Nepal": {
+        "timezone": "UTC +05:45"
+      },
+      "Netherlands": {
+        "timezone": "UTC +01:00"
+      },
+      "New Caledonia (France)": {
+        "timezone": "UTC +11:00"
+      },
+      "New Zealand": {
+        "timezone": "UTC +12:00"
+      },
+      "Nicaragua": {
+        "timezone": "UTC -06:00"
+      },
+      "Niger": {
+        "timezone": "UTC +01:00"
+      },
+      "Nigeria": {
+        "timezone": "UTC +01:00"
+      },
+      "Niue (New Zealand)": {
+        "timezone": "UTC -11:00"
+      },
+      "Norfolk Island (Australia)": {
+        "timezone": "UTC +11:00"
+      },
+      "Northern Mariana Islands (USA)": {
+        "timezone": "UTC +10:00"
+      },
+      "North Korea": {
+        "timezone": "UTC +09:00"
+      },
+      "North Macedonia (formerly Macedonia)": {
+        "timezone": "UTC +01:00"
+      },
+      "Norway": {
+        "timezone": "UTC +01:00"
+      },
+      "Oman": {
+        "timezone": "UTC +04:00"
+      },
+      "Pakistan": {
+        "timezone": "UTC +05:00"
+      },
+      "Palau": {
+        "timezone": "UTC +09:00"
+      },
+      "Palestine": {
+        "timezone": "UTC +02:00"
+      },
+      "Panama": {
+        "timezone": "UTC -05:00"
+      },
+      "Papua New Guinea, most of": {
+        "timezone": "UTC +10:00"
+      },
+      "Papua New Guinea, Bougainville Island": {
+        "timezone": "UTC +11:00"
+      },
+      "Paraguay": {
+        "timezone": "UTC -04:00"
+      },
+      "Peru": {
+        "timezone": "UTC -05:00"
+      },
+      "Philippines": {
+        "timezone": "UTC +08:00"
+      },
+      "Pitcairn Islands (UK)": {
+        "timezone": "UTC -08:00"
+      },
+      "Poland": {
+        "timezone": "UTC +01:00"
+      },
+      "Portugal, main territory": {
+        "timezone": "UTC ±00:00"
+      },
+      "Portugal, Azores": {
+        "timezone": "UTC -01:00"
+      },
+      "Puerto Rico (USA)": {
+        "timezone": "UTC -04:00"
+      },
+      "Qatar": {
+        "timezone": "UTC +03:00"
+      },
+      "Reunion (France)": {
+        "timezone": "UTC +04:00"
+      },
+      "Romania": {
+        "timezone": "UTC +02:00"
+      },
+      "Saba (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Saint Barthelemy (France)": {
+        "timezone": "UTC -04:00"
+      },
+      "Saint Helena (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Saint Kitts and Nevis": {
+        "timezone": "UTC -04:00"
+      },
+      "Saint Lucia": {
+        "timezone": "UTC -04:00"
+      },
+      "Saint Martin (France)": {
+        "timezone": "UTC -04:00"
+      },
+      "Saint Pierre and Miquelon (France)": {
+        "timezone": "UTC -03:00"
+      },
+      "Saint Vincent and the Grenadines": {
+        "timezone": "UTC -04:00"
+      },
+      "Samoa": {
+        "timezone": "UTC +13:00"
+      },
+      "San Marino": {
+        "timezone": "UTC +01:00"
+      },
+      "Sao Tome and Principe": {
+        "timezone": "UTC ±00:00"
+      },
+      "Saudi Arabia": {
+        "timezone": "UTC +03:00"
+      },
+      "Senegal": {
+        "timezone": "UTC ±00:00"
+      },
+      "Serbia": {
+        "timezone": "UTC +01:00"
+      },
+      "Seychelles": {
+        "timezone": "UTC +04:00"
+      },
+      "Sierra Leone": {
+        "timezone": "UTC ±00:00"
+      },
+      "Singapore": {
+        "timezone": "UTC +08:00"
+      },
+      "Sint Eustatius (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Sint Maarten (Netherlands)": {
+        "timezone": "UTC -04:00"
+      },
+      "Slovakia": {
+        "timezone": "UTC +01:00"
+      },
+      "Slovenia": {
+        "timezone": "UTC +01:00"
+      },
+      "Solomon Islands": {
+        "timezone": "UTC +11:00"
+      },
+      "Somalia": {
+        "timezone": "UTC +03:00"
+      },
+      "South Africa": {
+        "timezone": "UTC +02:00"
+      },
+      "South Georgia Island (UK)": {
+        "timezone": "UTC -02:00"
+      },
+      "South Korea": {
+        "timezone": "UTC +09:00"
+      },
+      "South Sudan": {
+        "timezone": "UTC +03:00"
+      },
+      "Spain, main territory": {
+        "timezone": "UTC +01:00"
+      },
+      "Spain, Canary Islands": {
+        "timezone": "UTC ±00:00"
+      },
+      "Sri Lanka": {
+        "timezone": "UTC +05:30"
+      },
+      "Sudan": {
+        "timezone": "UTC +02:00"
+      },
+      "Suriname": {
+        "timezone": "UTC -03:00"
+      },
+      "Svalbard and Jan Mayen (Norway)": {
+        "timezone": "UTC +01:00"
+      },
+      "Sweden": {
+        "timezone": "UTC +01:00"
+      },
+      "Switzerland": {
+        "timezone": "UTC +01:00"
+      },
+      "Syria": {
+        "timezone": "UTC +02:00"
+      },
+      "Taiwan": {
+        "timezone": "UTC +08:00"
+      },
+      "Tajikistan": {
+        "timezone": "UTC +05:00"
+      },
+      "Tanzania": {
+        "timezone": "UTC +03:00"
+      },
+      "Thailand": {
+        "timezone": "UTC +07:00"
+      },
+      "Timor-Leste": {
+        "timezone": "UTC +09:00"
+      },
+      "Togo": {
+        "timezone": "UTC ±00:00"
+      },
+      "Tokelau (New Zealand)": {
+        "timezone": "UTC +13:00"
+      },
+      "Tonga": {
+        "timezone": "UTC +13:00"
+      },
+      "Trinidad and Tobago": {
+        "timezone": "UTC -04:00"
+      },
+      "Tristan da Cunha (UK)": {
+        "timezone": "UTC ±00:00"
+      },
+      "Tunisia": {
+        "timezone": "UTC +01:00"
+      },
+      "Turkey": {
+        "timezone": "UTC +03:00"
+      },
+      "Turkmenistan": {
+        "timezone": "UTC +05:00"
+      },
+      "Turks and Caicos Islands (UK)": {
+        "timezone": "UTC -04:00"
+      },
+      "Tuvalu": {
+        "timezone": "UTC +12:00"
+      },
+      "Uganda": {
+        "timezone": "UTC +03:00"
+      },
+      "Ukraine": {
+        "timezone": "UTC +02:00"
+      },
+      "United Arab Emirates": {
+        "timezone": "UTC +04:00"
+      },
+      "United Kingdom": {
+        "timezone": "UTC ±00:00"
+      },
+      "US Virgin Islands (USA)": {
+        "timezone": "UTC -04:00"
+      },
+      "Uzbekistan": {
+        "timezone": "UTC +05:00"
+      },
+      "Vanuatu": {
+        "timezone": "UTC +11:00"
+      },
+      "Vatican City (Holy See)": {
+        "timezone": "UTC +01:00"
+      },
+      "Venezuela": {
+        "timezone": "UTC -04:00"
+      },
+      "Vietnam": {
+        "timezone": "UTC +07:00"
+      },
+      "Wake Island (USA)": {
+        "timezone": "UTC +12:00"
+      },
+      "Wallis and Futuna (France)": {
+        "timezone": "UTC +12:00"
+      },
+      "Yemen": {
+        "timezone": "UTC +03:00"
+      },
+      "Zambia": {
+        "timezone": "UTC +02:00"
+      },
+      "Zimbabwe": {
+        "timezone": "UTC +02:00"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "States",
+    "displayName": "Province",
+    "keys": {
+      "country": {
+        "type": "Country",
+        "order": 1
+      }
+    },
+    "variables": {
+      "Andhra Pradesh": {
+        "country": "India"
+      },
+      "Arunachal Pradesh": {
+        "country": "India"
+      },
+      "Assam": {
+        "country": "India"
+      },
+      "Bihar": {
+        "country": "India"
+      },
+      "Chhattisgarh": {
+        "country": "India"
+      },
+      "Goa": {
+        "country": "India"
+      },
+      "Gujarat": {
+        "country": "India"
+      },
+      "Haryana": {
+        "country": "India"
+      },
+      "Himachal Pradesh": {
+        "country": "India"
+      },
+      "Jharkhand": {
+        "country": "India"
+      },
+      "Karnataka": {
+        "country": "India"
+      },
+      "Kerala": {
+        "country": "India"
+      },
+      "Madhya Pradesh": {
+        "country": "India"
+      },
+      "Maharashtra": {
+        "country": "India"
+      },
+      "Manipur": {
+        "country": "India"
+      },
+      "Meghalaya": {
+        "country": "India"
+      },
+      "Mizoram": {
+        "country": "India"
+      },
+      "Nagaland": {
+        "country": "India"
+      },
+      "Odisha": {
+        "country": "India"
+      },
+      "Punjab": {
+        "country": "India"
+      },
+      "Rajasthan": {
+        "country": "India"
+      },
+      "Sikkim": {
+        "country": "India"
+      },
+      "Tamil Nadu": {
+        "country": "India"
+      },
+      "Telangana": {
+        "country": "India"
+      },
+      "Tripura": {
+        "country": "India"
+      },
+      "Uttar Pradesh": {
+        "country": "India"
+      },
+      "Uttarakhand": {
+        "country": "India"
+      },
+      "West Bengal": {
+        "country": "India"
+      },
+      "Andaman and Nicobar Islands": {
+        "country": "India"
+      },
+      "Chandigarh": {
+        "country": "India"
+      },
+      "Dadra Nagar Haveli and Daman Diu": {
+        "country": "India"
+      },
+      "Delhi": {
+        "country": "India"
+      },
+      "Jammu and Kashmir": {
+        "country": "India"
+      },
+      "Ladakh": {
+        "country": "India"
+      },
+      "Lakshadweep": {
+        "country": "India"
+      },
+      "Puducherry": {
+        "country": "India"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "Area",
+    "displayName": "Area",
+    "keys": {
+      "state": {
+        "type": "States",
+        "order": 1
+      },
+      "parentArea": {
+        "type": "List",
+        "listType": "Area",
+        "min": 0,
+        "max": 0,
+        "order": 2
+      }
+    },
+    "variables": {
+      "Hardoi": {
+        "state": "Uttar Pradesh",
+        "parentArea": []
+      },
+      "Sandi": {
+        "state": "Uttar Pradesh",
+        "parentArea": ["Hardoi"]
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "PinCode",
+    "displayName": "PinCode",
+    "keys": {
+      "state": {
+        "type": "States",
+        "order": 1
+      },
+      "area": {
+        "type": "List",
+        "listType": "Area",
+        "min": 0,
+        "max": 0,
+        "order": 2
+      }
+    },
+    "variables": {
+      "241001": {
+        "state": "Uttar Pradesh",
+        "area": ["Hardoi"]
+      },
+      "241003": {
+        "state": "Uttar Pradesh",
+        "area": ["Sandi"]
+      }
+
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   }
 ]

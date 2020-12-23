@@ -1,6 +1,6 @@
 [
   {
-    "typeName": "CreditNote",
+    "typeName": "CreditNoteNew",
     "displayName": "Credit Note",
     "keys": {
       "description": {
@@ -29,7 +29,7 @@
         "order": "4"
       },
       "taxRule": {
-        "type": "SalesTaxRule",
+        "type": "TaxRule",
         "displayName": "Tax Rule",
         "order": "5"
       },
@@ -100,7 +100,7 @@
         "order": "8"
       },
       "taxRule": {
-        "type": "SalesTaxRule",
+        "type": "TaxRule",
         "displayName": "Tax Rule",
         "order": "9"
       },
@@ -120,7 +120,7 @@
         "order": "12"
       },
       "creditNote": {
-        "type": "CreditNote",
+        "type": "CreditNoteNew",
         "displayName": "Credit Note",
         "order": "13"
       }

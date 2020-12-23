@@ -1,6 +1,8 @@
 [
-  "User",
   "Country",
+  "User",
+  "Account",
+  "Transaction",
   "Currency",
   "Customer",
   "Supplier",
@@ -8,5 +10,6 @@
   "PurchaseOrder",
   "SaleCreditNote",
   "PurchaseCreditNote",
+  "PurchaseDebitNote",
   "Machine"
 ]

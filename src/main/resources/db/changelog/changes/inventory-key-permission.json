@@ -3,13 +3,22 @@
     {
       "changeSet": {
         "id": "inventory_key_permission_1",
-        "author": "shubham.gupta",
+        "author": "shivam.sharma",
         "changes": [
           {
             "createTable": {
               "schemaName": "inventory",
               "tableName": "key_permission",
               "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
                 {
                   "column": {
                     "name": "access_level",
@@ -21,8 +30,8 @@
                 },
                 {
                   "column": {
-                    "name": "organization_id",
-                    "type": "NVARCHAR(255)",
+                    "name": "version",
+                    "type": "TIMESTAMP",
                     "constraints": {
                       "nullable": false
                     }
@@ -30,89 +39,20 @@
                 },
                 {
                   "column": {
-                    "name": "permission_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
+                    "name": "key_id",
+                    "type": "BIGINT"
                   }
                 },
                 {
                   "column": {
-                    "name": "type_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
+                    "name": "referenced_type_permission_id",
+                    "type": "BIGINT"
                   }
                 },
                 {
                   "column": {
-                    "name": "super_type_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_type_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_organization_id",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_super_type_name",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_type_permission_permission_name",
-                    "type": "NVARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_type_permission_type_name",
-                    "type": "NVARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_type_permission_organization_id",
-                    "type": "NVARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_type_permission_super_type_name",
-                    "type": "NVARCHAR(255)"
+                    "name": "type_permission_id",
+                    "type": "BIGINT"
                   }
                 }
               ]
@@ -124,63 +64,84 @@
     {
       "changeSet": {
         "id": "inventory_key_permission_2",
-        "author": "shubham.gupta",
+        "author": "shivam.sharma",
         "addPrimaryKey": {
           "constraintName": "inventory_key_permission_pk",
           "schemaName": "inventory",
           "tableName": "key_permission",
-          "columnNames": "key_name, key_type_name, key_organization_id, key_super_type_name, permission_name, type_name, organization_id, super_type_name"
+          "columnNames": "id"
         }
       }
     },
     {
       "changeSet": {
+        "id": "inventory_key_permission_2",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "type_permission_id,key_id",
+              "constraintName": "Inventory_key_permission_uk_1",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "key_permission",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
         "id": "inventory_key_permission_3",
-        "author": "shubham.gupta",
+        "author": "shivam.sharma",
         "addForeignKeyConstraint": {
           "constraintName": "inventory_key_permission_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_permission",
-          "baseColumnNames": "referenced_type_permission_permission_name, referenced_type_permission_type_name, referenced_type_permission_organization_id, referenced_type_permission_super_type_name",
+          "baseColumnNames": "key_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "type_permission",
-          "referencedColumnNames": "permission_name, type_name, organization_id, super_type_name"
+          "referencedColumnNames": "keys"
         }
       }
     },
     {
       "changeSet": {
         "id": "inventory_key_permission_4",
-        "author": "shubham.gupta",
+        "author": "shivam.sharma",
         "addForeignKeyConstraint": {
           "constraintName": "inventory_key_permission_fk_2",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_permission",
-          "baseColumnNames": "key_name, key_type_name, key_organization_id, key_super_type_name",
+          "baseColumnNames": "type_permission_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "key_names",
-          "referencedColumnNames": "key_name, parent_type_name, parent_type_organization_id, parent_super_type_name"
+          "referencedTableName": "key_permission",
+          "referencedColumnNames": "type_permission"
         }
       }
     },
     {
       "changeSet": {
         "id": "inventory_key_permission_5",
-        "author": "shubham.gupta",
+        "author": "shivam.sharma",
         "addForeignKeyConstraint": {
           "constraintName": "inventory_key_permission_fk_3",
           "baseTableSchemaName": "inventory",
           "baseTableName": "key_permission",
-          "baseColumnNames": "permission_name, type_name, organization_id, super_type_name",
+          "baseColumnNames": "referenced_type_permission_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "type_permission",
-          "referencedColumnNames": "permission_name, type_name, organization_id, super_type_name"
+          "referencedTableName": "key_permission",
+          "referencedColumnNames": "type_permission"
         }
       }
     }

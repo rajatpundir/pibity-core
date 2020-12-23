@@ -1,0 +1,148 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_function_output",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "function_input_output",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": true,
+                      "nullable": false,
+                      "primaryKeyName": "inventory_function_output_pk_1"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "variable",
+                    "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "function_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "function_output_type_id",
+                    "type": "BIGINT"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "changeSet": {
+              "id": "inventory_function_output_2",
+              "author": "shivam.sharma",
+              "changes": [
+                {
+                  "addUniqueConstraint": {
+                    "columnNames": "function_id,name",
+                    "constraintName": "Inventory_function_output_uk_1",
+                    "deferrable": true,
+                    "disabled": true,
+                    "initiallyDeferred": true,
+                    "schemaName": "inventory",
+                    "tableName": "function_output",
+                    "tablespace": "A String",
+                    "validate": true
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "changeSet": {
+              "id": "inventory_function_output_3",
+              "author": "shivam.sharma",
+              "addForeignKeyConstraint": {
+                "constraintName": "inventory_function_output_fk_1",
+                "baseTableSchemaName": "inventory",
+                "baseTableName": "function_output",
+                "baseColumnNames": "type_id",
+                "onDelete": "CASCADE",
+                "onUpdate": "RESTRICT",
+                "referencedTableSchemaName": "inventory",
+                "referencedTableName": "type",
+                "referencedColumnNames": "id"
+              }
+            }
+          },
+          {
+            "changeSet": {
+              "id": "inventory_function_output_4",
+              "author": "shivam.sharma",
+              "addForeignKeyConstraint": {
+                "constraintName": "inventory_function_output_fk_2",
+                "baseTableSchemaName": "inventory",
+                "baseTableName": "function_output",
+                "baseColumnNames": "function_output_type_id",
+                "onDelete": "CASCADE",
+                "onUpdate": "RESTRICT",
+                "referencedTableSchemaName": "inventory",
+                "referencedTableName": "function_output_type",
+                "referencedColumnNames": "id"
+              }
+            }
+          },
+          {
+            "changeSet": {
+              "id": "inventory_function_output_4",
+              "author": "shivam.sharma",
+              "addForeignKeyConstraint": {
+                "constraintName": "inventory_function_output_fk_3",
+                "baseTableSchemaName": "inventory",
+                "baseTableName": "function_output",
+                "baseColumnNames": "function_id",
+                "onDelete": "CASCADE",
+                "onUpdate": "RESTRICT",
+                "referencedTableSchemaName": "inventory",
+                "referencedTableName": "function",
+                "referencedColumnNames": "id"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

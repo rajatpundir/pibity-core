@@ -12,7 +12,7 @@
               "columns": [
                 {
                   "column": {
-                    "name": "variable_super_list_id",
+                    "name": "id",
                     "type": "BIGINT",
                     "constraints": {
                       "nullable": false
@@ -22,133 +22,67 @@
                 {
 
                   "column": {
-                    "name": "variable_name",
-                    "type": "NVARCHAR(511)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_organization_id",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_super_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_organization_id",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_super_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "key_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "string_value",
-                    "type": "NVARCHAR(1024)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "long_value",
-                    "type": "BIGINT"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "double_value",
-                    "type": "DOUBLE"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "boolean_value",
+                    "name": "value_boolean",
                     "type": "BOOLEAN"
                   }
                 },
                 {
                   "column": {
-                    "name": "referenced_variable_organization_id",
-                    "type": "NVARCHAR(255)"
+                    "name": "value_double",
+                    "type": "DOUBLE"
                   }
                 },
                 {
                   "column": {
-                    "name": "referenced_variable_super_type_name",
-                    "type": "VARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_variable_type_name",
-                    "type": "VARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "referenced_variable_super_list_id",
+                    "name": "value_long",
                     "type": "BIGINT"
                   }
                 },
                 {
                   "column": {
-                    "name": "referenced_variable_name",
-                    "type": "NVARCHAR(511)"
+                    "name": "value_string",
+                    "type": "VARCHAR(1024)"
                   }
                 },
                 {
                   "column": {
-                    "name": "list_variable_id",
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_variable_list_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_referenced_variable_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "parent_variable_id",
                     "type": "BIGINT"
                   }
                 }
@@ -166,25 +100,29 @@
           "constraintName": "inventory_value_pk",
           "schemaName": "inventory",
           "tableName": "value",
-          "columnNames": "key_name,key_type_name,key_organization_id,key_super_type_name,variable_name,variable_super_list_id,variable_type_name,variable_organization_id,variable_super_type_name"
+          "columnNames": "id"
         }
       }
     },
     {
       "changeSet": {
         "id": "inventory_value_3",
-        "author": "shubham.gupta",
-        "addForeignKeyConstraint": {
-          "constraintName": "inventory_value_fk_1",
-          "baseTableSchemaName": "inventory",
-          "baseTableName": "value",
-          "baseColumnNames": "key_organization_id, key_super_type_name, key_type_name, key_name",
-          "onDelete": "CASCADE",
-          "onUpdate": "RESTRICT",
-          "referencedTableSchemaName": "inventory",
-          "referencedTableName": "key_names",
-          "referencedColumnNames": "parent_type_organization_id, parent_super_type_name, parent_type_name, key_name,"
-        }
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "parent_variable_id, key_id",
+              "constraintName": "Inventory_value_uk_1",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "value",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
       }
     },
     {
@@ -192,15 +130,32 @@
         "id": "inventory_value_4",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
-          "constraintName": "inventory_value_fk_2",
+          "constraintName": "inventory_value_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "value",
-          "baseColumnNames": "variable_organization_id, variable_super_type_name, variable_type_name, variable_super_list_id, variable_name",
+          "baseColumnNames": "value_referenced_variable_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_list_id, variable_name"
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_value_5",
+        "author": "shubham.gupta",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_value_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "value",
+          "baseColumnNames": "value_variable_list_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "variable",
+          "referencedColumnNames": "id"
         }
       }
     },
@@ -212,11 +167,11 @@
           "constraintName": "inventory_value_fk_3",
           "baseTableSchemaName": "inventory",
           "baseTableName": "value",
-          "baseColumnNames": "list_variable_id",
+          "baseColumnNames": "key_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "variable_list",
+          "referencedTableName": "keys",
           "referencedColumnNames": "id"
         }
       }
@@ -229,12 +184,12 @@
           "constraintName": "inventory_value_fk_4",
           "baseTableSchemaName": "inventory",
           "baseTableName": "value",
-          "baseColumnNames": "referenced_variable_name,referenced_variable_super_list_id,referenced_variable_type_name,referenced_variable_organization_id,referenced_variable_super_type_name",
+          "baseColumnNames": "parent_variable_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "variable_name, super_list_id, type_name, organization_id, super_type_name"
+          "referencedColumnNames": "variable"
         }
       }
     }

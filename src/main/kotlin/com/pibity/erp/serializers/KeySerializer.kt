@@ -22,19 +22,35 @@ fun serialize(key: Key): JsonObject {
   when (key.type.name) {
     TypeConstants.TEXT -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultStringValue)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultStringValue!!)
     }
     TypeConstants.NUMBER -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultLongValue)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultLongValue!!)
     }
     TypeConstants.DECIMAL -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultDoubleValue)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultDecimalValue!!)
     }
     TypeConstants.BOOLEAN -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue!!)
+    }
+    TypeConstants.DATE -> {
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultTimeValue.toString())
+    }
+    TypeConstants.TIME -> {
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultTimestampValue.toString())
+    }
+    TypeConstants.TIMESTAMP -> {
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultDateValue.toString())
+    }
+    TypeConstants.BLOB -> {
+      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
+      json.addProperty(KeyConstants.DEFAULT, key.defaultBlobValue.toString())
     }
     TypeConstants.FORMULA -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)

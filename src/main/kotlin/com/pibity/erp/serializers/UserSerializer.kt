@@ -22,6 +22,7 @@ fun serialize(user: User): JsonObject {
   json.addProperty("email", user.email)
   json.addProperty("firstName", user.firstName)
   json.addProperty("lastName", user.lastName)
+  json.add("details", serialize(user.details!!))
   json.add("groups", serialize(user.userGroups))
   json.add("roles", serialize(user.userRoles))
   return json

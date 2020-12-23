@@ -102,26 +102,7 @@
       ]
     }
   },
-  {
-    "typeName": "PurchaseTaxRule",
-    "displayName": "Purchase Tax Rule",
-    "keys": {},
-    "variables": {
-      "Auto Lookup": {},
-      "Tax Exempt": {},
-      "Sales Tax on Imports": {},
-      "Tax on Purchase": {}
-    },
-    "permissions": [],
-    "roles": {
-      "ADMIN": [
-        "WRITE_ALL"
-      ],
-      "USER": [
-        "READ_ALL"
-      ]
-    }
-  },
+
   {
     "typeName": "ProductType",
     "displayName": "Product Type",
@@ -149,6 +130,23 @@
     "keys": {},
     "variables": {
       "Nike": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "ProductCategory",
+    "displayName": "ProductCategory",
+    "keys": {},
+    "variables": {
+      "Shirt": {}
     },
     "permissions": [],
     "roles": {
@@ -262,13 +260,13 @@
               "default": "No BOM"
             },
             "purchaseTaxRule": {
-              "type": "PurchaseTaxRule",
+              "type": "TaxRule",
               "displayName": "Purchase Tax Rule",
               "order": "5",
               "default": "Auto Lookup"
             },
             "salesTaxRule": {
-              "type": "SalesTaxRule",
+              "type": "TaxRule",
               "displayName": "Sales Tax Rule",
               "order": "6"
             },
@@ -356,14 +354,6 @@
         },
         "displayName": "General",
         "order": "0"
-      },
-      "productPrice": {
-        "type": "List",
-        "min": "0",
-        "max": "0",
-        "listType": "ProductPrice",
-        "displayName": "Product Price",
-        "order": "1"
       },
       "productStock": {
         "type": "List",

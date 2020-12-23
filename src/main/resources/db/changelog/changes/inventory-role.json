@@ -12,8 +12,8 @@
               "columns": [
                 {
                   "column": {
-                    "name": "organization_id",
-                    "type": "NVARCHAR(255)",
+                    "name": "id",
+                    "type": "BIGINT",
                     "constraints": {
                       "nullable": false
                     }
@@ -21,8 +21,26 @@
                 },
                 {
                   "column": {
-                    "name": "role_name",
+                    "name": "name",
                     "type": "VARCHAR(255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "organization_id",
+                    "type": "BIGINT",
                     "constraints": {
                       "nullable": false
                     }
@@ -42,8 +60,29 @@
           "constraintName": "inventory_role_pk",
           "schemaName": "inventory",
           "tableName": "role",
-          "columnNames": "role_name, organization_id"
+          "columnNames": "id"
         }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_role_3",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "type_organization_id",
+              "constraintName": "Inventory_organization_uk_1",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "organization",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
       }
     },
     {

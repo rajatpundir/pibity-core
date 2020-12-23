@@ -12,8 +12,8 @@
               "columns": [
                 {
                   "column": {
-                    "name": "organization_id",
-                    "type": "NVARCHAR(255)",
+                    "name": "id",
+                    "type": "BIGINT",
                     "constraints": {
                       "nullable": false
                     }
@@ -21,17 +21,8 @@
                 },
                 {
                   "column": {
-                    "name": "super_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "type_name",
-                    "type": "VARCHAR(255)",
+                    "name": "auto_assign_id",
+                    "type": "BOOLEAN",
                     "constraints": {
                       "nullable": false
                     }
@@ -43,28 +34,7 @@
                     "type": "INTEGER",
                     "constraints": {
                       "nullable": false
-                    },
-                    "defaultValue": 0
-                  }
-                },
-                {
-                  "column": {
-                    "name": "auto_assign_id",
-                    "type": "BOOLEAN",
-                    "constraints": {
-                      "nullable": false
-                    },
-                    "defaultValue": false
-                  }
-                },
-                {
-                  "column": {
-                    "name": "display_name",
-                    "type": "NVARCHAR(511)",
-                    "constraints": {
-                      "nullable": false
-                    },
-                    "defaultValue": ""
+                    }
                   }
                 },
                 {
@@ -73,18 +43,34 @@
                     "type": "INTEGER",
                     "constraints": {
                       "nullable": false
-                    },
-                    "defaultValue": 0
+                    }
                   }
                 },
                 {
                   "column": {
-                    "name": "primitive_type",
+                    "name": "has_assertions",
                     "type": "BOOLEAN",
                     "constraints": {
-                      "nullable": "false"
-                    },
-                    "defaultValue": false
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "has_assertion_dependency",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "is_formula_dependency",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 },
                 {
@@ -98,7 +84,52 @@
                 },
                 {
                   "column": {
+                    "name": "name",
+                    "type": "VARCHAR (255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "primitive_type",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "super_type_name",
+                    "type": "VARCHAR (255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
                     "name": "variable_count",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "organization_id",
                     "type": "BIGINT",
                     "constraints": {
                       "nullable": false
@@ -119,13 +150,32 @@
           "constraintName": "inventory_type_pk",
           "schemaName": "inventory",
           "tableName": "type",
-          "columnNames": "organization_id, super_type_name, type_name"
+          "columnNames": "id"
         }
       }
     },
     {
       "changeSet": {
         "id": "inventory_type_3",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "organization_id, super_type_name, name",
+              "constraintName": "Inventory_type_uk_1",
+              "deferrable": true,
+              "disabled": false,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "type"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_type_4",
         "author": "shubham.gupta",
         "addForeignKeyConstraint": {
           "constraintName": "inventory_type_fk_1",

@@ -15,6 +15,7 @@ import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
+import java.sql.Timestamp
 import java.util.regex.Pattern
 
 val typeIdentifierPattern: Pattern = Pattern.compile("^[A-Z][a-zA-Z0-9]*$")
@@ -91,9 +92,12 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             when (key.get(KeyConstants.KEY_TYPE).asJsonObject.get("typeName").asString) {
               TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
               TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
+              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBigDecimal)
               TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-              TypeConstants.LIST, TypeConstants.FORMULA -> {
+              TypeConstants.DATE  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Date(dateFormat.parse(key.get(KeyConstants.DEFAULT).asString).time).toString())
+              TypeConstants.TIMESTAMP  -> expectedKey.addProperty(KeyConstants.DEFAULT, Timestamp(key.get(KeyConstants.DEFAULT).asLong).time)
+              TypeConstants.TIME  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Time(key.get(KeyConstants.DEFAULT).asLong).time)
+              TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
               }
               else -> {
                 /* Referential keys with local types does not make sense to have defaults */
@@ -118,9 +122,12 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
             when (key.get(KeyConstants.KEY_TYPE).asString) {
               TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
               TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asDouble)
+              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBigDecimal)
               TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-              TypeConstants.LIST, TypeConstants.FORMULA -> {
+              TypeConstants.DATE  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Date(dateFormat.parse(key.get(KeyConstants.DEFAULT).asString).time).toString())
+              TypeConstants.TIMESTAMP  -> expectedKey.addProperty(KeyConstants.DEFAULT, Timestamp(key.get(KeyConstants.DEFAULT).asLong).time)
+              TypeConstants.TIME  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Time(key.get(KeyConstants.DEFAULT).asLong).time)
+              TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
               }
               else -> {
                 // Keys with reference to local types of some global variable does not make sense to have default value, at the time of writing this line.

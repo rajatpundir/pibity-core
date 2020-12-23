@@ -13,31 +13,12 @@
                 {
                   "column": {
                     "name": "id",
-                    "autoIncrement": "true",
                     "type": "BIGINT",
                     "constraints": {
                       "primaryKey": "true",
                       "nullable": false,
                       "primaryKeyName": "inventory_type_list_pk"
                     }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "organization_id",
-                    "type": "NVARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "super_type_name",
-                    "type": "VARCHAR(255)"
-                  }
-                },
-                {
-                  "column": {
-                    "name": "type_name",
-                    "type": "VARCHAR(255)"
                   }
                 },
                 {
@@ -57,6 +38,18 @@
                       "nullable": false
                     }
                   }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_id",
+                    "type": "BIGNIT"
+                  }
                 }
               ]
             }
@@ -72,12 +65,12 @@
           "constraintName": "inventory_type_list_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "type_list",
-          "baseColumnNames": "organization_id, super_type_name, type_name",
+          "baseColumnNames": "type_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "type",
-          "referencedColumnNames": "organization_id, super_type_name, type_name"
+          "referencedColumnNames": "id"
         }
       }
     }

@@ -13,7 +13,9 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
+import com.pibity.erp.commons.utils.dateFormat
 import com.pibity.erp.commons.utils.validateOrEvaluateExpression
+import java.sql.Timestamp
 import java.util.regex.Pattern
 
 val symbolIdentifierPattern: Pattern = Pattern.compile("^([a-z][a-zA-Z0-9]*)+(::([a-z][a-zA-Z0-9]*)+)?$")
@@ -47,15 +49,30 @@ fun validateSymbols(jsonParams: JsonObject): JsonObject {
           throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
         } else 0L)
         TypeConstants.DECIMAL -> expectedSymbol.addProperty(KeyConstants.VALUE, if (symbol.has(KeyConstants.VALUE)) try {
-          symbol.get(KeyConstants.VALUE).asDouble
+          symbol.get(KeyConstants.VALUE).asBigDecimal
         } catch (exception: Exception) {
           throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
-        } else 0.0)
+        } else null)
         TypeConstants.BOOLEAN -> expectedSymbol.addProperty(KeyConstants.VALUE, if (symbol.has(KeyConstants.VALUE)) try {
           symbol.get(KeyConstants.VALUE).asBoolean
         } catch (exception: Exception) {
           throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
         } else false)
+        TypeConstants.DATE -> expectedSymbol.addProperty(KeyConstants.VALUE, if (symbol.has(KeyConstants.VALUE)) try {
+          java.sql.Date(dateFormat.parse(symbol.get(KeyConstants.VALUE).asString).time).toString()
+        } catch (exception: Exception) {
+          throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
+        } else java.sql.Date(System.currentTimeMillis()).toString())
+        TypeConstants.TIMESTAMP -> expectedSymbol.addProperty(KeyConstants.VALUE, if (symbol.has(KeyConstants.VALUE)) try {
+          Timestamp(symbol.get(KeyConstants.VALUE).asLong).time
+        } catch (exception: Exception) {
+          throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
+        } else System.currentTimeMillis())
+        TypeConstants.TIME -> expectedSymbol.addProperty(KeyConstants.VALUE, if (symbol.has(KeyConstants.VALUE)) try {
+          java.sql.Time(symbol.get(KeyConstants.VALUE).asLong).time
+        } catch (exception: Exception) {
+          throw CustomJsonException("{$symbolName: {${KeyConstants.VALUE}: 'Unexpected value for parameter'}}")
+        } else java.sql.Time(System.currentTimeMillis()).time)
         else -> throw CustomJsonException("{$symbolName: {${KeyConstants.KEY_TYPE}: 'Unexpected value for parameter'}}")
       }
     }
@@ -148,6 +165,9 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
                   TypeConstants.TEXT -> TypeConstants.TEXT
                   TypeConstants.NUMBER -> TypeConstants.NUMBER
                   TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  TypeConstants.TIMESTAMP -> TypeConstants.TIMESTAMP
+                  TypeConstants.TIME -> TypeConstants.TIME
+                  TypeConstants.DATE -> TypeConstants.DATE
                   else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
                 }
                 TypeConstants.DECIMAL -> when (expectedReturnType) {
@@ -159,6 +179,32 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
                 TypeConstants.BOOLEAN -> when (expectedReturnType) {
                   TypeConstants.TEXT -> TypeConstants.TEXT
                   TypeConstants.BOOLEAN -> TypeConstants.BOOLEAN
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.DATE -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.NUMBER -> TypeConstants.NUMBER
+                  TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  TypeConstants.TIMESTAMP -> TypeConstants.TIMESTAMP
+                  TypeConstants.TIME -> TypeConstants.TIME
+                  TypeConstants.DATE -> TypeConstants.DATE
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.TIMESTAMP -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.NUMBER -> TypeConstants.NUMBER
+                  TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  TypeConstants.TIMESTAMP -> TypeConstants.TIMESTAMP
+                  TypeConstants.TIME -> TypeConstants.TIME
+                  TypeConstants.DATE -> TypeConstants.DATE
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.TIME -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> TypeConstants.TEXT
+                  TypeConstants.NUMBER -> TypeConstants.NUMBER
+                  TypeConstants.DECIMAL -> TypeConstants.DECIMAL
+                  TypeConstants.TIMESTAMP -> TypeConstants.TIMESTAMP
+                  TypeConstants.TIME -> TypeConstants.TIME
                   else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
                 }
                 else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
@@ -209,18 +255,44 @@ fun dot(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
                 TypeConstants.NUMBER -> when (expectedReturnType) {
                   TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
                   TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
-                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBigDecimal
                   else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
                 }
                 TypeConstants.DECIMAL -> when (expectedReturnType) {
                   TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
                   TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
-                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asDouble
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBigDecimal
                   else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
                 }
                 TypeConstants.BOOLEAN -> when (expectedReturnType) {
                   TypeConstants.TEXT -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString
                   TypeConstants.BOOLEAN -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBoolean
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.DATE -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> java.sql.Date(dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time).toString()
+                  TypeConstants.NUMBER -> dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time
+                  TypeConstants.DECIMAL -> dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time.toBigDecimal()
+                  TypeConstants.TIMESTAMP -> Timestamp(dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time)
+                  TypeConstants.TIME -> java.sql.Time(dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time)
+                  TypeConstants.DATE -> java.sql.Date(dateFormat.parse(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asString).time)
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.TIMESTAMP -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> Timestamp(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong).toString()
+                  TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBigDecimal
+                  TypeConstants.TIMESTAMP -> Timestamp(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong)
+                  TypeConstants.TIME -> java.sql.Time(Timestamp(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong).time)
+                  TypeConstants.DATE -> java.sql.Date(Timestamp(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong).time)
+                  else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+                }
+                TypeConstants.TIME -> when (expectedReturnType) {
+                  TypeConstants.TEXT -> java.sql.Time(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong).toString()
+                  TypeConstants.NUMBER -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong
+                  TypeConstants.DECIMAL -> symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asBigDecimal
+                  TypeConstants.TIMESTAMP -> Timestamp(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong)
+                  TypeConstants.TIME -> java.sql.Time(symbolsJson.get(symbolName).asJsonObject.get(KeyConstants.VALUE).asLong)
                   else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
                 }
                 else -> throw CustomJsonException("{args: 'Unexpected value for parameter'}")
@@ -268,7 +340,7 @@ fun identity(args: List<JsonElement>, types: MutableList<String>, expectedReturn
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
         TypeConstants.DECIMAL -> try {
-          args.first().asDouble
+          args.first().asBigDecimal
         } catch (exception: Exception) {
           throw CustomJsonException("{args: 'Unexpected value for parameter'}")
         }
@@ -285,13 +357,13 @@ fun identity(args: List<JsonElement>, types: MutableList<String>, expectedReturn
       TypeConstants.TEXT -> args.first().asString
       TypeConstants.NUMBER -> when (expectedReturnType) {
         TypeConstants.NUMBER -> args.first().asLong
-        TypeConstants.DECIMAL -> args.first().asLong.toDouble()
+        TypeConstants.DECIMAL -> args.first().asLong.toBigDecimal()
         else -> args.first().asLong.toString()
       }
       TypeConstants.DECIMAL -> when (expectedReturnType) {
         TypeConstants.NUMBER -> args.first().asLong
-        TypeConstants.DECIMAL -> args.first().asDouble
-        else -> args.first().asDouble.toString()
+        TypeConstants.DECIMAL -> args.first().asBigDecimal
+        else -> args.first().asBigDecimal.toString()
       }
       else -> when (expectedReturnType) {
         TypeConstants.BOOLEAN -> args.first().asBoolean

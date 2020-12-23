@@ -11,58 +11,58 @@
             "currency": {
               "type": "Currency",
               "displayName": "Supplier Currency",
-              "order": "1"
+              "order": 1
             },
             "paymentTerm": {
               "type": "PaymentTerm",
               "displayName": "Payment Term",
-              "order": "2"
+              "order": 2
             },
             "taxRule": {
-              "type": "SalesTaxRule",
+              "type": "TaxRule",
               "displayName": "Tax Rule",
-              "order": "3"
+              "order": 3
             },
             "status": {
               "type": "Status",
               "displayName": "status",
-              "order": "4"
+              "order": 4
             },
             "defaultCarrier": {
               "type": "CarrierService",
               "displayName": "Default Carrier",
-              "order": "5"
+              "order": 5
             },
             "taxNumber": {
               "type": "Text",
               "displayName": "Tax Number",
-              "order": "6"
+              "order": 6
             },
             "discount": {
               "type": "Decimal",
               "displayName": "Discount",
-              "order": "7"
+              "order": 7
             },
             "attributeSet": {
               "type": "AttributeSet",
               "displayName": "Attribute Set",
-              "order": "8",
+              "order": 8,
               "default": "Not Defined"
             },
             "comments": {
               "type": "Text",
               "displayName": "comments",
-              "order": "9"
+              "order": 9
             }
           }
         },
         "displayName": "General",
-        "order": "1"
+        "order": 1
       },
       "addresses": {
         "type": "List",
-        "min": "1",
-        "max": "0",
+        "min": 1,
+        "max": 0,
         "listType": {
           "typeName": "Address",
           "displayName": "Address",
@@ -70,53 +70,53 @@
             "name": {
               "type": "Text",
               "displayName": "Name",
-              "order": "0"
+              "order": 0
             },
             "line1": {
               "type": "Text",
               "displayName": "Line 1",
-              "order": "1"
+              "order": 1
             },
             "line2": {
               "type": "Text",
               "displayName": "Line 2",
-              "order": "2"
+              "order": 2
             },
             "city": {
-              "type": "Text",
+              "type": "Area",
               "displayName": "City",
-              "order": "3"
+              "order": 3
             },
             "state": {
-              "type": "Text",
+              "type": "States",
               "displayName": "State",
-              "order": "4"
+              "order": 4
             },
             "country": {
               "type": "Country",
               "displayName": "Country",
-              "order": "5"
+              "order": 5
             },
             "postCode": {
-              "type": "Number",
+              "type": "PinCode",
               "displayName": "Postcode",
-              "order": "6"
+              "order": 6
             },
             "addressType": {
               "type": "AddressType",
               "displayName": "Type",
-              "order": "7",
+              "order": 7,
               "default": "Billing"
             }
           }
         },
         "displayName": "Addresses",
-        "order": "10"
+        "order": 2
       },
       "contacts": {
         "type": "List",
-        "min": "1",
-        "max": "0",
+        "min": 1,
+        "max": 0,
         "listType": {
           "typeName": "Contact",
           "displayName": "Contact",
@@ -124,59 +124,63 @@
             "name": {
               "type": "Text",
               "displayName": "Name",
-              "order": "0"
+              "order": 0
             },
             "phone": {
               "type": "Number",
               "displayName": "Phone",
-              "order": "1"
+              "order": 1
             },
             "mobile": {
               "type": "Number",
               "displayName": "mobile",
-              "order": "2"
+              "order": 2
             },
             "jobTitle": {
               "type": "Text",
               "displayName": "jobTitle",
-              "order": "3"
+              "order": 3
             },
             "fax": {
               "type": "Text",
               "displayName": "Fax",
-              "order": "4"
+              "order": 4
             },
             "email": {
               "type": "Text",
               "displayName": "Email",
-              "order": "5"
+              "order": 5
             },
             "website": {
               "type": "Text",
               "displayName": "Website",
-              "order": "6"
+              "order": 6
             },
             "comment": {
               "type": "Text",
               "displayName": "Comment",
-              "order": "7"
+              "order":7
             },
             "default": {
               "type": "Boolean",
               "displayName": "default",
-              "order": "8",
+              "order": 8,
               "default": "false"
             },
             "includeInEmail": {
               "type": "Boolean",
               "displayName": "includeInEmail",
-              "order": "9",
+              "order": 9,
               "default": "false"
             }
           }
         },
         "displayName": "Supplier Contacts",
-        "order": "11"
+        "order": 3
+      },
+      "account": {
+        "type": "Account",
+        "order": 4
       }
     },
     "permissions": [],
