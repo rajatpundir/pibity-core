@@ -1,6 +1,9 @@
 {
   "orgId": {
-    "type": "String"
+    "type": "Long"
+  },
+  "context?": {
+    "type": "Long"
   },
   "typeName": {
     "type": "String"

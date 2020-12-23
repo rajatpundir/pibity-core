@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -58,7 +58,8 @@ class TypePermissionService(
           } else {
             if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.list!!.type.superTypeName)
                 || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.list!!.type.superTypeName)) {
-              val (referencedTypePermission, referencedTypePermissionMaxAccessLevel) = createTypePermission(jsonParams = keyPermissions.get(key.name).asJsonObject, permissionOrganization = organization, permissionType = key.list!!.type, permissionName = typePermission.name)
+              val (referencedTypePermission, referencedTypePermissionMaxAccessLevel) = createTypePermission(jsonParams = keyPermissions.get(key.name).asJsonObject,
+                  permissionOrganization = organization, permissionType = key.list!!.type, permissionName = typePermission.name)
               typePermission.keyPermissions.add(KeyPermission(typePermission = typePermission, key = key, referencedTypePermission = referencedTypePermission, accessLevel = referencedTypePermissionMaxAccessLevel))
             } else {
               typePermission.keyPermissions.add(KeyPermission(typePermission = typePermission, key = key, accessLevel = keyPermissions.get(key.name).asInt))

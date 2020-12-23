@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -10,6 +10,7 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.utils.gson
@@ -37,16 +38,18 @@ fun serialize(key: Key): JsonObject {
     }
     TypeConstants.FORMULA -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula?.returnType?.name)
-      json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula?.expression, JsonObject::class.java))
-      json.add(KeyConstants.FORMULA_SYMBOLS, gson.fromJson(key.formula?.symbolPaths, JsonArray::class.java))
+      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula!!.returnType.name)
+      json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula!!.expression, JsonObject::class.java))
     }
     TypeConstants.LIST -> {
       json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.add(KeyConstants.LIST_TYPE, serialize(key.list!!.type))
+      if (key.list!!.type.superTypeName == GLOBAL_TYPE)
+        json.addProperty(KeyConstants.LIST_TYPE, key.list!!.type.name)
+      else
+        json.add(KeyConstants.LIST_TYPE, serialize(key.list!!.type))
     }
     else -> {
-      if (key.type.superTypeName == "Any") {
+      if (key.type.superTypeName == GLOBAL_TYPE) {
         json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
         if (key.referencedVariable != null)
           json.add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))

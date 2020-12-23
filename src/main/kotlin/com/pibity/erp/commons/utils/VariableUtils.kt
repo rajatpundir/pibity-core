@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -18,6 +18,62 @@ import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Value
 import com.pibity.erp.entities.Variable
 import com.pibity.erp.entities.permission.TypePermission
+
+data class Quadruple<T1, T2, T3, T4>(val t1: T1, val t2: T2, val t3: T3, val t4: T4)
+
+fun validateMutatedVariables(jsonParams: JsonArray): JsonArray {
+  val expectedParams = JsonArray()
+  for (variableJson in jsonParams) {
+    val expectedVariable = JsonObject()
+    if (!variableJson.isJsonObject)
+      throw CustomJsonException("{error: 'Unexpected value for parameter'}")
+    else {
+      if (!variableJson.asJsonObject.has("op"))
+        throw CustomJsonException("{op: 'Field is missing in request body'}")
+      else {
+        try {
+          expectedVariable.addProperty("op", variableJson.asJsonObject.get("op").asString)
+        } catch (exception: Exception) {
+          throw CustomJsonException("{op: 'Unexpected value for parameter'}")
+        }
+        if (!listOf("create", "update", "delete").contains(variableJson.asJsonObject.get("op").asString))
+          throw CustomJsonException("{op: 'Unexpected value for parameter'}")
+      }
+      if (variableJson.asJsonObject.has("context")) {
+        try {
+          expectedVariable.addProperty("context?", variableJson.asJsonObject.get("context").asLong)
+        } catch (exception: Exception) {
+          throw CustomJsonException("{context: 'Unexpected value for parameter'}")
+        }
+      }
+      if (!variableJson.asJsonObject.has("typeName"))
+        throw CustomJsonException("{typeName: 'Field is missing in request body'}")
+      else try {
+        expectedVariable.addProperty("typeName", variableJson.asJsonObject.get("typeName").asString)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{typeName: 'Unexpected value for parameter'}")
+      }
+      if (!variableJson.asJsonObject.has("variableName"))
+        throw CustomJsonException("{variableName: 'Field is missing in request body'}")
+      else try {
+        expectedVariable.addProperty("variableName", variableJson.asJsonObject.get("variableName").asString)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{variableName: 'Unexpected value for parameter'}")
+      }
+      if (variableJson.asJsonObject.get("op").asString != "delete") {
+        if (!variableJson.asJsonObject.has("values"))
+          throw CustomJsonException("{values, values: 'Field is missing in request body'}")
+        else try {
+          expectedVariable.add("values", variableJson.asJsonObject.get("values").asJsonObject)
+        } catch (exception: Exception) {
+          throw CustomJsonException("{values: 'Unexpected value for parameter'}")
+        }
+      }
+    }
+    expectedParams.add(expectedVariable)
+  }
+  return expectedParams
+}
 
 fun validateVariableValues(values: JsonObject, typePermission: TypePermission): JsonObject {
   val expectedValues = JsonObject()
@@ -712,7 +768,7 @@ fun getSymbolValuesAndUpdateDependencies(variable: Variable, symbolPaths: Mutabl
                 || (value.key.parentType.superTypeName != GLOBAL_TYPE && value.key.parentType.superTypeName == value.key.type.superTypeName)) {
               val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = symbolsForFormula)
               if (subSymbols.size() != 0)
-                symbols.add(value.key.name, subSymbols)
+                symbols.add(value.key.name, JsonObject().apply { add("values", subSymbols) })
             } else {
               if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") }) {
                 val subSymbols: JsonObject = getSymbolValuesAndUpdateDependencies(prefix = prefix + value.key.name + ".", variable = value.referencedVariable!!, symbolPaths = symbolPaths, level = level + 1, valueDependencies = valueDependencies, variableDependencies = variableDependencies, symbolsForFormula = symbolsForFormula)

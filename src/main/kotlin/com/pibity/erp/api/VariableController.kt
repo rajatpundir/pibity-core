@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -30,44 +30,25 @@ import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = ["/api/variable"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(path = ["/api/variables"], consumes = [MediaType.APPLICATION_JSON_VALUE])
 class VariableController(val variableService: VariableService, val queryService: QueryService) {
 
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createVariable" to getExpectedParams("variable", "createVariable"),
-      "updateVariable" to getExpectedParams("variable", "updateVariable"),
+      "mutateVariables" to getExpectedParams("variable", "mutateVariables"),
       "queryVariables" to getExpectedParams("variable", "queryVariables")
   )
 
-  @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
+  @PostMapping(path = ["/mutate"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_USER)
-  fun createVariable(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun mutateVariable(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createVariable"]
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["mutateVariables"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      val (variable, typePermission) = variableService.createVariable(jsonParams = jsonParams)
-      ResponseEntity(serialize(variable ,typePermission).toString(), HttpStatus.OK)
-    } catch (exception: CustomJsonException) {
-      val message: String = exception.message
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_USER)
-  fun updateVariable(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
-    return try {
-      val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateVariable"]
-          ?: JsonObject()).apply { addProperty("username",  token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      val (variable, _) = variableService.updateVariable(jsonParams = jsonParams)
-      ResponseEntity(serialize(variable).toString(), HttpStatus.OK)
+      ResponseEntity(variableService.executeQueue(jsonParams = jsonParams).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

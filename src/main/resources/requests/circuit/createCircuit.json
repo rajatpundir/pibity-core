@@ -1,0 +1,17 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "circuitName": {
+    "type": "String"
+  },
+  "inputs": {
+    "type": "Object"
+  },
+  "computations": {
+    "type": "Object"
+  },
+  "outputs": {
+    "type": "Object"
+  }
+}

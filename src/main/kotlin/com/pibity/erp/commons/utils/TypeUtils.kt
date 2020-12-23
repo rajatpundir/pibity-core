@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -59,13 +59,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
         } catch (exception: Exception) {
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {typeName: 'Unexpected value for parameter'}}}}")
         }
-        if (!nestedType.has("displayName"))
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {displayName: 'Field is missing in request body'}}}}")
-        try {
-          nestedType.get("displayName").asString
-        } catch (exception: Exception) {
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {displayName: 'Unexpected value for parameter'}}}}")
-        }
         if (!nestedType.has("keys"))
           throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {keys: 'Field is missing in request body'}}}}")
         val nestedTypeKeys: JsonObject = try {
@@ -85,7 +78,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
           validateTypeKeys(nestedTypeKeys)
           expectedKey.add(KeyConstants.KEY_TYPE, JsonObject().apply {
             addProperty("typeName", nestedTypeName)
-            addProperty("displayName", nestedType.get("displayName").asString)
             add("keys", nestedTypeKeys)
             if (nestedType.has("multiplicity") && nestedType.get("multiplicity").asLong >= 0)
               addProperty("multiplicity?", nestedType.get("multiplicity").asLong)
@@ -154,13 +146,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                 } catch (exception: Exception) {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {typeName: 'Unexpected value for parameter'}}}}")
                 }
-                if (!nestedType.has("displayName"))
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {displayName: 'Field is missing in request body'}}}}")
-                try {
-                  nestedType.get("displayName").asString
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {displayName: 'Unexpected value for parameter'}}}}")
-                }
                 if (!nestedType.has("keys"))
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {keys: 'Field is missing in request body'}}}}")
                 val nestedTypeKeys: JsonObject = try {
@@ -173,7 +158,6 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                   validateTypeKeys(nestedTypeKeys)
                   expectedKey.add(KeyConstants.LIST_TYPE, JsonObject().apply {
                     addProperty("typeName", nestedTypeName)
-                    addProperty("displayName", nestedType.get("displayName").asString)
                     add("keys", nestedTypeKeys)
                   })
                 } catch (exception: CustomJsonException) {
@@ -190,30 +174,28 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
                   throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'Type name for key is not valid'}}}")
               }
             }
-            if (!key.has(KeyConstants.LIST_MAX_SIZE))
+            val listMaxSize: Int = if (!key.has(KeyConstants.LIST_MAX_SIZE))
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not provided'}}}")
-            else {
-              val listMaxSize: Int = try {
-                key.get(KeyConstants.LIST_MAX_SIZE).asInt
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
-              }
-              expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
-              if (listMaxSize < 0)
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+            else try {
+              key.get(KeyConstants.LIST_MAX_SIZE).asInt
+            } catch (exception: Exception) {
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
             }
-            if (!key.has(KeyConstants.LIST_MIN_SIZE))
+            if (listMaxSize < 0)
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
+            expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
+            val listMinSize: Int = if (!key.has(KeyConstants.LIST_MIN_SIZE))
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not provided'}}}")
-            else {
-              val listMinSize: Int = try {
-                key.get(KeyConstants.LIST_MIN_SIZE).asInt
-              } catch (exception: CustomJsonException) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
-              }
-              expectedKey.addProperty(KeyConstants.LIST_MIN_SIZE, listMinSize)
-              if (listMinSize < 0)
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
+            else try {
+              key.get(KeyConstants.LIST_MIN_SIZE).asInt
+            } catch (exception: Exception) {
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
             }
+            if (listMinSize < 0)
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
+            expectedKey.addProperty(KeyConstants.LIST_MIN_SIZE, listMinSize)
+            if (listMaxSize != 0 && listMaxSize < listMinSize)
+              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Max/Min size for List is not valid'}}}")
           }
           TypeConstants.FORMULA -> {
             if (!key.has(KeyConstants.FORMULA_RETURN_TYPE))

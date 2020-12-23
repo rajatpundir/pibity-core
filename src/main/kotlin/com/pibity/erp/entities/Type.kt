@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -74,7 +74,10 @@ data class Type(
     val typeAssertions: MutableSet<TypeAssertion> = HashSet(),
 
     @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
-    val permissions: MutableSet<TypePermission> = HashSet()
+    val permissions: MutableSet<TypePermission> = HashSet(),
+
+    @OneToOne
+    var superList: VariableList? = null
 
 ) : Serializable {
 

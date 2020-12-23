@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2020 Pibity Infotech Private Limited - All Rights Reserved
+ * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
  * THIS IS UNPUBLISHED PROPRIETARY CODE OF PIBITY INFOTECH PRIVATE LIMITED
@@ -53,9 +53,6 @@ fun joinKeycloakGroups(jsonParams: JsonObject): String {
   val keycloakUserId = jsonParams.get("keycloakUserId").asString
   val userResource: UserResource = realmResource.users()!!.get(keycloakUserId)
   val subGroups: List<String> = jsonParams.get("subGroups").asJsonArray.map { it.asString }
-  println("@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-  println(keycloakUserId)
-  println(subGroups)
   for (subGroup in subGroups) {
     val subGroupId: String = realmResource.getGroupByPath(listOf(jsonParams.get("orgId").asString, subGroup).joinToString(separator = "/")).id
     userResource.joinGroup(subGroupId)

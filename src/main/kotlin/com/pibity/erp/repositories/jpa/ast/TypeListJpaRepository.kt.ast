@@ -1,7 +1,0 @@
-PackageHeader(com.pibity.erp.repositories.jpa)
-importList
-  Import(com.pibity.erp.entities.TypeList)
-  Import(org.springframework.data.repository.CrudRepository)
-KlassDeclaration(interface TypeListJpaRepository)
-  KlassInheritance
-    KlassIdentifier(CrudRepository<TypeList, Long>)

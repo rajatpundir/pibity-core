@@ -1,6 +1,6 @@
 {
   "orgId": {
-    "type": "String"
+    "type": "Long"
   },
   "roleName": {
     "type": "String"

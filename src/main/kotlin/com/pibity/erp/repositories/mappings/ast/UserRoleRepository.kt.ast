@@ -1,8 +1,0 @@
-PackageHeader(com.pibity.erp.repositories.mappings)
-importList
-  Import(com.pibity.erp.entities.mappings.UserRole)
-  Import(com.pibity.erp.entities.mappings.embeddables.UserRoleId)
-  Import(org.springframework.data.repository.CrudRepository)
-KlassDeclaration(interface UserRoleRepository)
-  KlassInheritance
-    KlassIdentifier(CrudRepository<UserRole, UserRoleId>)

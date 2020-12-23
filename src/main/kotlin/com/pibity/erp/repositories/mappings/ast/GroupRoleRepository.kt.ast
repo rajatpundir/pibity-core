@@ -1,8 +1,0 @@
-PackageHeader(com.pibity.erp.repositories.mappings)
-importList
-  Import(com.pibity.erp.entities.mappings.GroupRole)
-  Import(com.pibity.erp.entities.mappings.embeddables.GroupRoleId)
-  Import(org.springframework.data.repository.CrudRepository)
-KlassDeclaration(interface GroupRoleRepository)
-  KlassInheritance
-    KlassIdentifier(CrudRepository<GroupRole, GroupRoleId>)
