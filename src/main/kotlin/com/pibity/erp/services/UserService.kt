@@ -83,11 +83,10 @@ class UserService(
       user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role)))
     }
     user = userJpaRepository.save(user)
-    print(user)
     user.details = try {
       variableService.createVariable(jsonParams = JsonObject().apply {
         addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", keycloakId)
+        addProperty("username", jsonParams.get("username").asString)
         addProperty("typeName", "User")
         addProperty("variableName", keycloakId)
         add("values", jsonParams.get("details").asJsonObject)

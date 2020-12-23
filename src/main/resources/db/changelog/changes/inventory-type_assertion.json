@@ -1,0 +1,114 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_type_assertion_1",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "type_assertion",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": true,
+                      "nullable": false,
+                      "primaryKeyName": "inventory_type_assertion_pk_1"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "expression",
+                    "type": "VARCHAR (255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "VARCHAR (255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "symbol_paths",
+                    "type": "VARCHAR (255)",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_type_assertion_2",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "type_id, name",
+              "constraintName": "Inventory_type_assertion_uk_1",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "type_assertion",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_type_assertion_3",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_type_assertion_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "type_assertion",
+          "baseColumnNames": "type_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "type",
+          "referencedColumnNames": "id"
+        }
+      }
+    }
+  ]
+}

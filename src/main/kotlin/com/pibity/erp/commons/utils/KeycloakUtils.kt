@@ -26,7 +26,7 @@ fun createKeycloakGroup(jsonParams: JsonObject) {
   }
 }
 
-fun getKeycloakId(username: String): String = realmResource.users()!!.search(username).single().id
+fun getKeycloakId(username: String): String = realmResource.users()!!.search(username, true).single().id
 
 fun createKeycloakUser(jsonParams: JsonObject): String {
   val user = UserRepresentation().apply {

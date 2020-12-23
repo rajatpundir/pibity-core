@@ -30,6 +30,10 @@ import com.pibity.erp.repositories.query.VariableRepository
 import com.pibity.erp.serializers.serialize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.sql.Date
+import java.sql.Time
+import java.sql.Timestamp
 
 @Service
 class FunctionService(
@@ -70,24 +74,28 @@ class FunctionService(
         globalTypes.single { it.name == input.asString }
       var functionInput = FunctionInput(function = function, name = inputName, type = type,
           variableName = when (type.name) {
-            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> null
+            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> null
             else -> if (input.asJsonObject.has("variableName"))
               input.asJsonObject.get("variableName").asJsonObject.toString()
             else null
           },
           variableNameKeyDependencies = when (type.name) {
-            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> mutableSetOf()
+            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> mutableSetOf()
             else -> if (input.asJsonObject.has("variableName"))
               getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = input.asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
             else mutableSetOf()
-          })
+          }
+      )
       if (input.isJsonObject) {
         when (type.name) {
           TypeConstants.TEXT -> functionInput.defaultStringValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asString else ""
           TypeConstants.NUMBER -> functionInput.defaultLongValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asLong else 0
-          TypeConstants.DECIMAL -> functionInput.defaultDoubleValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asDouble else 0.0
+          TypeConstants.DECIMAL -> functionInput.defaultDecimalValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asBigDecimal else null
           TypeConstants.BOOLEAN -> functionInput.defaultBooleanValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) input.asJsonObject.get(KeyConstants.DEFAULT).asBoolean else false
-          TypeConstants.FORMULA, TypeConstants.LIST -> {
+          TypeConstants.DATE -> functionInput.defaultDateValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) java.sql.Date(dateFormat.parse(input.asJsonObject.get(KeyConstants.DEFAULT).asString).time) else null
+          TypeConstants.TIMESTAMP -> functionInput.defaultTimestampValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) Timestamp(input.asJsonObject.get(KeyConstants.DEFAULT).asLong) else null
+          TypeConstants.TIME -> functionInput.defaultTimeValue = if (input.asJsonObject.has(KeyConstants.DEFAULT)) java.sql.Time(input.asJsonObject.get(KeyConstants.DEFAULT).asLong) else null
+          TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
           }
           else -> if (input.asJsonObject.has(KeyConstants.DEFAULT)) {
             functionInput.referencedVariable = variableRepository.findVariable(organizationId = organization.id, superList = type.superList!!.id, superTypeName = GLOBAL_TYPE, typeName = type.name, name = input.asJsonObject.get(KeyConstants.DEFAULT).asString)
@@ -97,7 +105,7 @@ class FunctionService(
       }
       functionInput = functionInputJpaRepository.save(functionInput)
       if (input.isJsonObject && input.asJsonObject.has("values")) {
-        functionInput.values = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = FunctionInput(function = function, name = inputName, type = type), type = type, values = input.asJsonObject.get("values").asJsonObject)
+        functionInput.values = saveFunctionInputType(inputs = inputs, globalTypes = globalTypes, functionInput = functionInput, type = type, values = input.asJsonObject.get("values").asJsonObject)
         functionInputJpaRepository.save(functionInput)
       }
       function.inputs.add(functionInput)
@@ -106,20 +114,20 @@ class FunctionService(
       val type: Type = globalTypes.single { it.name == output.asJsonObject.get(KeyConstants.KEY_TYPE).asString }
       var functionOutput = FunctionOutput(function = function, name = outputName, type = type,
           variableName = when (type.name) {
-            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME, TypeConstants.BLOB ->
               output.asJsonObject.get("values").asJsonObject.toString()
             TypeConstants.FORMULA, TypeConstants.LIST -> ""
             else -> output.asJsonObject.get("variableName").asJsonObject.toString()
           },
           variableNameKeyDependencies = when (type.name) {
-            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+            TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME, TypeConstants.BLOB ->
               getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = output.asJsonObject.get("values").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
             TypeConstants.FORMULA, TypeConstants.LIST -> mutableSetOf()
             else -> getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = output.asJsonObject.get("variableName").asJsonObject.deepCopy().apply { addProperty("expectedReturnType", TypeConstants.TEXT) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()
           })
       functionOutput = functionOutputJpaRepository.save(functionOutput)
       when (type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME, TypeConstants.BLOB, TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
         else -> {
           functionOutput.values = saveFunctionOutputType(inputs = inputs, globalTypes = globalTypes, functionOutput = functionOutput, type = type, values = output.asJsonObject.get("values").asJsonObject)
@@ -187,7 +195,8 @@ class FunctionService(
         })
     val function: Function = functionPermission.function
     val inputs: Set<FunctionInput> = functionInputRepository.getFunctionInputs(organizationId = functionPermission.function.organization.id, functionName = jsonParams.get("functionName").asString)
-    val args: JsonObject = validateFunctionArgs(args = jsonParams.get("args").asJsonObject, inputs = inputs)
+    val defaultTimestamp = Timestamp(System.currentTimeMillis())
+    val args: JsonObject = validateFunctionArgs(args = jsonParams.get("args").asJsonObject, inputs = inputs, defaultTimestamp = defaultTimestamp)
     val symbolPaths: Set<String> = gson.fromJson(function.symbolPaths, JsonArray::class.java).map { it.asString }.toSet()
     val symbols = JsonObject()
     for (inputPermission in functionPermission.functionInputPermissions) {
@@ -211,8 +220,8 @@ class FunctionService(
         })
         TypeConstants.DECIMAL -> symbols.add(input.name, JsonObject().apply {
           addProperty(KeyConstants.KEY_TYPE, input.type.name)
-          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asDouble else try {
-            input.defaultDoubleValue!!
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asBigDecimal else try {
+            input.defaultDecimalValue!!
           } catch (exception: Exception) {
             throw CustomJsonException("{error: 'Unauthorized Access'}")
           })
@@ -225,7 +234,34 @@ class FunctionService(
             throw CustomJsonException("{error: 'Unauthorized Access'}")
           })
         })
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.DATE -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asString else try {
+            if (input.defaultDateValue != null) input.defaultDateValue!!.toString()
+            else java.sql.Date(defaultTimestamp.time).toString()
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
+        })
+        TypeConstants.TIMESTAMP -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asLong else try {
+            if (input.defaultTimestampValue != null) input.defaultTimestampValue!!.time
+            else defaultTimestamp.time
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
+        })
+        TypeConstants.TIME -> symbols.add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          addProperty(KeyConstants.VALUE, if (inputPermission.accessLevel) args.get(input.name).asLong else try {
+            if (input.defaultTimeValue != null) input.defaultTimeValue!!.time
+            else java.sql.Time(defaultTimestamp.time).time
+          } catch (exception: Exception) {
+            throw CustomJsonException("{error: 'Unauthorized Access'}")
+          })
+        })
+        TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           val variable: Variable = if (inputPermission.accessLevel) variableRepository.findVariable(organizationId = functionPermission.function.organization.id,
@@ -248,7 +284,7 @@ class FunctionService(
     }
     for (input in inputs) {
       when (input.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.LIST, TypeConstants.FORMULA -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME, TypeConstants.BLOB, TypeConstants.LIST, TypeConstants.FORMULA -> {
         }
         else -> {
           if (input.variableName != null || input.values != null) {
@@ -285,11 +321,20 @@ class FunctionService(
         }, mode = "evaluate", symbols = symbols) as Long)
         TypeConstants.DECIMAL -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
           addProperty("expectedReturnType", output.type.name)
-        }, mode = "evaluate", symbols = symbols) as Double)
+        }, mode = "evaluate", symbols = symbols) as BigDecimal)
         TypeConstants.BOOLEAN -> if (outputPermission.accessLevel) results.addProperty(output.name, validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
           addProperty("expectedReturnType", output.type.name)
         }, mode = "evaluate", symbols = symbols) as Boolean)
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.DATE -> if (outputPermission.accessLevel) results.addProperty(output.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
+        }, mode = "evaluate", symbols = symbols) as Date).toString())
+        TypeConstants.TIMESTAMP -> if (outputPermission.accessLevel) results.addProperty(output.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
+        }, mode = "evaluate", symbols = symbols) as Timestamp).toString())
+        TypeConstants.TIME -> if (outputPermission.accessLevel) results.addProperty(output.name, (validateOrEvaluateExpression(jsonParams = gson.fromJson(output.variableName, JsonObject::class.java).apply {
+          addProperty("expectedReturnType", output.type.name)
+        }, mode = "evaluate", symbols = symbols) as Time).toString())
+        TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           val (variable: Variable, _) = variableService.createVariable(jsonParams = JsonObject().apply {
@@ -317,11 +362,11 @@ class FunctionService(
     for (key in type.keys) {
       if (values.has(key.name)) {
         when (key.type.name) {
-          TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+          TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME ->
             functionInputType.functionInputKeys.add(FunctionInputKey(functionInputType = functionInputType, key = key,
                 expression = values.get(key.name).asJsonObject.toString(),
                 keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
-          TypeConstants.FORMULA, TypeConstants.LIST -> {
+          TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
           }
           else -> {
             if (key.type.superTypeName == GLOBAL_TYPE) {
@@ -357,11 +402,11 @@ class FunctionService(
     val functionOutputType = FunctionOutputType(functionOutput = functionOutput, type = type)
     for (key in type.keys) {
       when (key.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME ->
           functionOutputType.functionOutputKeys.add(FunctionOutputKey(functionOutputType = functionOutputType, key = key,
               expression = values.get(key.name).asJsonObject.toString(),
               keyDependencies = getInputKeyDependencies(inputs = inputs, globalTypes = globalTypes, symbolPaths = validateOrEvaluateExpression(jsonParams = values.get(key.name).asJsonObject.deepCopy().apply { addProperty("expectedReturnType", key.type.name) }, mode = "collect", symbols = JsonObject()) as MutableSet<String>).toMutableSet()))
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA, TypeConstants.LIST, TypeConstants.BLOB -> {
         }
         else -> {
           if (key.type.superTypeName == GLOBAL_TYPE) {

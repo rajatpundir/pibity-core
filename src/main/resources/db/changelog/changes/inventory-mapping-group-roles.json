@@ -12,8 +12,8 @@
               "columns": [
                 {
                   "column": {
-                    "name": "role_organization_id",
-                    "type": "NVARCHAR(255)",
+                    "name": "group_id",
+                    "type": "BIGINT",
                     "constraints": {
                       "nullable": false
                     }
@@ -21,28 +21,10 @@
                 },
                 {
                   "column": {
-                    "name": "role_name",
-                    "type": "VARCHAR(255)",
+                    "name": "role_id",
+                    "type": "BIGINT",
                     "constraints": {
                       "nullable": "false"
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "group_organization_id",
-                    "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "group_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
                     }
                   }
                 }
@@ -60,7 +42,7 @@
           "constraintName": "inventory_mapping_group_roles_pk",
           "schemaName": "inventory",
           "tableName": "mapping_group_roles",
-          "columnNames": "group_name, group_organization_id, role_name, role_organization_id"
+          "columnNames": "group_id, role_id"
         }
       }
     },
@@ -72,12 +54,12 @@
           "constraintName": "inventory_mapping_group_roles_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "mapping_group_roles",
-          "baseColumnNames": "role_name, role_organization_id",
+          "baseColumnNames": "role_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "role",
-          "referencedColumnNames": "role_name, organization_id"
+          "referencedColumnNames": "id"
         }
       }
     },
@@ -89,12 +71,12 @@
           "constraintName": "inventory_mapping_group_roles_fk_2",
           "baseTableSchemaName": "inventory",
           "baseTableName": "mapping_group_roles",
-          "baseColumnNames": "group_name, group_organization_id",
+          "baseColumnNames": "group_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
-          "referencedTableName": "group_names",
-          "referencedColumnNames": "group_name, organization_id"
+          "referencedTableName": "groups",
+          "referencedColumnNames": "id"
         }
       }
     }

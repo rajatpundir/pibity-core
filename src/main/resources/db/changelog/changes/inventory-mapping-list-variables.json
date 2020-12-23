@@ -12,7 +12,7 @@
               "columns": [
                 {
                   "column": {
-                    "name": "list_variable_id",
+                    "name": "variable_list_id",
                     "type": "BIGINT",
                     "constraints": {
                       "nullable": false
@@ -21,44 +21,8 @@
                 },
                 {
                   "column": {
-                    "name": "organization_id",
+                    "name": "variable_id",
                     "type": "NVARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_super_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_type_name",
-                    "type": "VARCHAR(255)",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_super_list_id",
-                    "type": "BIGINT",
-                    "constraints": {
-                      "nullable": false
-                    }
-                  }
-                },
-                {
-                  "column": {
-                    "name": "variable_name",
-                    "type": "NVARCHAR(511)",
                     "constraints": {
                       "nullable": false
                     }
@@ -78,7 +42,7 @@
           "constraintName": "inventory_mapping_list_variables_pk",
           "schemaName": "inventory",
           "tableName": "mapping_list_variables",
-          "columnNames": "list_variable_id, variable_name, variable_super_list_id, variable_type_name, organization_id, variable_super_type_name"
+          "columnNames": "variable_list_id, variable_id"
         }
       }
     },
@@ -90,12 +54,12 @@
           "constraintName": "inventory_mapping_list_variables_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "mapping_list_variables",
-          "baseColumnNames": "organization_id ,variable_super_type_name, variable_type_name, variable_super_list_id, variable_name ",
+          "baseColumnNames": "variable_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "variable",
-          "referencedColumnNames": "organization_id, super_type_name, type_name, super_list_id, variable_name"
+          "referencedColumnNames": "id"
         }
       }
     },
@@ -107,7 +71,7 @@
           "constraintName": "inventory_mapping_list_variables_fk_2",
           "baseTableSchemaName": "inventory",
           "baseTableName": "mapping_list_variables",
-          "baseColumnNames": "list_variable_id",
+          "baseColumnNames": "variable_list_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",

@@ -4,14 +4,36 @@
     "displayName": "Location",
     "keys": {},
     "variables": {
-     "Main Warehouse": {},
+      "Main Warehouse": {},
       "Local Warehouse": {},
       "Offsite Storage": {}
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "Status",
+    "displayName": "Status",
+    "keys": {},
+    "variables": {
+      "Active": {},
+      "Deprecated": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -32,8 +54,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -46,8 +72,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -62,8 +92,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -114,23 +148,121 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
-    "typeName": "SalesTaxRule",
-    "displayName": "Sales Tax Rule",
+    "typeName": "TaxRuleType",
+    "displayName": "Tax Rule Type",
     "keys": {},
     "variables": {
-      "Tax on Sale": {},
-      "Auto Lookup": {},
-      "Tax Exempt": {}
+      "Exclusive": {},
+      "Inclusive": {}
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "TaxRule",
+    "displayName": "Tax Rule",
+    "keys": {
+      "taxPercentage": {
+        "type": "Decimal",
+        "default": 0,
+        "order": 0
+      },
+      "status": {
+        "type": "Status",
+        "default": "Active",
+        "order": 1
+      },
+      "isTaxForSale": {
+        "type": "Boolean",
+        "default": "true",
+        "order": 2
+      },
+      "isTaxForPurchase": {
+        "type": "Boolean",
+        "default": "true",
+        "order": 3
+      },
+      "taxType": {
+        "type": "TaxRuleType",
+        "default": "Exclusive",
+        "order": 4
+      }
+    },
+    "variables": {
+      "10%-Exclusive": {
+        "taxPercentage": 10,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Exclusive"
+      },
+      "10%-Inclusive": {
+        "taxPercentage": 10,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      },
+      "0%": {
+        "taxPercentage": 0,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      },
+      "Auto Lookup": {
+        "taxPercentage": 0,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      },
+      "Tax Exempt": {
+        "taxPercentage": 0,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      },
+      "Sales Tax on Imports": {
+        "taxPercentage": 0,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      },
+      "Tax on Purchase": {
+        "taxPercentage": 0,
+        "status": "Active",
+        "isTaxForSale": "true",
+        "isTaxForPurchase": "true",
+        "taxType": "Inclusive"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -143,8 +275,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -158,36 +294,45 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
-    }
-  },
-  {
-    "typeName": "Status",
-    "displayName": "Status",
-    "keys": {},
-    "variables": {
-      "Active": {},
-      "Deprecated": {}
-    },
-    "permissions": [],
-    "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
     "typeName": "PaymentTerm",
     "displayName": "Payment Term",
-    "keys": {},
+    "keys": {
+      "status": {
+        "type": "Status",
+        "order": 0
+      },
+      "days": {
+        "type": "Number",
+        "order": 1
+      }
+    },
     "variables": {
-      "15 Days": {},
-      "30 Days": {}
+      "15 Days": {
+        "status": "Active",
+        "days": 15
+      },
+      "30 Days": {
+        "status": "Active",
+        "days": 30
+      }
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -200,8 +345,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -214,8 +363,12 @@
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   },
   {
@@ -223,7 +376,7 @@
     "displayName": "Customer",
     "keys": {
       "general": {
-        "type":{
+        "type": {
           "typeName": "CustomerGeneralDetails",
           "displayName": "Customer General Details",
           "keys": {
@@ -238,7 +391,7 @@
               "order": "2"
             },
             "taxRule": {
-              "type": "SalesTaxRule",
+              "type": "TaxRule",
               "displayName": "Tax Rule",
               "order": "3"
             },
@@ -323,12 +476,12 @@
               "order": "2"
             },
             "city": {
-              "type": "Text",
+              "type": "Area",
               "displayName": "City",
               "order": "3"
             },
             "state": {
-              "type": "Text",
+              "type": "States",
               "displayName": "State",
               "order": "4"
             },
@@ -338,7 +491,7 @@
               "order": "5"
             },
             "postCode": {
-              "type": "Number",
+              "type": "PinCode",
               "displayName": "Postcode",
               "order": "6"
             },
@@ -417,12 +570,20 @@
         },
         "displayName": "Customer Contacts",
         "order": "3"
+      },
+      "account": {
+        "type": "Account",
+        "order": 4
       }
     },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   }
 ]

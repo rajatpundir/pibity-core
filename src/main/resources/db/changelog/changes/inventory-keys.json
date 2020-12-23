@@ -1,0 +1,263 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_key_1",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "keys",
+              "columns": [
+                {
+                  "column": {
+                    "name": "id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": true,
+                      "nullable": false,
+                      "primaryKeyName": "inventory_keys_pk_1"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_boolean",
+                    "type": "BOOLEAN"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_double",
+                    "type": "DOUBLE"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_long",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_string",
+                    "type": "NVARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "is_assertion_dependency",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "is_formula_dependency",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "is_variable_dependency",
+                    "type": "BOOLEAN",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_order",
+                    "type": "INTEGER"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "name",
+                    "type": "NVARCHAR(255)"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "formula_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_type_list_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "parent_type_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_referenced_variable_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_id",
+                    "type": "BIGINT"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_2",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "parent_type_id,name",
+              "constraintName": "Inventory_keys_uk_1",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "keys",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_3",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "addUniqueConstraint": {
+              "columnNames": "parent_type_id,key_order",
+              "constraintName": "Inventory_keys_uk_2",
+              "deferrable": true,
+              "disabled": true,
+              "initiallyDeferred": true,
+              "schemaName": "inventory",
+              "tableName": "keys",
+              "tablespace": "A String",
+              "validate": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_4",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_keys_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "keys",
+          "baseColumnNames": "formula_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "formula"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_5",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_keys_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "keys",
+          "baseColumnNames": "parent_type_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "type"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_6",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_keys_fk_3",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "keys",
+          "baseColumnNames": "value_referenced_variable_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "variable"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_7",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_keys_fk_4",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "keys",
+          "baseColumnNames": "type_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "type"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_keys_8",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_keys_fk_5",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "keys",
+          "baseColumnNames": "value_type_list_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "type_list"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_variable_dependencies_1",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "mapping_value_variable_dependencies",
+              "columns": [
+                {
+                  "column": {
+                    "name": "value_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "dependency_variable_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_variable_dependencies_2",
+        "author": "shivam.sharma",
+        "addPrimaryKey": {
+          "constraintName": "inventory_mapping_value_variable_dependencies_pk",
+          "schemaName": "inventory",
+          "tableName": "mapping_value_variable_dependencies",
+          "columnNames": "value_id, dependency_variable_id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_variable_dependencies_3",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_value_variable_dependencies_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_value_variable_dependencies",
+          "baseColumnNames": "dependency_variable_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "variable",
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_value_variable_dependencies_4",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_value_variable_dependencies_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_value_variable_dependencies",
+          "baseColumnNames": "value_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "value",
+          "referencedColumnNames": "id"
+        }
+      }
+    }
+  ]
+}

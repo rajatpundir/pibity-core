@@ -1,0 +1,89 @@
+[
+  {
+    "typeName": "AmountType",
+    "displayName": "AmountType",
+    "keys": {},
+    "variables": {
+      "Credit": {},
+      "Debit": {}
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "Voucher",
+    "displayName": "Voucher",
+    "keys": {
+      "amountType": {
+        "type": "AmountType",
+        "order": 0
+      }
+    },
+    "variables": {
+      "Sales": {
+        "amountType": "Credit"
+      },
+      "Purchase": {
+        "amountType": "Debit"
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  },
+  {
+    "typeName": "AccountTransaction",
+    "displayName": "Account Transactions",
+    "autoId": true,
+    "keys": {
+      "date": {
+        "type": "Timestamp",
+        "order": 0
+      },
+      "voucherType": {
+        "type": "Voucher",
+        "order": 1
+      },
+      "account": {
+        "type": "Account",
+        "order": 2
+      },
+      "refAccount": {
+        "type": "Account",
+        "order": 3
+      },
+      "creditAmount": {
+        "type": "Decimal",
+        "order": 4,
+        "default":0
+      },
+      "debitAmount": {
+        "type": "Decimal",
+        "order": 5,
+        "default": 0
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    }
+  }
+]

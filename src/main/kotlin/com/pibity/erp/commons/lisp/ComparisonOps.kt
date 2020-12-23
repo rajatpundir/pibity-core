@@ -13,6 +13,7 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.validateOrEvaluateExpression
+import java.math.BigDecimal
 
 fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnType: String, mode: String, symbols: JsonObject, operator: String): Any {
   val acceptableTypes = listOf(TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.TEXT)
@@ -33,7 +34,7 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
             try {
               when (type) {
                 TypeConstants.NUMBER -> arg.asLong
-                TypeConstants.DECIMAL -> arg.asDouble
+                TypeConstants.DECIMAL -> arg.asBigDecimal
                 else -> arg.asString
               }
               type
@@ -80,14 +81,14 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
           when (types.first()) {
             TypeConstants.DECIMAL -> {
               when (argType) {
-                TypeConstants.DECIMAL -> evaluatedArg as Double
-                TypeConstants.NUMBER -> (evaluatedArg as Double).toLong()
+                TypeConstants.DECIMAL -> evaluatedArg as BigDecimal
+                TypeConstants.NUMBER -> (evaluatedArg as BigDecimal).toLong()
                 else -> evaluatedArg.toString()
               }
             }
             TypeConstants.NUMBER -> {
               when (argType) {
-                TypeConstants.DECIMAL -> (evaluatedArg as Long).toDouble()
+                TypeConstants.DECIMAL -> (evaluatedArg as Long).toBigDecimal()
                 TypeConstants.NUMBER -> evaluatedArg as Long
                 else -> evaluatedArg.toString()
               }
@@ -98,14 +99,14 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
           when (types.first()) {
             TypeConstants.DECIMAL -> {
               when (argType) {
-                TypeConstants.DECIMAL -> args.first().asDouble
-                TypeConstants.NUMBER -> (args.first().asDouble).toLong()
+                TypeConstants.DECIMAL -> args.first().asBigDecimal
+                TypeConstants.NUMBER -> (args.first().asBigDecimal).toLong()
                 else -> args.first().toString()
               }
             }
             TypeConstants.NUMBER -> {
               when (argType) {
-                TypeConstants.DECIMAL -> (args.first().asLong).toDouble()
+                TypeConstants.DECIMAL -> (args.first().asLong).toBigDecimal()
                 TypeConstants.NUMBER -> args.first().asLong
                 else -> args.first().toString()
               }
@@ -120,13 +121,13 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
           when (argType) {
             TypeConstants.DECIMAL -> {
               when (type) {
-                TypeConstants.DECIMAL -> evaluatedArg as Double
-                else -> (evaluatedArg as Long).toDouble()
+                TypeConstants.DECIMAL -> evaluatedArg as BigDecimal
+                else -> (evaluatedArg as Long).toBigDecimal()
               }
             }
             TypeConstants.NUMBER -> {
               when (type) {
-                TypeConstants.DECIMAL -> (evaluatedArg as Double).toLong()
+                TypeConstants.DECIMAL -> (evaluatedArg as BigDecimal).toLong()
                 else -> evaluatedArg as Long
               }
             }
@@ -136,8 +137,8 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
           when (argType) {
             TypeConstants.DECIMAL -> {
               when (type) {
-                TypeConstants.DECIMAL -> value.asDouble
-                else -> value.asLong.toDouble()
+                TypeConstants.DECIMAL -> value.asBigDecimal
+                else -> value.asLong.toBigDecimal()
               }
             }
             TypeConstants.NUMBER -> value.asLong
@@ -148,35 +149,35 @@ fun compare(args: List<JsonElement>, types: MutableList<String>, expectedReturnT
         when (operator) {
           ">" -> {
             when (argType) {
-              TypeConstants.DECIMAL -> acc && ((a as Double) > b as Double)
+              TypeConstants.DECIMAL -> acc && ((a as BigDecimal) > b as BigDecimal)
               TypeConstants.NUMBER -> acc && ((a as Long) > b as Long)
               else -> acc && ((a as String) > b as String)
             }
           }
           ">=" -> {
             when (argType) {
-              TypeConstants.DECIMAL -> acc && ((a as Double) >= b as Double)
+              TypeConstants.DECIMAL -> acc && ((a as BigDecimal) >= b as BigDecimal)
               TypeConstants.NUMBER -> acc && ((a as Long) >= b as Long)
               else -> acc && ((a as String) >= b as String)
             }
           }
           "<" -> {
             when (argType) {
-              TypeConstants.DECIMAL -> acc && ((a as Double) < b as Double)
+              TypeConstants.DECIMAL -> acc && ((a as BigDecimal) < b as BigDecimal)
               TypeConstants.NUMBER -> acc && ((a as Long) < b as Long)
               else -> acc && ((a as String) < b as String)
             }
           }
           "<=" -> {
             when (argType) {
-              TypeConstants.DECIMAL -> acc && ((a as Double) <= b as Double)
+              TypeConstants.DECIMAL -> acc && ((a as BigDecimal) <= b as BigDecimal)
               TypeConstants.NUMBER -> acc && ((a as Long) <= b as Long)
               else -> acc && ((a as String) <= b as String)
             }
           }
           "==" -> {
             when (argType) {
-              TypeConstants.DECIMAL -> acc && (a as Double == b as Double)
+              TypeConstants.DECIMAL -> acc && (a as BigDecimal == b as BigDecimal)
               TypeConstants.NUMBER -> acc && (a as Long == b as Long)
               else -> acc && (a as String == b as String)
             }

@@ -1,0 +1,74 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_mapping_formula_key_dependencies_1",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "mapping_formula_key_dependencies",
+              "columns": [
+                {
+                  "column": {
+                    "name": "formula_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "primaryKey": true,
+                      "nullable": false,
+                      "primaryKeyName": "formula_id,key_id"
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+           }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_formula_key_dependencies_2",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_formula_key_dependencies_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_formula_key_dependencies",
+          "baseColumnNames": "key_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_formula_key_dependencie_3",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_formula_key_dependencie_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_formula_key_dependencie",
+          "baseColumnNames": "formula_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "formula",
+          "referencedColumnNames": "id"
+        }
+      }
+    }
+  ]
+}

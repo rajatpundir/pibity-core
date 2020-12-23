@@ -18,7 +18,7 @@
                     "constraints": {
                       "primaryKey": true,
                       "nullable": false,
-                      "primaryKeyName": "inventory_formula_pk"
+                      "primaryKeyName": "formula_pk"
                     }
                   }
                 },
@@ -34,7 +34,7 @@
                 },
                 {
                   "column": {
-                    "name": "symbols",
+                    "name": "symbols_paths",
                     "type": "VARCHAR(255)",
                     "defaultValue": "",
                     "constraints": {
@@ -44,22 +44,38 @@
                 },
                 {
                   "column": {
-                    "name": "return_type_organization_id",
-                    "type": "NVARCHAR(255)"
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
                   }
                 },
                 {
                   "column": {
-                    "name": "return_type_name",
-                    "type": "VARCHAR(255)"
+                    "name": "function_id",
+                    "type": "BIGINT"
                   }
                 },
                 {
                   "column": {
-                    "name": "return_type_super_type_name",
-                    "type": "VARCHAR(255)"
+                    "name": "value_referenced_variable_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "type_id",
+                    "type": "BIGINT"
+                  }
+                },
+                {
+                  "column": {
+                    "name": "value_referenced_variable_id",
+                    "type": "BIGINT"
                   }
                 }
+
               ]
             }
           }
@@ -74,12 +90,12 @@
           "constraintName": "inventory_formula_fk_1",
           "baseTableSchemaName": "inventory",
           "baseTableName": "formula",
-          "baseColumnNames": "return_type_organization_id,return_type_super_type_name,return_type_name",
+          "baseColumnNames": "return_type_id",
           "onDelete": "CASCADE",
           "onUpdate": "RESTRICT",
           "referencedTableSchemaName": "inventory",
           "referencedTableName": "type",
-          "referencedColumnNames": "organization_id, super_type_name, type_name"
+          "referencedColumnNames": "id"
         }
       }
     }

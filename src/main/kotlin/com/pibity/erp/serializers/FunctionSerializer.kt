@@ -44,7 +44,7 @@ fun serialize(function: Function): JsonObject {
   json.add("outputs", JsonObject().apply {
     for (output in function.outputs) {
       when (output.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
+        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> {
           add(output.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, output.type.name)
             add("values", gson.fromJson(output.variableName, JsonObject::class.java))

@@ -1,0 +1,84 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "id": "inventory_mapping_type_assertion_key_dependencies_1",
+        "author": "shivam.sharma",
+        "changes": [
+          {
+            "createTable": {
+              "schemaName": "inventory",
+              "tableName": "mapping_type_assertion_key_dependencies",
+              "columns": [
+                {
+                  "column": {
+                    "name": "type_assertion_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "key_id",
+                    "type": "BIGINT",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_type_assertion_key_dependencies_2",
+        "author": "shivam.sharma",
+        "addPrimaryKey": {
+          "constraintName": "inventory_mapping_type_assertion_key_dependencies_pk",
+          "schemaName": "inventory",
+          "tableName": "mapping_type_assertion_key_dependencies",
+          "columnNames": "type_assertion_id, key_id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_type_assertion_key_dependencies_3",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_type_assertion_key_dependencies_fk_1",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_type_assertion_key_dependencies",
+          "baseColumnNames": "key_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "keys",
+          "referencedColumnNames": "id"
+        }
+      }
+    },
+    {
+      "changeSet": {
+        "id": "inventory_mapping_type_assertion_key_dependencies_4",
+        "author": "shivam.sharma",
+        "addForeignKeyConstraint": {
+          "constraintName": "inventory_mapping_type_assertion_key_dependencies_fk_2",
+          "baseTableSchemaName": "inventory",
+          "baseTableName": "mapping_type_assertion_key_dependencies",
+          "baseColumnNames": "type_assertion_id",
+          "onDelete": "CASCADE",
+          "onUpdate": "RESTRICT",
+          "referencedTableSchemaName": "inventory",
+          "referencedTableName": "type_assertion",
+          "referencedColumnNames": "id"
+        }
+      }
+    }
+  ]
+}

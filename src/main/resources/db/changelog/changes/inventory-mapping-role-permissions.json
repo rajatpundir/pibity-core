@@ -81,40 +81,6 @@
           "columnNames": "permission_name, permission_type_name, permission_organization_id, permission_super_type_name, role_name, role_organization_id"
         }
       }
-    },
-    {
-      "changeSet": {
-        "id": "inventory_mapping_role_permissions_3",
-        "author": "shubham.gupta",
-        "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_role_permissions_fk_1",
-          "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_role_permissions",
-          "baseColumnNames": "permission_name, permission_type_name, permission_organization_id, permission_super_type_name",
-          "onDelete": "CASCADE",
-          "onUpdate": "RESTRICT",
-          "referencedTableSchemaName": "inventory",
-          "referencedTableName": "type_permission",
-          "referencedColumnNames": "permission_name, type_name, organization_id, super_type_name"
-        }
-      }
-    },
-    {
-      "changeSet": {
-        "id": "inventory_mapping_role_permissions_4",
-        "author": "shubham.gupta",
-        "addForeignKeyConstraint": {
-          "constraintName": "inventory_mapping_role_permissions_fk_2",
-          "baseTableSchemaName": "inventory",
-          "baseTableName": "mapping_role_permissions",
-          "baseColumnNames": "role_name, role_organization_id",
-          "onDelete": "CASCADE",
-          "onUpdate": "RESTRICT",
-          "referencedTableSchemaName": "inventory",
-          "referencedTableName": "role",
-          "referencedColumnNames": "role_name, organization_id"
-        }
-      }
     }
   ]
 }

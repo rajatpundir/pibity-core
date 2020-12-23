@@ -13,6 +13,7 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.validateOrEvaluateExpression
+import java.math.BigDecimal
 
 fun ifThenElse(args: List<JsonElement>, types: MutableList<String>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
   return when (mode) {
@@ -51,7 +52,7 @@ fun ifThenElse(args: List<JsonElement>, types: MutableList<String>, expectedRetu
             when (type) {
               TypeConstants.TEXT -> arg.asString
               TypeConstants.NUMBER -> arg.asLong
-              TypeConstants.DECIMAL -> arg.asDouble
+              TypeConstants.DECIMAL -> arg.asBigDecimal
               else -> arg.asBoolean
             }
           } catch (exception: Exception) {
@@ -106,15 +107,15 @@ fun ifThenElse(args: List<JsonElement>, types: MutableList<String>, expectedRetu
           TypeConstants.NUMBER -> {
             when (expectedReturnType) {
               TypeConstants.NUMBER -> evaluatedArg as Long
-              TypeConstants.DECIMAL -> (evaluatedArg as Long).toDouble()
+              TypeConstants.DECIMAL -> (evaluatedArg as Long).toBigDecimal()
               else -> (evaluatedArg as Long).toString()
             }
           }
           TypeConstants.DECIMAL -> {
             when (expectedReturnType) {
-              TypeConstants.DECIMAL -> evaluatedArg as Double
-              TypeConstants.NUMBER -> (evaluatedArg as Double).toLong()
-              else -> (evaluatedArg as Double).toString()
+              TypeConstants.DECIMAL -> evaluatedArg as BigDecimal
+              TypeConstants.NUMBER -> (evaluatedArg as BigDecimal).toLong()
+              else -> (evaluatedArg as BigDecimal).toString()
             }
           }
           else -> {
@@ -129,7 +130,7 @@ fun ifThenElse(args: List<JsonElement>, types: MutableList<String>, expectedRetu
           TypeConstants.TEXT -> expression.asString
           TypeConstants.NUMBER, TypeConstants.DECIMAL -> {
             when (expectedReturnType) {
-              TypeConstants.DECIMAL -> expression.asDouble
+              TypeConstants.DECIMAL -> expression.asBigDecimal
               TypeConstants.NUMBER -> expression.asLong
               else -> expression.asString
             }

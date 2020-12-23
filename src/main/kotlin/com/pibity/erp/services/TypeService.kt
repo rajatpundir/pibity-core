@@ -22,6 +22,7 @@ import com.pibity.erp.repositories.query.TypeRepository
 import com.pibity.erp.repositories.query.VariableRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
 
 @Service
 class TypeService(
@@ -145,7 +146,7 @@ class TypeService(
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
       if (!keyJson.get(KeyConstants.KEY_TYPE).isJsonObject && keyJson.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
-        val key = Key(parentType = type, name = keyName, keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validGlobalTypes.first { it.name == TypeConstants.FORMULA})
+        val key = Key(parentType = type, name = keyName, keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validGlobalTypes.first { it.name == TypeConstants.FORMULA })
         when (keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) {
           in formulaReturnTypes -> {
             val returnType: Type = try {
@@ -185,12 +186,12 @@ class TypeService(
       throw CustomJsonException("{typeName: 'Unable to create Type'}")
     }
     if (type.superTypeName == GLOBAL_TYPE) {
-      val typeList: TypeList =  try {
+      val typeList: TypeList = try {
         typeListJpaRepository.save(TypeList(type = type, max = 0, min = 0))
       } catch (exception: Exception) {
         throw CustomJsonException("{typeName: 'Unable to create Type'}")
       }
-      val superList: VariableList =  try {
+      val superList: VariableList = try {
         variableListJpaRepository.save(VariableList(listType = typeList))
       } catch (exception: Exception) {
         throw CustomJsonException("{typeName: 'Unable to create Type'}")
@@ -215,9 +216,12 @@ class TypeService(
     when (key.type.name) {
       TypeConstants.TEXT -> key.defaultStringValue = defaultValue?.asString ?: ""
       TypeConstants.NUMBER -> key.defaultLongValue = defaultValue?.asLong ?: 0
-      TypeConstants.DECIMAL -> key.defaultDoubleValue = defaultValue?.asDouble ?: 0.0
+      TypeConstants.DECIMAL -> key.defaultDecimalValue = defaultValue?.asBigDecimal ?: (0).toBigDecimal()
       TypeConstants.BOOLEAN -> key.defaultBooleanValue = defaultValue?.asBoolean ?: false
-      TypeConstants.LIST, TypeConstants.FORMULA -> {
+      TypeConstants.DATE -> key.defaultDateValue = if (defaultValue != null) java.sql.Date(dateFormat.parse(defaultValue.asString).time) else null
+      TypeConstants.TIMESTAMP -> key.defaultTimestampValue = if (defaultValue != null) Timestamp(defaultValue.asLong) else null
+      TypeConstants.TIME -> key.defaultTimeValue = if (defaultValue != null) java.sql.Time(defaultValue.asLong) else null
+      TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
       }
       else -> {
         // Default values for variable references only makes sense when they refer a Global variable

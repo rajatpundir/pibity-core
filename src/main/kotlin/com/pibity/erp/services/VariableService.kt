@@ -24,6 +24,8 @@ import com.pibity.erp.repositories.jpa.VariableListJpaRepository
 import com.pibity.erp.repositories.query.VariableRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.sql.Timestamp
 
 @Service
 class VariableService(
@@ -47,7 +49,7 @@ class VariableService(
           add(JsonObject())
         }
       } catch (exception: CustomJsonException) {
-          multiLevelQueue.add(JsonArray().apply { add(gson.fromJson(exception.message, JsonObject::class.java)) })
+        multiLevelQueue.add(JsonArray().apply { add(gson.fromJson(exception.message, JsonObject::class.java)) })
       }
     }
     return multiLevelQueue
@@ -59,7 +61,7 @@ class VariableService(
     val mutatedVariables = JsonArray()
     try {
       for (variableJson in validateMutatedVariables(jsonParams = jsonParams)) {
-        when(variableJson.asJsonObject.get("op").asString) {
+        when (variableJson.asJsonObject.get("op").asString) {
           "update" -> {
             val (variable, typePermission, _, _) = updateVariable(jsonParams = variableJson.asJsonObject.apply {
               addProperty("orgId", orgId)
@@ -97,21 +99,23 @@ class VariableService(
     val type: Type
     val typePermission: TypePermission
     if (jsonParams.has("context?")) {
-      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong)
+          ?: throw CustomJsonException("{context: 'Unable to determine context'}")
       type = superList.listType.type
-      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("superTypeName", type.superTypeName)
-        addProperty("typeName", type.name)
-      })
-    }
-    else {
-      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("typeName", jsonParams.get("typeName").asString)
-      })
+      typePermission = variableTypePermission
+          ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+            addProperty("orgId", jsonParams.get("orgId").asString)
+            addProperty("username", jsonParams.get("username").asString)
+            addProperty("superTypeName", type.superTypeName)
+            addProperty("typeName", type.name)
+          })
+    } else {
+      typePermission = variableTypePermission
+          ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+            addProperty("orgId", jsonParams.get("orgId").asString)
+            addProperty("username", jsonParams.get("username").asString)
+            addProperty("typeName", jsonParams.get("typeName").asString)
+          })
       type = typePermission.type
       superList = variableSuperList ?: type.superList!!
     }
@@ -129,8 +133,11 @@ class VariableService(
       when (key.type.name) {
         TypeConstants.TEXT -> variable.values.add(Value(variable = variable, key = key, stringValue = values.get(key.name).asString))
         TypeConstants.NUMBER -> variable.values.add(Value(variable = variable, key = key, longValue = values.get(key.name).asLong))
-        TypeConstants.DECIMAL -> variable.values.add(Value(variable = variable, key = key, doubleValue = values.get(key.name).asDouble))
+        TypeConstants.DECIMAL -> variable.values.add(Value(variable = variable, key = key, decimalValue = values.get(key.name).asBigDecimal))
         TypeConstants.BOOLEAN -> variable.values.add(Value(variable = variable, key = key, booleanValue = values.get(key.name).asBoolean))
+        TypeConstants.DATE -> variable.values.add(Value(variable = variable, key = key, dateValue = java.sql.Date(dateFormat.parse(values.get(key.name).asString).time)))
+        TypeConstants.TIME -> variable.values.add(Value(variable = variable, key = key, timeValue = java.sql.Time(values.get(key.name).asLong)))
+        TypeConstants.TIMESTAMP -> variable.values.add(Value(variable = variable, key = key, timestampValue = Timestamp(values.get(key.name).asLong)))
         TypeConstants.LIST -> {
           val jsonArray: JsonArray = values.get(key.name).asJsonArray
           val list: VariableList = try {
@@ -239,8 +246,8 @@ class VariableService(
             longValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.name) },
                 symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as Long)
         TypeConstants.DECIMAL -> Value(variable = variable, key = key,
-            doubleValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.name) },
-                symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as Double)
+            decimalValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as BigDecimal)
         TypeConstants.BOOLEAN -> Value(variable = variable, key = key,
             booleanValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", key.formula!!.returnType.name) },
                 symbols = getSymbolValuesAndUpdateDependencies(variable = variable, symbolPaths = gson.fromJson(key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as Boolean)
@@ -288,21 +295,23 @@ class VariableService(
     val type: Type
     val typePermission: TypePermission
     if (jsonParams.has("context?")) {
-      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      superList = variableSuperList ?: variableListJpaRepository.getById(jsonParams.get("context?").asLong)
+          ?: throw CustomJsonException("{context: 'Unable to determine context'}")
       type = superList.listType.type
-      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("superTypeName", type.superTypeName)
-        addProperty("typeName", type.name)
-      })
-    }
-    else {
-      typePermission = variableTypePermission ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("typeName", jsonParams.get("typeName").asString)
-      })
+      typePermission = variableTypePermission
+          ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+            addProperty("orgId", jsonParams.get("orgId").asString)
+            addProperty("username", jsonParams.get("username").asString)
+            addProperty("superTypeName", type.superTypeName)
+            addProperty("typeName", type.name)
+          })
+    } else {
+      typePermission = variableTypePermission
+          ?: userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
+            addProperty("orgId", jsonParams.get("orgId").asString)
+            addProperty("username", jsonParams.get("username").asString)
+            addProperty("typeName", jsonParams.get("typeName").asString)
+          })
       type = typePermission.type
       superList = variableSuperList ?: type.superList!!
     }
@@ -319,86 +328,154 @@ class VariableService(
       if (values.has(value.key.name)) {
         when (value.key.type.name) {
           TypeConstants.TEXT -> {
-            if (value.stringValue != values.get(value.key.name).asString) {
-              value.stringValue = values.get(value.key.name).asString
-              if (value.key.isFormulaDependency) {
-                value.dependentValues.forEach {
-                  if (!dependentFormulaValues.containsKey(it))
-                    dependentFormulaValues[it] = mutableSetOf(value)
-                  else
-                    dependentFormulaValues[it]!!.add(value)
-                }
+            value.stringValue = values.get(value.key.name).asString
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
               }
-              if (value.key.isAssertionDependency) {
-                value.dependentVariableAssertions.forEach {
-                  if (!dependentAssertions.containsKey(it))
-                    dependentAssertions[it] = mutableSetOf(value)
-                  else
-                    dependentAssertions[it]!!.add(value)
-                }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
               }
             }
           }
           TypeConstants.NUMBER -> {
-            if (value.longValue != values.get(value.key.name).asLong) {
-              value.longValue = values.get(value.key.name).asLong
-              if (value.key.isFormulaDependency) {
-                value.dependentValues.forEach {
-                  if (!dependentFormulaValues.containsKey(it))
-                    dependentFormulaValues[it] = mutableSetOf(value)
-                  else
-                    dependentFormulaValues[it]!!.add(value)
-                }
+            value.longValue = values.get(value.key.name).asLong
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
               }
-              if (value.key.isAssertionDependency) {
-                value.dependentVariableAssertions.forEach {
-                  if (!dependentAssertions.containsKey(it))
-                    dependentAssertions[it] = mutableSetOf(value)
-                  else
-                    dependentAssertions[it]!!.add(value)
-                }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
               }
             }
           }
           TypeConstants.DECIMAL -> {
-            if (value.doubleValue != values.get(value.key.name).asDouble) {
-              value.doubleValue = values.get(value.key.name).asDouble
-              if (value.key.isFormulaDependency) {
-                value.dependentValues.forEach {
-                  if (!dependentFormulaValues.containsKey(it))
-                    dependentFormulaValues[it] = mutableSetOf(value)
-                  else
-                    dependentFormulaValues[it]!!.add(value)
-                }
+            value.decimalValue = values.get(value.key.name).asBigDecimal
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
               }
-              if (value.key.isAssertionDependency) {
-                value.dependentVariableAssertions.forEach {
-                  if (!dependentAssertions.containsKey(it))
-                    dependentAssertions[it] = mutableSetOf(value)
-                  else
-                    dependentAssertions[it]!!.add(value)
-                }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
               }
             }
           }
           TypeConstants.BOOLEAN -> {
-            if (value.booleanValue != values.get(value.key.name).asBoolean) {
-              value.booleanValue = values.get(value.key.name).asBoolean
-              if (value.key.isFormulaDependency) {
-                value.dependentValues.forEach {
-                  if (!dependentFormulaValues.containsKey(it))
-                    dependentFormulaValues[it] = mutableSetOf(value)
-                  else
-                    dependentFormulaValues[it]!!.add(value)
-                }
+            value.booleanValue = values.get(value.key.name).asBoolean
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
               }
-              if (value.key.isAssertionDependency) {
-                value.dependentVariableAssertions.forEach {
-                  if (!dependentAssertions.containsKey(it))
-                    dependentAssertions[it] = mutableSetOf(value)
-                  else
-                    dependentAssertions[it]!!.add(value)
-                }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
+              }
+            }
+          }
+          TypeConstants.DATE -> {
+            value.dateValue = java.sql.Date(dateFormat.parse(values.get(value.key.name).asString).time)
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
+              }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
+              }
+            }
+          }
+          TypeConstants.TIME -> {
+            value.timeValue = java.sql.Time(values.get(value.key.name).asLong)
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
+              }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
+              }
+            }
+          }
+          TypeConstants.TIMESTAMP -> {
+            value.timestampValue = Timestamp(values.get(value.key.name).asLong)
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
+              }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
+              }
+            }
+          }
+          TypeConstants.BLOB -> {
+            value.blobValue = (values.get(value.key.name).asString).toByteArray()
+            if (value.key.isFormulaDependency) {
+              value.dependentValues.forEach {
+                if (!dependentFormulaValues.containsKey(it))
+                  dependentFormulaValues[it] = mutableSetOf(value)
+                else
+                  dependentFormulaValues[it]!!.add(value)
+              }
+            }
+            if (value.key.isAssertionDependency) {
+              value.dependentVariableAssertions.forEach {
+                if (!dependentAssertions.containsKey(it))
+                  dependentAssertions[it] = mutableSetOf(value)
+                else
+                  dependentAssertions[it]!!.add(value)
               }
             }
           }
@@ -681,9 +758,9 @@ class VariableService(
           }
           TypeConstants.DECIMAL -> {
             val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.key.formula!!.returnType.name) },
-                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Double
-            if (value.doubleValue != evaluatedValue) {
-              value.doubleValue = evaluatedValue
+                symbols = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as BigDecimal
+            if (value.decimalValue != evaluatedValue) {
+              value.decimalValue = evaluatedValue
               if (value.key.isFormulaDependency) {
                 value.dependentValues.forEach {
                   if (!dependentFormulaValues.containsKey(it))
@@ -835,8 +912,8 @@ class VariableService(
           if (reconstructDependencies) {
             val valueDependencies: MutableSet<Value> = mutableSetOf()
             val variableDependencies: MutableSet<Variable> = mutableSetOf()
-            value.doubleValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.key.formula!!.returnType.name) },
-                symbols = getSymbolValuesAndUpdateDependencies(variable = value.variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as Double
+            value.decimalValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.key.formula!!.returnType.name) },
+                symbols = getSymbolValuesAndUpdateDependencies(variable = value.variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), valueDependencies = valueDependencies, variableDependencies = variableDependencies), mode = "evaluate") as BigDecimal
             value.valueDependencies = valueDependencies
             valueJpaRepository.save(value)
             if (value.key.isFormulaDependency) {
@@ -849,9 +926,9 @@ class VariableService(
             }
           } else {
             val evaluatedValue = validateOrEvaluateExpression(jsonParams = gson.fromJson(value.key.formula!!.expression, JsonObject::class.java).apply { addProperty("expectedReturnType", value.key.formula!!.returnType.name) },
-                symbols = getSymbolValues(variable = value.variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as Double
-            if (value.doubleValue != evaluatedValue) {
-              value.doubleValue = evaluatedValue
+                symbols = getSymbolValues(variable = value.variable, symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet()), mode = "evaluate") as BigDecimal
+            if (value.decimalValue != evaluatedValue) {
+              value.decimalValue = evaluatedValue
               if (value.key.isFormulaDependency) {
                 value.dependentValues.forEach {
                   if (!higherDependentFormulaValues.containsKey(it))
@@ -929,7 +1006,8 @@ class VariableService(
     val type: Type
     val typePermission: TypePermission
     if (jsonParams.has("context?")) {
-      superList = variableListJpaRepository.getById(jsonParams.get("context?").asLong) ?: throw CustomJsonException("{context: 'Unable to determine context'}")
+      superList = variableListJpaRepository.getById(jsonParams.get("context?").asLong)
+          ?: throw CustomJsonException("{context: 'Unable to determine context'}")
       type = superList.listType.type
       typePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
         addProperty("orgId", jsonParams.get("orgId").asString)
@@ -937,8 +1015,7 @@ class VariableService(
         addProperty("superTypeName", type.superTypeName)
         addProperty("typeName", type.name)
       })
-    }
-    else {
+    } else {
       typePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
         addProperty("orgId", jsonParams.get("orgId").asString)
         addProperty("username", jsonParams.get("username").asString)
@@ -982,18 +1059,34 @@ class VariableService(
         }
         TypeConstants.DECIMAL -> {
           if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
-            jsonValues.addProperty(value.key.name, value.doubleValue!!)
+            jsonValues.addProperty(value.key.name, value.decimalValue!!)
         }
         TypeConstants.BOOLEAN -> {
           if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
             jsonValues.addProperty(value.key.name, value.booleanValue!!)
+        }
+        TypeConstants.DATE -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.dateValue!!.toString())
+        }
+        TypeConstants.TIME -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.timeValue!!.toString())
+        }
+        TypeConstants.TIMESTAMP -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.timestampValue!!.toString())
+        }
+        TypeConstants.BLOB -> {
+          if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS)
+            jsonValues.addProperty(value.key.name, value.blobValue!!.toString())
         }
         TypeConstants.FORMULA -> {
           if (typePermission.keyPermissions.single { it.key == value.key }.accessLevel > PermissionConstants.NO_ACCESS) {
             when (value.key.formula!!.returnType.name) {
               TypeConstants.TEXT -> jsonValues.addProperty(value.key.name, value.stringValue!!)
               TypeConstants.NUMBER -> jsonValues.addProperty(value.key.name, value.longValue!!)
-              TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.doubleValue!!)
+              TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.decimalValue!!)
               TypeConstants.BOOLEAN -> jsonValues.addProperty(value.key.name, value.booleanValue!!)
             }
           }

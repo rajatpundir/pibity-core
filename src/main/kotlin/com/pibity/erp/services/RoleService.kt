@@ -19,13 +19,13 @@ import com.pibity.erp.entities.mappings.embeddables.RoleFunctionPermissionId
 import com.pibity.erp.entities.mappings.embeddables.RoleTypePermissionId
 import com.pibity.erp.entities.permission.FunctionPermission
 import com.pibity.erp.entities.permission.TypePermission
-import com.pibity.erp.repositories.query.FunctionPermissionRepository
 import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.jpa.RoleJpaRepository
-import com.pibity.erp.repositories.query.RoleRepository
-import com.pibity.erp.repositories.query.TypePermissionRepository
 import com.pibity.erp.repositories.mappings.RoleFunctionPermissionRepository
 import com.pibity.erp.repositories.mappings.RoleTypePermissionRepository
+import com.pibity.erp.repositories.query.FunctionPermissionRepository
+import com.pibity.erp.repositories.query.RoleRepository
+import com.pibity.erp.repositories.query.TypePermissionRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

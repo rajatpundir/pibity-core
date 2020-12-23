@@ -16,7 +16,10 @@ import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.constants.primitiveTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.*
-import com.pibity.erp.entities.*
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Role
+import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.User
 import com.pibity.erp.entities.mappings.UserRole
 import com.pibity.erp.entities.mappings.embeddables.UserRoleId
 import com.pibity.erp.repositories.jpa.*
@@ -29,12 +32,15 @@ import java.io.FileReader
 class OrganizationService(
     val organizationJpaRepository: OrganizationJpaRepository,
     val typeJpaRepository: TypeJpaRepository,
+    val typeListJpaRepository: TypeListJpaRepository,
+    val variableListJpaRepository: VariableListJpaRepository,
     val typeService: TypeService,
     val userJpaRepository: UserJpaRepository,
     val userService: UserService,
     val roleService: RoleService,
     val roleRepository: RoleRepository,
-    val variableService: VariableService
+    val variableService: VariableService,
+    val functionService: FunctionService
 ) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -58,11 +64,6 @@ class OrganizationService(
     } catch (exception: Exception) {
       createKeycloakUser(jsonParams = jsonParams.apply { addProperty("email", KeycloakConstants.SUPERUSER_USERNAME) })
     }
-    joinKeycloakGroups(jsonParams = jsonParams.apply {
-      addProperty("orgId", organization.id)
-      addProperty("keycloakUserId", superuserId)
-      add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.ADMIN, RoleConstants.USER)), JsonArray::class.java))
-    })
     var superuser = User(organization = organization, username = superuserId,
         active = true,
         email = KeycloakConstants.SUPERUSER_USERNAME,
@@ -91,8 +92,10 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{username: 'User could not be created'}")
     }
-    userService.createUser(jsonParams = JsonObject().apply {
+    createCustomFunctions(organization = organization, username = superuser.username)
+    userService.createUser(JsonObject().apply {
       addProperty("orgId", organization.id)
+      addProperty("username", superuserId)
       addProperty("email", jsonParams.get("admin").asString)
       addProperty("active", true)
       addProperty("firstName", jsonParams.get("firstName").asString)
@@ -100,7 +103,6 @@ class OrganizationService(
       addProperty("password", jsonParams.get("password").asString)
       add("roles", JsonArray().apply { add(RoleConstants.ADMIN) })
       add("details", jsonParams.get("details").asJsonObject)
-      add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.ADMIN, RoleConstants.USER)), JsonArray::class.java))
     })
     return organization
   }
@@ -137,6 +139,22 @@ class OrganizationService(
           addProperty("orgId", organization.id)
         }
         typeService.createType(jsonParams = getJsonParams(typeRequest.toString(), getExpectedParams("type", "createType")).apply {
+          addProperty("username", username)
+        })
+      }
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun createCustomFunctions(organization: Organization, username: String) {
+    val customTypeFilenames: JsonArray = gson.fromJson(FileReader("src/main/resources/functions/index.json"), JsonArray::class.java)
+    for (filename in customTypeFilenames) {
+      val functions: JsonArray = gson.fromJson(FileReader("src/main/resources/functions/${filename.asString}.json"), JsonArray::class.java)
+      for (json in functions) {
+        val functionRequest = json.asJsonObject.apply {
+          addProperty("orgId", organization.id)
+        }
+        functionService.createFunction(jsonParams = getJsonParams(functionRequest.toString(), getExpectedParams("function", "createFunction")).apply {
           addProperty("username", username)
         })
       }

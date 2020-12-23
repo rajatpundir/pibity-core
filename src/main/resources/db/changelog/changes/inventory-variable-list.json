@@ -13,7 +13,6 @@
                 {
                   "column": {
                     "name": "id",
-                    "autoIncrement": true,
                     "type": "BIGINT",
                     "constraints": {
                       "primaryKey": true,
@@ -24,17 +23,26 @@
                 },
                 {
                   "column": {
-                    "name": "list_type_id",
-                    "type": "BIGINT"
-                  }
-                },
-                {
-                  "column": {
                     "name": "size",
                     "type": "INTEGER",
                     "constraints": {
                       "nullable": false
                     }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "version",
+                    "type": "TIMESTAMP",
+                    "constraints": {
+                      "nullable": false
+                    }
+                  }
+                },
+                {
+                  "column": {
+                    "name": "list_type_id",
+                    "type": "BIGINT"
                   }
                 }
               ]

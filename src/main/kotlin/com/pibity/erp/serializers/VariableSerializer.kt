@@ -10,11 +10,7 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
-import com.pibity.erp.commons.constants.KeyConstants
-import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.entities.Variable
 
 fun serialize(variable: Variable): JsonObject {
@@ -32,13 +28,17 @@ fun serialize(variable: Variable): JsonObject {
     when (value.key.type.name) {
       TypeConstants.TEXT -> jsonValues.addProperty(value.key.name, value.stringValue!!)
       TypeConstants.NUMBER -> jsonValues.addProperty(value.key.name, value.longValue!!)
-      TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.doubleValue!!)
+      TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.decimalValue!!)
       TypeConstants.BOOLEAN -> jsonValues.addProperty(value.key.name, value.booleanValue!!)
+      TypeConstants.DATE -> jsonValues.addProperty(value.key.name, value.dateValue.toString())
+      TypeConstants.TIME -> jsonValues.addProperty(value.key.name, value.timeValue.toString())
+      TypeConstants.TIMESTAMP -> jsonValues.addProperty(value.key.name, value.timestampValue.toString())
+      TypeConstants.BLOB -> jsonValues.addProperty(value.key.name, value.blobValue.toString())
       TypeConstants.FORMULA -> {
         when (value.key.formula!!.returnType.name) {
           TypeConstants.TEXT -> jsonValues.addProperty(value.key.name, value.stringValue!!)
           TypeConstants.NUMBER -> jsonValues.addProperty(value.key.name, value.longValue!!)
-          TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.doubleValue!!)
+          TypeConstants.DECIMAL -> jsonValues.addProperty(value.key.name, value.decimalValue!!)
           TypeConstants.BOOLEAN -> jsonValues.addProperty(value.key.name, value.booleanValue!!)
         }
       }

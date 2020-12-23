@@ -1,0 +1,119 @@
+[
+  {
+    "functionName": "createSupplierCreditNote",
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "DEFAULT"
+      ],
+      "USER": [
+        "DEFAULT"
+      ]
+    },
+    "inputs": {
+      "purchaseOrder": {
+        "type": "PurchaseOrder"
+      },
+      "total": "Decimal",
+      "status": {
+        "type": "CreditStatus"
+      }
+    },
+    "outputs": {
+      "creditNote": {
+        "type": "CreditNote",
+        "variableName": {
+          "op": "id",
+          "types": [
+            "Text"
+          ],
+          "args": [
+            ""
+          ]
+        },
+        "values": {
+          "supplier": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "purchaseOrder",
+              "general",
+              "supplierName"
+            ]
+          },
+          "date": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "purchaseOrder",
+              "general",
+              "date"
+            ]
+          },
+          "dueDate": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "purchaseOrder",
+              "general",
+              "date"
+            ]
+          },
+          "purchaseOrder": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "purchaseOrder"
+            ]
+          },
+          "account": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "purchaseOrder",
+              "general",
+              "account"
+            ]
+          },
+          "total": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "total"
+            ]
+          },
+          "dueAmount": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "total"
+            ]
+          },
+          "status": {
+            "op": ".",
+            "types": [
+              "Text"
+            ],
+            "args": [
+              "status"
+            ]
+          }
+        }
+      }
+    }
+  }
+]
