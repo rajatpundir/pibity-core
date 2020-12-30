@@ -1134,25 +1134,9 @@
       "state": {
         "type": "States",
         "order": 1
-      },
-      "parentArea": {
-        "type": "List",
-        "listType": "Area",
-        "min": 0,
-        "max": 0,
-        "order": 2
       }
     },
-    "variables": {
-      "Hardoi": {
-        "state": "Uttar Pradesh",
-        "parentArea": []
-      },
-      "Sandi": {
-        "state": "Uttar Pradesh",
-        "parentArea": ["Hardoi"]
-      }
-    },
+    "variables": {},
     "permissions": [],
     "roles": {
       "ADMIN": [
@@ -1179,17 +1163,7 @@
         "order": 2
       }
     },
-    "variables": {
-      "241001": {
-        "state": "Uttar Pradesh",
-        "area": ["Hardoi"]
-      },
-      "241003": {
-        "state": "Uttar Pradesh",
-        "area": ["Sandi"]
-      }
-
-    },
+    "variables": {},
     "permissions": [],
     "roles": {
       "ADMIN": [

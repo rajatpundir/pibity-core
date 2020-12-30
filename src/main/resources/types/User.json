@@ -19,9 +19,8 @@
         "default": "Uttar Pradesh"
       },
       "pinCode": {
-        "type": "PinCode",
-        "order": 4,
-        "default": "241001"
+        "type": "Text",
+        "order": 4
       },
       "address": {
         "type": "Text",
