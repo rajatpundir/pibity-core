@@ -28,11 +28,11 @@ data class CircuitComputationConnection(
     val parentComputation: CircuitComputation,
 
     @ManyToOne
-    @JoinColumn(name = "function_input_id", nullable = false)
+    @JoinColumn(name = "function_input_id")
     val functionInput: FunctionInput? = null,
 
     @ManyToOne
-    @JoinColumn(name = "circuit_input_id", nullable = false)
+    @JoinColumn(name = "circuit_input_id")
     val circuitInput: CircuitInput? = null,
 
     @Version

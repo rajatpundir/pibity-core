@@ -348,7 +348,7 @@ fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, fu
     val connectionLevels: List<Int> = computation.get(CONNECT).asJsonObject.entrySet()
         .filter { (_, connectionArray) -> connectionArray.asJsonArray.first().asString == COMPUTATION }
         .map { (_, connectionArray) -> computationLevels[connectionArray.asJsonArray[1].asString]!! }
-    val level: Int = if (connectionLevels.isEmpty()) 0 else 1 + connectionLevels.max()!!
+    val level: Int = if (connectionLevels.isEmpty()) 0 else 1 + connectionLevels.maxOrNull()!!
     computationLevels[computationName] = level
     expectedComputationsWithLevel.add(computationName, computationObject.asJsonObject.apply { addProperty(LEVEL, level) })
   }

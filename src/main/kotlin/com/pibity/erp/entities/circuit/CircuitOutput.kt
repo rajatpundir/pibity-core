@@ -14,7 +14,7 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "circuit_output", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["circuit_id", "name"])])
+@Table(name = "circuit_output", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["parent_circuit_id", "name"])])
 data class CircuitOutput(
 
     @Id
@@ -23,8 +23,8 @@ data class CircuitOutput(
     val id: Long = -1,
 
     @ManyToOne
-    @JoinColumn(name = "circuit_id", nullable = false)
-    val circuit: Circuit,
+    @JoinColumn(name = "parent_circuit_id", nullable = false)
+    val parentCircuit: Circuit,
 
     @Column(name = "name", nullable = false)
     val name: String,
@@ -51,7 +51,7 @@ data class CircuitOutput(
     other ?: return false
     if (this === other) return true
     other as CircuitOutput
-    return this.circuit == other.circuit && this.name == other.name
+    return this.parentCircuit == other.parentCircuit && this.name == other.name
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
