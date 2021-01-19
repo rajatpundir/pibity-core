@@ -179,7 +179,7 @@ class TypeService(
         type.keys.add(keyJpaRepository.save(key))
       }
     }
-    type.depth = type.keys.map { 1 + it.type.depth }.max() ?: 0
+    type.depth = type.keys.map { 1 + it.type.depth }.maxOrNull() ?: 0
     type = try {
       typeJpaRepository.save(type)
     } catch (exception: Exception) {

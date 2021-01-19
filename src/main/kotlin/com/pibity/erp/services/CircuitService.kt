@@ -58,13 +58,13 @@ class CircuitService(
       val input: JsonObject = inputElement.asJsonObject
       val inputType: Type = globalTypes.single { it.name == input.get(KeyConstants.KEY_TYPE).asString }
       when (inputType.name) {
-        TypeConstants.TEXT -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType,
+        TypeConstants.TEXT -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType,
             defaultStringValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asString else "")))
-        TypeConstants.NUMBER -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType,
+        TypeConstants.NUMBER -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType,
             defaultLongValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asLong else 0)))
-        TypeConstants.DECIMAL -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType,
+        TypeConstants.DECIMAL -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType,
             defaultDoubleValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asDouble else 0.0)))
-        TypeConstants.BOOLEAN -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType,
+        TypeConstants.BOOLEAN -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType,
             defaultBooleanValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asBoolean else false)))
         TypeConstants.FORMULA, TypeConstants.LIST -> {
         }
@@ -72,8 +72,8 @@ class CircuitService(
           if (input.has(KeyConstants.DEFAULT)) {
             val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = inputType.superList!!, type = inputType, name = input.get(KeyConstants.DEFAULT).asString)
                 ?: throw CustomJsonException("{inputs: {$inputName: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
-            circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType, referencedVariable = referencedVariable)))
-          } else circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(circuit = circuit, name = inputName, type = inputType)))
+            circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType, referencedVariable = referencedVariable)))
+          } else circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType)))
         }
       }
     }
@@ -146,10 +146,10 @@ class CircuitService(
       val outputConnections: JsonArray = outputObject.asJsonObject.get(CONNECT).asJsonArray
       val connectedCircuitComputation = circuit.computations.single { it.name == outputConnections.first().asString }
       val circuitOutput: CircuitOutput = when (connectedCircuitComputation.connectedToFunction) {
-        true -> CircuitOutput(circuit = circuit, name = outputName,
+        true -> CircuitOutput(parentCircuit = circuit, name = outputName,
             connectedCircuitComputation = connectedCircuitComputation,
             connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function!!.outputs.single { it.name == outputConnections[1].asString })
-        false -> CircuitOutput(circuit = circuit, name = outputName,
+        false -> CircuitOutput(parentCircuit = circuit, name = outputName,
             connectedCircuitComputation = connectedCircuitComputation,
             connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == outputConnections[1].asString }.connectedCircuitComputationCircuitOutput
         )

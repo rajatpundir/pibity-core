@@ -34,13 +34,13 @@ data class Circuit(
     @Column(name = "version", nullable = false)
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @OneToMany(mappedBy = "circuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @OneToMany(mappedBy = "parentCircuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val inputs: MutableSet<CircuitInput> = HashSet(),
 
-    @OneToMany(mappedBy = "circuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @OneToMany(mappedBy = "parentCircuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val computations: MutableSet<CircuitComputation> = HashSet(),
 
-    @OneToMany(mappedBy = "circuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @OneToMany(mappedBy = "parentCircuit", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val outputs: MutableSet<CircuitOutput> = HashSet()
 
 ) : Serializable {

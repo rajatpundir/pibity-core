@@ -40,6 +40,7 @@ fun serialize(circuit: Circuit): JsonObject {
         addProperty(ORDER, computation.order)
         addProperty(LEVEL, computation.level)
         if (computation.connectedToFunction) {
+          addProperty(KeyConstants.KEY_TYPE, "Function")
           addProperty(EXECUTE, computation.function!!.name)
           add(CONNECT, JsonObject().apply {
             for (connection in computation.connections)
@@ -55,6 +56,7 @@ fun serialize(circuit: Circuit): JsonObject {
               })
           })
         } else {
+          addProperty(KeyConstants.KEY_TYPE, "Circuit")
           addProperty(EXECUTE, computation.circuit!!.name)
           add(CONNECT, JsonObject().apply {
             for (connection in computation.connections)
