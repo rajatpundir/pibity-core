@@ -14,8 +14,6 @@ import com.pibity.erp.entities.permission.TypePermission
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
-import javax.persistence.LockModeType
-import javax.persistence.TypedQuery
 
 @Repository
 class UserRepository(val entityManager: EntityManager) {
@@ -34,11 +32,10 @@ class UserRepository(val entityManager: EntityManager) {
   }
 
   @Transactional(readOnly = true)
-  fun getUserTypePermissions(organizationId: Long, superTypeName: String, typeName: String, username: String): Set<TypePermission> {
-    val hql = "SELECT DISTINCT p0 FROM TypePermission p0 WHERE EXISTS (SELECT p FROM TypePermission p JOIN p.permissionRoles pr JOIN pr.id.role r JOIN r.roleUsers ru JOIN ru.id.user u WHERE p.type.organization.id = :organizationId AND p.type.superTypeName = :superTypeName AND p.type.name = :typeName AND u.organization.id = :organizationId AND u.username = :username AND p = p0) OR EXISTS (SELECT p FROM TypePermission p JOIN p.permissionRoles pr JOIN pr.id.role r JOIN r.roleGroups rg JOIN rg.id.group g JOIN g.groupUsers gu JOIN gu.id.user u WHERE p.type.organization.id = :organizationId AND p.type.superTypeName = :superTypeName AND p.type.name = :typeName AND u.organization.id = :organizationId AND u.username = :username AND p = p0)"
+  fun getUserTypePermissions(organizationId: Long, typeName: String, username: String): Set<TypePermission> {
+    val hql = "SELECT DISTINCT p0 FROM TypePermission p0 WHERE EXISTS (SELECT p FROM TypePermission p JOIN p.permissionRoles pr JOIN pr.id.role r JOIN r.roleUsers ru JOIN ru.id.user u WHERE p.type.organization.id = :organizationId AND p.type.name = :typeName AND u.organization.id = :organizationId AND u.username = :username AND p = p0) OR EXISTS (SELECT p FROM TypePermission p JOIN p.permissionRoles pr JOIN pr.id.role r JOIN r.roleGroups rg JOIN rg.id.group g JOIN g.groupUsers gu JOIN gu.id.user u WHERE p.type.organization.id = :organizationId AND p.type.name = :typeName AND u.organization.id = :organizationId AND u.username = :username AND p = p0)"
     return entityManager.createQuery(hql, TypePermission::class.java).apply {
       setParameter("organizationId", organizationId)
-      setParameter("superTypeName", superTypeName)
       setParameter("typeName", typeName)
       setParameter("username", username)
     }.resultList.toSet()

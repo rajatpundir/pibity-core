@@ -5,9 +5,6 @@
   "typeName": {
     "type": "String"
   },
-  "multiplicity?": {
-    "type": "Long"
-  },
   "autoId?": {
     "type": "Boolean"
   },
@@ -15,6 +12,9 @@
     "type": "Object"
   },
   "variables?": {
+    "type": "Object"
+  },
+  "uniqueConstraints": {
     "type": "Object"
   },
   "permissions": {

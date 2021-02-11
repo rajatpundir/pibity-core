@@ -10,7 +10,6 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.constants.primitiveTypes
@@ -32,8 +31,6 @@ import java.io.FileReader
 class OrganizationService(
     val organizationJpaRepository: OrganizationJpaRepository,
     val typeJpaRepository: TypeJpaRepository,
-    val typeListJpaRepository: TypeListJpaRepository,
-    val variableListJpaRepository: VariableListJpaRepository,
     val typeService: TypeService,
     val userJpaRepository: UserJpaRepository,
     val userService: UserService,
@@ -62,7 +59,12 @@ class OrganizationService(
     val superuserId: String = try {
       getKeycloakId(KeycloakConstants.SUPERUSER_USERNAME)
     } catch (exception: Exception) {
-      createKeycloakUser(jsonParams = jsonParams.apply { addProperty("email", KeycloakConstants.SUPERUSER_USERNAME) })
+      createKeycloakUser(jsonParams = JsonObject().apply {
+        addProperty("firstName", "System")
+        addProperty("lastName", "Administrator")
+        addProperty("email", KeycloakConstants.SUPERUSER_USERNAME)
+        addProperty("isEnabled", true)
+      })
     }
     var superuser = User(organization = organization, username = superuserId,
         active = true,
@@ -118,16 +120,14 @@ class OrganizationService(
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createPrimitiveTypes(organization: Organization): Type {
-    val anyType: Type = typeJpaRepository.save(Type(organization = organization, superTypeName = GLOBAL_TYPE, name = GLOBAL_TYPE, primitiveType = true, multiplicity = 0))
-    try {
+  fun createPrimitiveTypes(organization: Organization) {
+        try {
       for (primitiveType in primitiveTypes)
-        typeJpaRepository.save(Type(organization = organization, superTypeName = GLOBAL_TYPE, name = primitiveType, primitiveType = true, multiplicity = 0))
+        typeJpaRepository.save(Type(organization = organization, name = primitiveType, primitiveType = true))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
     }
-    return anyType
-  }
+   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createCustomTypes(organization: Organization, username: String) {

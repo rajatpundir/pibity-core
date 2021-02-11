@@ -35,10 +35,7 @@ data class KeyPermission(
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @Column(name = "access_level", nullable = false)
-    var accessLevel: Int = 0,
-
-    @OneToOne
-    val referencedTypePermission: TypePermission? = null
+    var accessLevel: Int = 0
 
 ) : Serializable {
 

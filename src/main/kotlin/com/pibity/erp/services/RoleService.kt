@@ -9,7 +9,6 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Role
@@ -58,7 +57,6 @@ class RoleService(
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(
         organizationId = jsonParams.get("orgId").asLong,
-        superTypeName = GLOBAL_TYPE,
         typeName = jsonParams.get("typeName").asString,
         name = jsonParams.get("permissionName").asString
     ) ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}")

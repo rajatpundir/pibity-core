@@ -10,7 +10,6 @@ package com.pibity.erp.repositories.query
 
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
-import com.pibity.erp.entities.VariableList
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
@@ -19,11 +18,10 @@ import javax.persistence.EntityManager
 class VariableRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findByTypeAndName(superList: VariableList, type: Type, name: String): Variable? {
-    val hql = "SELECT v FROM Variable v WHERE v.superList = :superList AND v.type = :type AND v.name = :name"
+  fun findByTypeAndName(type: Type, name: String): Variable? {
+    val hql = "SELECT v FROM Variable v WHERE v.type = :type AND v.name = :name"
     return try {
       entityManager.createQuery(hql, Variable::class.java).apply {
-        setParameter("superList", superList)
         setParameter("type", type)
         setParameter("name", name)
       }.singleResult
@@ -33,14 +31,13 @@ class VariableRepository(val entityManager: EntityManager) {
   }
 
   @Transactional(readOnly = true)
-  fun findVariable(organizationId: Long, superTypeName: String, typeName: String, superList: Long, name: String = ""): Variable? {
-    val hql = "SELECT v FROM Variable v WHERE v.type.organization.id = :organizationId AND v.type.superTypeName = :superTypeName AND v.type.name = :typeName AND v.superList.id = :superList AND v.name = :name"
+  fun findVariable(organizationId: Long, typeName: String, name: String = ""): Variable? {
+    val hql =
+      "SELECT v FROM Variable v WHERE v.type.organization.id = :organizationId AND v.type.name = :typeName AND v.name = :name"
     return try {
       entityManager.createQuery(hql, Variable::class.java).apply {
         setParameter("organizationId", organizationId)
-        setParameter("superTypeName", superTypeName)
         setParameter("typeName", typeName)
-        setParameter("superList", superList)
         setParameter("name", name)
       }.singleResult
     } catch (exception: Exception) {

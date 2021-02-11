@@ -8,12 +8,7 @@
 
 package com.pibity.erp.repositories.jpa
 
-import com.pibity.erp.entities.VariableList
+import com.pibity.erp.entities.uniqueness.VariableUniqueness
 import org.springframework.data.repository.CrudRepository
-import org.springframework.transaction.annotation.Transactional
 
-interface VariableListJpaRepository : CrudRepository<VariableList, Long> {
-
-  @Transactional(readOnly = true)
-  fun getById(id: Long): VariableList?
-}
+interface VariableUniquenessJpaRepository : CrudRepository<VariableUniqueness, Long>

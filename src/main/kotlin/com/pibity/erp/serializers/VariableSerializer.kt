@@ -15,14 +15,10 @@ import com.pibity.erp.entities.Variable
 
 fun serialize(variable: Variable): JsonObject {
   val json = JsonObject()
-  if (variable.type.superTypeName == "Any") {
-    json.addProperty("orgId", variable.type.organization.id)
-    json.addProperty("typeName", variable.type.name)
-    json.addProperty("active", variable.active)
-  } else
-    json.addProperty("context", variable.superList.id)
+  json.addProperty("orgId", variable.type.organization.id)
+  json.addProperty("typeName", variable.type.name)
+  json.addProperty("active", variable.active)
   json.addProperty("variableName", variable.name)
-//  json.addProperty("version", variable.version.time)
   val jsonValues = JsonObject()
   for (value in variable.values) {
     when (value.key.type.name) {
@@ -42,13 +38,7 @@ fun serialize(variable: Variable): JsonObject {
           TypeConstants.BOOLEAN -> jsonValues.addProperty(value.key.name, value.booleanValue!!)
         }
       }
-      TypeConstants.LIST -> jsonValues.add(value.key.name, serialize(value.list!!.variables))
-      else -> {
-        if (value.referencedVariable!!.type.superTypeName == "Any")
-          jsonValues.addProperty(value.key.name, value.referencedVariable!!.name)
-        else
-          jsonValues.add(value.key.name, serialize(value.referencedVariable!!))
-      }
+      else -> jsonValues.addProperty(value.key.name, value.referencedVariable!!.name)
     }
   }
   json.add("values", jsonValues)

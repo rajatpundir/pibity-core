@@ -1,0 +1,74 @@
+[
+  {
+    "typeName": "A1",
+    "keys": {
+      "a": {
+        "type": "Number",
+        "order": 1,
+        "default": 3
+      },
+      "b": {
+        "type": "Number",
+        "order": 2,
+        "default": 2
+      }
+    },
+    "uniqueConstraints": {
+      "Constraint1": [
+        "a",
+        "b"
+      ],
+      "Constraint2": [
+        "a"
+      ]
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    },
+    "variables": {
+      "aa": {
+        "a": 6
+      },
+      "aa1": {
+        "a": 7
+      }
+    }
+  },
+  {
+    "typeName": "A2",
+    "keys": {
+      "c": {
+        "type": "Decimal",
+        "order": 1,
+        "default": 3
+      },
+      "d": {
+        "type": "Decimal",
+        "order": 2,
+        "default": 2
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    },
+    "uniqueConstraints": {
+         },
+    "variables": {
+      "bb": {
+        "d": 23.42
+      }
+    }
+  }
+]

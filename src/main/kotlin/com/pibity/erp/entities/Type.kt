@@ -9,13 +9,14 @@
 package com.pibity.erp.entities
 
 import com.pibity.erp.entities.permission.TypePermission
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "type", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "super_type_name", "name"])])
+@Table(name = "type", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Type(
 
     @Id
@@ -27,30 +28,15 @@ data class Type(
     @JoinColumn(name = "organization_id", nullable = false)
     val organization: Organization,
 
-    @Column(name = "super_type_name", nullable = false)
-    val superTypeName: String,
-
     @Column(name = "name", nullable = false)
     val name: String,
+
+    @Column(name = "auto_id", nullable = false)
+    var autoId: Boolean = false,
 
     @Version
     @Column(name = "version", nullable = false)
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
-
-    @Column(name = "auto_increment_id", nullable = false)
-    var autoIncrementId: Int = 0,
-
-    @Column(name = "auto_assign_id", nullable = false)
-    var autoAssignId: Boolean = false,
-
-    @Column(name = "multiplicity", nullable = false)
-    val multiplicity: Long,
-
-    @Column(name = "variable_count", nullable = false)
-    var variableCount: Long = 0,
-
-    @Column(name = "depth", nullable = false)
-    var depth: Int = 0,
 
     @Column(name = "primitive_type", nullable = false)
     var primitiveType: Boolean = false,
@@ -71,13 +57,13 @@ data class Type(
     val referencingKeys: Set<Key> = HashSet(),
 
     @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    val uniqueConstraints: MutableSet<TypeUniqueness> = HashSet(),
+
+    @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     val typeAssertions: MutableSet<TypeAssertion> = HashSet(),
 
     @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
-    val permissions: MutableSet<TypePermission> = HashSet(),
-
-    @OneToOne
-    var superList: VariableList? = null
+    val permissions: MutableSet<TypePermission> = HashSet()
 
 ) : Serializable {
 
@@ -85,7 +71,7 @@ data class Type(
     other ?: return false
     if (this === other) return true
     other as Type
-    return this.organization == other.organization && this.superTypeName == other.superTypeName && this.name == other.name
+    return this.organization == other.organization && this.name == other.name
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()

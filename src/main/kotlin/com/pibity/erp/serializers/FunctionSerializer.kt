@@ -10,7 +10,6 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.utils.gson
@@ -22,13 +21,12 @@ fun serialize(function: Function): JsonObject {
   val json = JsonObject()
   json.addProperty("orgId", function.organization.id)
   json.addProperty("functionName", function.name)
-//  json.addProperty("version", function.version.time)
   json.add("inputs", JsonObject().apply {
     for (input in function.inputs) {
       when (input.type.name) {
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
           addProperty(input.name, input.type.name)
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA -> {
         }
         else ->
           add(input.name, JsonObject().apply {
@@ -50,7 +48,7 @@ fun serialize(function: Function): JsonObject {
             add("values", gson.fromJson(output.variableName, JsonObject::class.java))
           })
         }
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA -> {
         }
         else ->
           add(output.name, JsonObject().apply {
@@ -78,18 +76,9 @@ fun serialize(functionInputType: FunctionInputType): JsonObject {
     when (functionInputKey.key.type.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
         json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
-      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      TypeConstants.FORMULA, TypeConstants.BLOB -> {
       }
-      else -> if (functionInputKey.key.type.superTypeName == GLOBAL_TYPE) {
-        json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
-      } else {
-        if ((functionInputKey.key.parentType.superTypeName == GLOBAL_TYPE && functionInputKey.key.parentType.name == functionInputKey.key.type.superTypeName)
-            || (functionInputKey.key.parentType.superTypeName != GLOBAL_TYPE && functionInputKey.key.parentType.superTypeName == functionInputKey.key.type.superTypeName)) {
-          json.add(functionInputKey.key.name, serialize(functionInputKey.referencedFunctionInputType!!))
-        } else {
-          json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
-        }
-      }
+      else -> json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
     }
   }
   return json
@@ -101,18 +90,9 @@ fun serialize(functionOutputType: FunctionOutputType): JsonObject {
     when (functionOutputKey.key.type.name) {
       TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
         json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
-      TypeConstants.FORMULA, TypeConstants.LIST -> {
+      TypeConstants.FORMULA -> {
       }
-      else -> if (functionOutputKey.key.type.superTypeName == GLOBAL_TYPE) {
-        json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
-      } else {
-        if ((functionOutputKey.key.parentType.superTypeName == GLOBAL_TYPE && functionOutputKey.key.parentType.name == functionOutputKey.key.type.superTypeName)
-            || (functionOutputKey.key.parentType.superTypeName != GLOBAL_TYPE && functionOutputKey.key.parentType.superTypeName == functionOutputKey.key.type.superTypeName)) {
-          json.add(functionOutputKey.key.name, serialize(functionOutputKey.referencedFunctionOutputType!!))
-        } else {
-          json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
-        }
-      }
+      else -> json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
     }
   }
   return json

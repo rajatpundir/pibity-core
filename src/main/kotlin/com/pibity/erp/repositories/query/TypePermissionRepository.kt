@@ -19,12 +19,11 @@ import javax.persistence.TypedQuery
 class TypePermissionRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findTypePermission(organizationId: Long, superTypeName: String, typeName: String, name: String): TypePermission? {
-    val hql = "SELECT p FROM TypePermission p WHERE p.type.organization.id = :organizationId AND p.type.superTypeName = :superTypeName AND p.type.name = :typeName AND p.name = :name"
+  fun findTypePermission(organizationId: Long, typeName: String, name: String): TypePermission? {
+    val hql = "SELECT p FROM TypePermission p WHERE p.type.organization.id = :organizationId AND p.type.name = :typeName AND p.name = :name"
     return try {
       entityManager.createQuery(hql, TypePermission::class.java).apply {
         setParameter("organizationId", organizationId)
-        setParameter("superTypeName", superTypeName)
         setParameter("typeName", typeName)
         setParameter("name", name)
       }.singleResult

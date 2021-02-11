@@ -13,6 +13,7 @@ import com.pibity.erp.entities.function.FunctionInputKey
 import com.pibity.erp.entities.function.FunctionOutput
 import com.pibity.erp.entities.function.FunctionOutputKey
 import com.pibity.erp.entities.permission.KeyPermission
+import com.pibity.erp.entities.uniqueness.KeyUniqueness
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.math.BigDecimal
@@ -88,10 +89,6 @@ data class Key(
     @JoinColumns(*[JoinColumn(name = "formula_id", referencedColumnName = "id")])
     var formula: Formula? = null,
 
-    @OneToOne(cascade = [CascadeType.ALL])
-    @JoinColumn(name = "value_type_list_id")
-    var list: TypeList? = null,
-
     @Column(name = "is_formula_dependency", nullable = false)
     var isFormulaDependency: Boolean = false,
 
@@ -100,6 +97,9 @@ data class Key(
 
     @Column(name = "is_variable_dependency", nullable = false)
     var isVariableDependency: Boolean = false,
+
+    @ManyToMany(mappedBy = "key")
+    val dependentKeyUniquenesses: Set<KeyUniqueness> = HashSet(),
 
     @ManyToMany(mappedBy = "keyDependencies")
     val dependentFormulas: Set<Formula> = HashSet(),

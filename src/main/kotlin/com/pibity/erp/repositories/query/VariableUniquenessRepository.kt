@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,22 +8,23 @@
 
 package com.pibity.erp.repositories.query
 
-import com.pibity.erp.entities.TypeAssertion
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
+import com.pibity.erp.entities.uniqueness.VariableUniqueness
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
 
 @Repository
-class AssertionRepository(val entityManager: EntityManager) {
+class VariableUniquenessRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findAssertion(organizationId: Long, typeName: String, name: String): TypeAssertion? {
-    val hql = "SELECT a from Assertion a WHERE a.type.organization.id = :organizationId AND a.type.name = :typeName AND a.name = :name"
+  fun findVariableUniqueness(typeUniqueness: TypeUniqueness, level: Int = 0, hash: String): VariableUniqueness? {
+    val hql = "SELECT v FROM VariableUniqueness v WHERE v.typeUniqueness = :typeUniqueness AND v.level = :level AND v.hash = :hash"
     return try {
-      entityManager.createQuery(hql, TypeAssertion::class.java).apply {
-        setParameter("organizationId", organizationId)
-        setParameter("typeName", typeName)
-        setParameter("name", name)
+      entityManager.createQuery(hql, VariableUniqueness::class.java).apply {
+        setParameter("typeUniqueness", typeUniqueness)
+        setParameter("level", level)
+        setParameter("hash", hash)
       }.singleResult
     } catch (exception: Exception) {
       null

@@ -65,10 +65,6 @@ data class Value(
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null,
 
-    @OneToOne(cascade = [CascadeType.ALL])
-    @JoinColumn(name = "value_variable_list_id")
-    var list: VariableList? = null,
-
     @ManyToMany
     @JoinTable(name = "mapping_value_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_value_id", referencedColumnName = "id")])
     var valueDependencies: MutableSet<Value> = HashSet(),

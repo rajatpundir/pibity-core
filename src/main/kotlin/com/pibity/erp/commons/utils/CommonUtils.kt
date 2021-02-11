@@ -14,6 +14,7 @@ import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.keycloak.representations.AccessToken
 import java.io.File
+import java.security.MessageDigest
 
 val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
@@ -82,4 +83,11 @@ fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonP
     gson.fromJson(gson.toJson(claims["groups"]), JsonArray::class.java).map { it.asString }.toSet()
   if (!groups.contains(listOf("", jsonParams.get("orgId").asString, subGroupName).joinToString(separator = "/")))
     throw CustomJsonException("{orgId: 'Organization could not be found'}")
+}
+
+fun computeHash(input: String): String {
+  val bytes = input.toByteArray()
+  val md = MessageDigest.getInstance("SHA-256")
+  val digest = md.digest(bytes)
+  return digest.fold("", { str, it -> str + "%02x".format(it) })
 }
