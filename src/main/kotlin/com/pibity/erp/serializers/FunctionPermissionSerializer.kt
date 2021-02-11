@@ -17,7 +17,6 @@ fun serialize(functionPermission: FunctionPermission): JsonObject {
   json.addProperty("orgId", functionPermission.function.organization.id)
   json.addProperty("functionName", functionPermission.function.name)
   json.addProperty("permissionName", functionPermission.name)
-//  json.addProperty("version", functionPermission.version.time)
   json.add("permissions", JsonObject().apply {
     add("inputs", JsonObject().apply {
       functionPermission.functionInputPermissions.forEach { addProperty(it.functionInput.name, it.accessLevel) }

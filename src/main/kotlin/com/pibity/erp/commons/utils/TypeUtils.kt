@@ -9,7 +9,6 @@
 package com.pibity.erp.commons.utils
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.KeyConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
@@ -20,19 +19,11 @@ import java.util.regex.Pattern
 
 val typeIdentifierPattern: Pattern = Pattern.compile("^[A-Z][a-zA-Z0-9]*$")
 
-val keyIdentifierPattern: Pattern = Pattern.compile("^[a-z][a-zA-Z0-9]*$")
-
-val keyTypeIdentifierPattern: Pattern = Pattern.compile("^([A-Z][a-zA-Z0-9]*)(::[A-Z][a-zA-Z0-9]*)?\$")
+val keyIdentifierPattern: Pattern = Pattern.compile("[a-z][a-zA-Z0-9]*(_[a-z][a-zA-Z0-9]*)*$")
 
 fun validateTypeName(typeName: String): String {
   if (!typeIdentifierPattern.matcher(typeName).matches())
     throw CustomJsonException("{typeName: 'Type name $typeName is not a valid identifier'}")
-  return typeName
-}
-
-fun validateSuperTypeName(typeName: String): String {
-  if (!typeIdentifierPattern.matcher(typeName).matches())
-    throw CustomJsonException("{superTypeName: 'Type name $typeName is not a valid identifier'}")
   return typeName
 }
 
@@ -51,178 +42,78 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
     if (!key.has(KeyConstants.KEY_TYPE))
       throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Type is not provided'}}}")
     else {
-      if (key.get(KeyConstants.KEY_TYPE).isJsonObject) {
-        val nestedType: JsonObject = key.get(KeyConstants.KEY_TYPE).asJsonObject
-        if (!nestedType.has("typeName"))
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {typeName: 'Field is missing in request body'}}}}")
-        val nestedTypeName: String = try {
-          nestedType.get("typeName").asString
-        } catch (exception: Exception) {
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {typeName: 'Unexpected value for parameter'}}}}")
-        }
-        if (!nestedType.has("keys"))
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {keys: 'Field is missing in request body'}}}}")
-        val nestedTypeKeys: JsonObject = try {
-          nestedType.get("keys").asJsonObject
-        } catch (exception: Exception) {
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {keys: 'Unexpected value for parameter'}}}}")
-        }
-        if (nestedType.has("multiplicity")) {
-          try {
-            nestedType.get("multiplicity").asLong
-          } catch (exception: Exception) {
-            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: {multiplicity: 'Unexpected value for parameter'}}}}")
-          }
-        }
+      try {
+        expectedKey.addProperty(KeyConstants.KEY_TYPE, key.get(KeyConstants.KEY_TYPE).asString)
+      } catch (exception: Exception) {
+        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Unexpected value for parameter'}}}")
+      }
+      // Validate type name for key
+      if (!typeIdentifierPattern.matcher(key.get(KeyConstants.KEY_TYPE).asString).matches())
+        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Type name for key is not valid'}}}")
+      // validate default value for key
+      if (key.has(KeyConstants.DEFAULT)) {
         try {
-          validateTypeName(nestedTypeName)
-          validateTypeKeys(nestedTypeKeys)
-          expectedKey.add(KeyConstants.KEY_TYPE, JsonObject().apply {
-            addProperty("typeName", nestedTypeName)
-            add("keys", nestedTypeKeys)
-            if (nestedType.has("multiplicity") && nestedType.get("multiplicity").asLong >= 0)
-              addProperty("multiplicity?", nestedType.get("multiplicity").asLong)
-          })
-        } catch (exception: CustomJsonException) {
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: ${exception.message}}}}")
-        }
-        // validate default value for key
-        if (key.has(KeyConstants.DEFAULT)) {
-          try {
-            when (key.get(KeyConstants.KEY_TYPE).asJsonObject.get("typeName").asString) {
-              TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-              TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBigDecimal)
-              TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-              TypeConstants.DATE  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Date(dateFormat.parse(key.get(KeyConstants.DEFAULT).asString).time).toString())
-              TypeConstants.TIMESTAMP  -> expectedKey.addProperty(KeyConstants.DEFAULT, Timestamp(key.get(KeyConstants.DEFAULT).asLong).time)
-              TypeConstants.TIME  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Time(key.get(KeyConstants.DEFAULT).asLong).time)
-              TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
-              }
-              else -> {
-                /* Referential keys with local types does not make sense to have defaults */
-              }
+          when (key.get(KeyConstants.KEY_TYPE).asString) {
+            TypeConstants.TEXT -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                key.get(KeyConstants.DEFAULT).asString
+            )
+            TypeConstants.NUMBER -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                key.get(KeyConstants.DEFAULT).asLong
+            )
+            TypeConstants.DECIMAL -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                key.get(KeyConstants.DEFAULT).asBigDecimal
+            )
+            TypeConstants.BOOLEAN -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                key.get(KeyConstants.DEFAULT).asBoolean
+            )
+            TypeConstants.DATE -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                java.sql.Date(dateFormat.parse(key.get(KeyConstants.DEFAULT).asString).time).toString()
+            )
+            TypeConstants.TIMESTAMP -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                Timestamp(key.get(KeyConstants.DEFAULT).asLong).time
+            )
+            TypeConstants.TIME -> expectedKey.addProperty(
+                KeyConstants.DEFAULT,
+                java.sql.Time(key.get(KeyConstants.DEFAULT).asLong).time
+            )
+            TypeConstants.FORMULA, TypeConstants.BLOB -> {
             }
-          } catch (exception: Exception) {
-            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
+            else -> {
+              // Keys with reference to local types of some global variable does not make sense to have default value, at the time of writing this line.
+              if (!key.get(KeyConstants.KEY_TYPE).asString.contains("::"))
+                expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
+            }
           }
-        }
-      } else {
-        try {
-          expectedKey.addProperty(KeyConstants.KEY_TYPE, key.get(KeyConstants.KEY_TYPE).asString)
         } catch (exception: Exception) {
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Unexpected value for parameter'}}}")
+          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
         }
-        // Validate type name for key
-        if (!keyTypeIdentifierPattern.matcher(key.get(KeyConstants.KEY_TYPE).asString).matches())
-          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Type name for key is not valid'}}}")
-        // validate default value for key
-        if (key.has(KeyConstants.DEFAULT)) {
+      }
+      if (key.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
+        if (!key.has(KeyConstants.FORMULA_RETURN_TYPE))
+          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not provided'}}}")
+        else {
           try {
-            when (key.get(KeyConstants.KEY_TYPE).asString) {
-              TypeConstants.TEXT -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-              TypeConstants.NUMBER -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asLong)
-              TypeConstants.DECIMAL -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBigDecimal)
-              TypeConstants.BOOLEAN -> expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asBoolean)
-              TypeConstants.DATE  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Date(dateFormat.parse(key.get(KeyConstants.DEFAULT).asString).time).toString())
-              TypeConstants.TIMESTAMP  -> expectedKey.addProperty(KeyConstants.DEFAULT, Timestamp(key.get(KeyConstants.DEFAULT).asLong).time)
-              TypeConstants.TIME  -> expectedKey.addProperty(KeyConstants.DEFAULT, java.sql.Time(key.get(KeyConstants.DEFAULT).asLong).time)
-              TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
-              }
-              else -> {
-                // Keys with reference to local types of some global variable does not make sense to have default value, at the time of writing this line.
-                if (!key.get(KeyConstants.KEY_TYPE).asString.contains("::"))
-                  expectedKey.addProperty(KeyConstants.DEFAULT, key.get(KeyConstants.DEFAULT).asString)
-              }
-            }
+            expectedKey.addProperty(
+                KeyConstants.FORMULA_RETURN_TYPE,
+                key.get(KeyConstants.FORMULA_RETURN_TYPE).asString
+            )
           } catch (exception: Exception) {
-            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.DEFAULT}: 'Default value for key is not valid'}}}")
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not valid'}}}")
           }
         }
-        when (key.get(KeyConstants.KEY_TYPE).asString) {
-          TypeConstants.LIST -> {
-            if (!key.has(KeyConstants.LIST_TYPE))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List Type is not provided'}}}")
-            else {
-              if (key.get(KeyConstants.LIST_TYPE).isJsonObject) {
-                val nestedType: JsonObject = key.get(KeyConstants.LIST_TYPE).asJsonObject
-                if (!nestedType.has("typeName"))
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {typeName: 'Field is missing in request body'}}}}")
-                val nestedTypeName: String = try {
-                  nestedType.get("typeName").asString
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {typeName: 'Unexpected value for parameter'}}}}")
-                }
-                if (!nestedType.has("keys"))
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {keys: 'Field is missing in request body'}}}}")
-                val nestedTypeKeys: JsonObject = try {
-                  nestedType.get("keys").asJsonObject
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: {keys: 'Unexpected value for parameter'}}}}")
-                }
-                try {
-                  validateTypeName(nestedTypeName)
-                  validateTypeKeys(nestedTypeKeys)
-                  expectedKey.add(KeyConstants.LIST_TYPE, JsonObject().apply {
-                    addProperty("typeName", nestedTypeName)
-                    add("keys", nestedTypeKeys)
-                  })
-                } catch (exception: CustomJsonException) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: ${exception.message}}}}")
-                }
-              } else {
-                try {
-                  expectedKey.addProperty(KeyConstants.LIST_TYPE, key.get(KeyConstants.LIST_TYPE).asString)
-                } catch (exception: Exception) {
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List Type is not valid'}}}")
-                }
-                // Validate list type name for key
-                if (!keyTypeIdentifierPattern.matcher(key.get(KeyConstants.LIST_TYPE).asString).matches())
-                  throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'Type name for key is not valid'}}}")
-              }
-            }
-            val listMaxSize: Int = if (!key.has(KeyConstants.LIST_MAX_SIZE))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not provided'}}}")
-            else try {
-              key.get(KeyConstants.LIST_MAX_SIZE).asInt
-            } catch (exception: Exception) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
-            }
-            if (listMaxSize < 0)
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MAX_SIZE}: 'Max size for List is not valid'}}}")
-            expectedKey.addProperty(KeyConstants.LIST_MAX_SIZE, listMaxSize)
-            val listMinSize: Int = if (!key.has(KeyConstants.LIST_MIN_SIZE))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not provided'}}}")
-            else try {
-              key.get(KeyConstants.LIST_MIN_SIZE).asInt
-            } catch (exception: Exception) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
-            }
-            if (listMinSize < 0)
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Min size for List is not valid'}}}")
-            expectedKey.addProperty(KeyConstants.LIST_MIN_SIZE, listMinSize)
-            if (listMaxSize != 0 && listMaxSize < listMinSize)
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_MIN_SIZE}: 'Max/Min size for List is not valid'}}}")
-          }
-          TypeConstants.FORMULA -> {
-            if (!key.has(KeyConstants.FORMULA_RETURN_TYPE))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not provided'}}}")
-            else {
-              try {
-                expectedKey.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return Type is not valid'}}}")
-              }
-            }
-            if (!key.has(KeyConstants.FORMULA_EXPRESSION))
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not provided'}}}")
-            else {
-              try {
-                expectedKey.add(KeyConstants.FORMULA_EXPRESSION, key.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject)
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not valid'}}}")
-              }
-            }
+        if (!key.has(KeyConstants.FORMULA_EXPRESSION))
+          throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not provided'}}}")
+        else {
+          try {
+            expectedKey.add(KeyConstants.FORMULA_EXPRESSION, key.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject)
+          } catch (exception: Exception) {
+            throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_EXPRESSION}: 'Formula expression is not valid'}}}")
           }
         }
       }
@@ -242,7 +133,15 @@ fun validateTypeKeys(keys: JsonObject): JsonObject {
   return expectedKeys
 }
 
-fun getSymbols(type: Type, symbolPaths: MutableSet<String>, prefix: String = "", level: Int, keyDependencies: MutableSet<Key>, typeDependencies: MutableSet<Type>, symbolsForFormula: Boolean = true): JsonObject {
+fun getSymbols(
+    type: Type,
+    symbolPaths: MutableSet<String>,
+    prefix: String = "",
+    level: Int,
+    keyDependencies: MutableSet<Key>,
+    typeDependencies: MutableSet<Type>,
+    symbolsForFormula: Boolean = true
+): JsonObject {
   val symbols = JsonObject()
   for (key in type.keys) {
     if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
@@ -250,86 +149,52 @@ fun getSymbols(type: Type, symbolPaths: MutableSet<String>, prefix: String = "",
         TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN -> {
           symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.type.name) })
           symbolPaths.remove(prefix + key.name)
-          keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-        }
-        TypeConstants.LIST -> {
+          keyDependencies.add(key.apply {
+            if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true
+          })
         }
         TypeConstants.FORMULA -> if (level != 0) {
-          symbols.add(key.name, JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.formula!!.returnType.name) })
+          symbols.add(
+              key.name,
+              JsonObject().apply { addProperty(KeyConstants.KEY_TYPE, key.formula!!.returnType.name) })
           symbolPaths.remove(prefix + key.name)
-          keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+          keyDependencies.add(key.apply {
+            if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true
+          })
         }
         else -> {
-          if (key.type.superTypeName == GLOBAL_TYPE) {
-            if (symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") }) {
-              val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
-              val keySymbols = JsonObject().apply {
-                if (symbolPaths.contains(prefix + key.name)) {
-                  addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-                }
-                if (subSymbols.size() != 0)
-                  add("values", subSymbols)
-              }
-              if (keySymbols.size() != 0) {
-                symbols.add(key.name, keySymbols)
-                keyDependencies.add(key.apply { isVariableDependency = true })
-              }
-            } else {
-              symbols.add(key.name, JsonObject().apply {
+          if (symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") }) {
+            val subSymbols: JsonObject = getSymbols(
+                prefix = prefix + key.name + ".",
+                type = key.type,
+                symbolPaths = symbolPaths,
+                level = level + 1,
+                keyDependencies = keyDependencies,
+                typeDependencies = typeDependencies,
+                symbolsForFormula = symbolsForFormula
+            )
+            val keySymbols = JsonObject().apply {
+              if (symbolPaths.contains(prefix + key.name)) {
                 addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-              })
-              typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+                typeDependencies.add(key.type.apply {
+                  if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true
+                })
+              }
+              if (subSymbols.size() != 0)
+                add("values", subSymbols)
+            }
+            if (keySymbols.size() != 0) {
+              symbols.add(key.name, keySymbols)
               keyDependencies.add(key.apply { isVariableDependency = true })
             }
           } else {
-            if ((key.parentType.superTypeName == GLOBAL_TYPE && key.parentType.name == key.type.superTypeName)
-                || (key.parentType.superTypeName != GLOBAL_TYPE && key.parentType.superTypeName == key.type.superTypeName)) {
-              val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
-              if (subSymbols.size() != 0) {
-                symbols.add(key.name, JsonObject().apply {
-                  add("values", subSymbols)
-                })
-              }
-            } else {
-              if (symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") }) {
-                val subSymbols: JsonObject = getSymbols(prefix = prefix + key.name + ".", type = key.type, symbolPaths = symbolPaths, level = level + 1, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = symbolsForFormula)
-                val keySymbols = JsonObject().apply {
-                  if (subSymbols.size() != 0)
-                    add("values", subSymbols)
-                }
-                if (symbolPaths.contains(prefix + key.name)) {
-                  keySymbols.addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-                }
-                if (keySymbols.size() != 0) {
-                  symbols.add(key.name, keySymbols)
-                  keyDependencies.add(key.apply { isVariableDependency = true })
-                }
-                if (symbolPaths.contains(prefix + key.name + "::context")) {
-                  symbols.add(key.name + "::context", JsonObject().apply {
-                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
-                  })
-                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-                  keyDependencies.add(key.apply { isVariableDependency = true })
-                }
-              } else {
-                if (symbolPaths.contains(prefix + key.name)) {
-                  symbols.add(key.name, JsonObject().apply {
-                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
-                  })
-                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-                  keyDependencies.add(key.apply { isVariableDependency = true })
-                }
-                if (symbolPaths.contains(prefix + key.name + "::context")) {
-                  symbols.add(key.name + "::context", JsonObject().apply {
-                    addProperty(KeyConstants.KEY_TYPE, TypeConstants.NUMBER)
-                  })
-                  typeDependencies.add(key.type.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
-                  keyDependencies.add(key.apply { isVariableDependency = true })
-                }
-              }
-            }
+            symbols.add(key.name, JsonObject().apply {
+              addProperty(KeyConstants.KEY_TYPE, TypeConstants.TEXT)
+            })
+            typeDependencies.add(key.type.apply {
+              if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true
+            })
+            keyDependencies.add(key.apply { isVariableDependency = true })
           }
         }
       }

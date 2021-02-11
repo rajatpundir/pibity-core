@@ -1,0 +1,41 @@
+[
+  {
+    "functionName": "fun",
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "DEFAULT"
+      ],
+      "USER": [
+        "DEFAULT"
+      ]
+    },
+    "inputs": {
+      "x": {
+        "type": "A1",
+        "variableName": {
+          "op": ".",
+          "types": [
+            "Text"
+          ],
+          "args": [
+            "y"
+          ]
+        }
+      },
+      "y": {
+        "type": "A2",
+        "variableName": {
+          "op": ".",
+          "types": [
+            "Text"
+          ],
+          "args": [
+            "x"
+          ]
+        }
+      }
+    },
+    "outputs": {}
+  }
+]

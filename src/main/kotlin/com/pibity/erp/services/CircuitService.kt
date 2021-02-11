@@ -66,11 +66,11 @@ class CircuitService(
             defaultDoubleValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asDouble else 0.0)))
         TypeConstants.BOOLEAN -> circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType,
             defaultBooleanValue = if (input.has(KeyConstants.DEFAULT)) input.get(KeyConstants.DEFAULT).asBoolean else false)))
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA -> {
         }
         else -> {
           if (input.has(KeyConstants.DEFAULT)) {
-            val referencedVariable: Variable = variableRepository.findByTypeAndName(superList = inputType.superList!!, type = inputType, name = input.get(KeyConstants.DEFAULT).asString)
+            val referencedVariable: Variable = variableRepository.findByTypeAndName(type = inputType, name = input.get(KeyConstants.DEFAULT).asString)
                 ?: throw CustomJsonException("{inputs: {$inputName: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
             circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType, referencedVariable = referencedVariable)))
           } else circuit.inputs.add(circuitInputJpaRepository.save(CircuitInput(parentCircuit = circuit, name = inputName, type = inputType)))
@@ -197,7 +197,7 @@ class CircuitService(
                         if (connection.connectedCircuitComputation.connectedToFunction) connection.connectedCircuitComputationFunctionOutput!!.name
                         else connection.connectedCircuitComputationCircuitOutput!!.name).asBoolean
                   else inputs.get(connection.connectedCircuitInput!!.name).asBoolean)
-                  TypeConstants.FORMULA, TypeConstants.LIST -> {
+                  TypeConstants.FORMULA -> {
                   }
                   else -> addProperty(connection.functionInput.name, if (connection.connectedToComputation)
                     computationResults.get(connection.connectedCircuitComputation!!.name).asJsonObject.get(
@@ -240,7 +240,7 @@ class CircuitService(
                         if (connection.connectedCircuitComputation.connectedToFunction) connection.connectedCircuitComputationFunctionOutput!!.name
                         else connection.connectedCircuitComputationCircuitOutput!!.name).asBoolean
                   else inputs.get(connection.connectedCircuitInput!!.name).asBoolean)
-                  TypeConstants.FORMULA, TypeConstants.LIST -> {
+                  TypeConstants.FORMULA -> {
                   }
                   else -> addProperty(connection.circuitInput.name, if (connection.connectedToComputation)
                     computationResults.get(connection.connectedCircuitComputation!!.name).asJsonObject.get(

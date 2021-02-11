@@ -16,7 +16,10 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "user", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "username"])])
+@Table(name = "user", schema = "inventory", uniqueConstraints = [
+  UniqueConstraint(columnNames = ["organization_id", "username"]),
+  UniqueConstraint(columnNames = ["organization_id", "email"])
+])
 data class User(
 
     @Id

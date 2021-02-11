@@ -10,7 +10,6 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.createKeycloakUser
@@ -170,7 +169,7 @@ class UserService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserTypePermissions(jsonParams: JsonObject): Set<TypePermission> {
-    return (userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, superTypeName = GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
+    return (userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
   }
 
   @Transactional(rollbackFor = [CustomJsonException::class])
@@ -180,7 +179,7 @@ class UserService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun superimposeUserTypePermissions(jsonParams: JsonObject): TypePermission {
-    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, superTypeName = if (jsonParams.has("superTypeName")) jsonParams.get("superTypeName").asString else GLOBAL_TYPE, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
+    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
     if (typePermissions.isNotEmpty())
       return typePermissionService.superimposeTypePermissions(typePermissions = typePermissions, type = typePermissions.first().type)
     else

@@ -1,15 +1,4 @@
 [
-  "Country",
-  "User",
-  "Account",
-  "Transaction",
-  "Currency",
-  "Customer",
-  "Supplier",
-  "Product",
-  "PurchaseOrder",
-  "SaleCreditNote",
-  "PurchaseCreditNote",
-  "PurchaseDebitNote",
-  "Machine"
+   "User",
+   "Temp"
 ]

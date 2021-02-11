@@ -17,7 +17,6 @@ fun serialize(role: Role): JsonObject {
   val json = JsonObject()
   json.addProperty("orgId", role.organization.id)
   json.addProperty("roleName", role.name)
-//  json.addProperty("version", role.version.time)
   json.add("typePermissions", serialize(role.roleTypePermissions))
   json.add("functionPermissions", serialize(role.roleFunctionPermissions))
   return json

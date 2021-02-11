@@ -59,7 +59,7 @@ fun validateCircuitInputs(inputs: JsonObject, globalTypes: Set<Type>): JsonObjec
         } catch (exception: Exception) {
           throw CustomJsonException("{inputs: {$inputName: {${KeyConstants.DEFAULT}: 'Unexpected value for parameter'}}}")
         }
-        TypeConstants.FORMULA, TypeConstants.LIST -> {
+        TypeConstants.FORMULA -> {
         }
         else -> try {
           expectedInput.addProperty(KeyConstants.DEFAULT, inputElement.asJsonObject.get(KeyConstants.DEFAULT).asString)
@@ -623,7 +623,7 @@ fun validateCircuitArgs(args: JsonObject, inputs: Set<CircuitInput>): JsonObject
       } catch (exception: Exception) {
         throw CustomJsonException("{args: {${input.name}: 'Unexpected value for parameter'}}")
       }
-      TypeConstants.LIST, TypeConstants.FORMULA -> {
+      TypeConstants.FORMULA -> {
       }
       else -> try {
         expectedJson.addProperty(input.name, if (args.has(input.name)) args.get(input.name).asString else input.referencedVariable!!.name)

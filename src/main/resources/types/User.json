@@ -8,30 +8,22 @@
         "order": 1,
         "default": 0
       },
-      "country": {
-        "type": "Country",
-        "order": 2,
-        "default": "India"
-      },
-      "state": {
-        "type": "States",
-        "order": 3,
-        "default": "Uttar Pradesh"
-      },
-      "pinCode": {
-        "type": "Text",
-        "order": 4
-      },
       "address": {
         "type": "Text",
         "order": 5,
         "default": ""
       }
     },
+    "uniqueConstraints": {
+    },
     "permissions": [],
     "roles": {
-      "ADMIN": ["WRITE_ALL"],
-      "USER": ["READ_ALL"]
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
     }
   }
 ]

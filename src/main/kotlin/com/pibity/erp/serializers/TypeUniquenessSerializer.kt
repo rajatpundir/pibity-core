@@ -10,18 +10,21 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.entities.Group
-import com.pibity.erp.serializers.mappings.serialize
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
 
-fun serialize(group: Group): JsonObject {
+fun serialize(typeUniqueness: TypeUniqueness): JsonObject {
   val json = JsonObject()
-  json.addProperty("orgId", group.organization.id)
-  json.addProperty("groupName", group.name)
-  json.add("roles", serialize(group.groupRoles))
+  json.addProperty("orgId", typeUniqueness.type.organization.id)
+  json.addProperty("typeName", typeUniqueness.type.name)
+  json.addProperty("constraintName", typeUniqueness.name)
+  val jsonKeys = JsonArray()
+  for (keyUniqueness in typeUniqueness.keyUniquenessConstraints)
+    jsonKeys.add(keyUniqueness.key.name)
+  json.add("keys", jsonKeys)
   return json
 }
 
-fun serialize(entities: Set<Group>): JsonArray {
+fun serialize(entities: Set<TypeUniqueness>): JsonArray {
   val json = JsonArray()
   for (entity in entities)
     json.add(serialize(entity))

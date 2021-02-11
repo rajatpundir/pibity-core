@@ -8,7 +8,13 @@
 
 package com.pibity.erp.repositories.jpa
 
-import com.pibity.erp.entities.TypeList
+import com.pibity.erp.entities.uniqueness.KeyUniqueness
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
 import org.springframework.data.repository.CrudRepository
+import org.springframework.transaction.annotation.Transactional
 
-interface TypeListJpaRepository : CrudRepository<TypeList, Long>
+interface KeyUniquenessJpaRepository : CrudRepository<KeyUniqueness, Long> {
+
+  @Transactional(readOnly = true)
+  fun getById(id: Long): KeyUniqueness?
+}

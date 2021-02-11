@@ -10,14 +10,21 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.*
+import com.pibity.erp.commons.constants.KeyConstants
+import com.pibity.erp.commons.constants.TypeConstants
+import com.pibity.erp.commons.constants.formulaReturnTypes
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.lisp.getSymbolPaths
 import com.pibity.erp.commons.lisp.validateSymbols
 import com.pibity.erp.commons.utils.*
-import com.pibity.erp.entities.*
+import com.pibity.erp.entities.Formula
+import com.pibity.erp.entities.Key
+import com.pibity.erp.entities.Organization
+import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.permission.TypePermission
-import com.pibity.erp.repositories.jpa.*
+import com.pibity.erp.repositories.jpa.KeyJpaRepository
+import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
+import com.pibity.erp.repositories.jpa.TypeJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import com.pibity.erp.repositories.query.VariableRepository
 import org.springframework.stereotype.Service
@@ -30,28 +37,23 @@ class TypeService(
     val typeRepository: TypeRepository,
     val typeJpaRepository: TypeJpaRepository,
     val keyJpaRepository: KeyJpaRepository,
-    val typeListJpaRepository: TypeListJpaRepository,
-    val variableListJpaRepository: VariableListJpaRepository,
+    val uniquenessService: UniquenessService,
     val variableRepository: VariableRepository,
     val variableService: VariableService,
     val typePermissionService: TypePermissionService,
-    val roleService: RoleService
-) {
+    val roleService: RoleService) {
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createType(jsonParams: JsonObject, typeOrganization: Organization? = null, globalTypes: MutableSet<Type>? = null, localTypes: MutableSet<Type>? = null): Type {
-    val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
-    val superTypeName: String = if (jsonParams.has("superTypeName")) validateSuperTypeName(jsonParams.get("superTypeName").asString) else GLOBAL_TYPE
-    val autoAssignId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
-    val multiplicity: Long = if (jsonParams.has("multiplicity?")) jsonParams.get("multiplicity?").asLong else 0
+     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
+    val autoId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject)
     val organization: Organization = typeOrganization
         ?: organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
         ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
-    val validGlobalTypes: MutableSet<Type> = globalTypes
+    val validTypes: MutableSet<Type> = globalTypes
         ?: typeRepository.findGlobalTypes(organizationId = organization.id) as MutableSet<Type>
-    val validLocalTypes: MutableSet<Type> = localTypes ?: mutableSetOf()
-    var type = Type(organization = organization, superTypeName = superTypeName, name = typeName, autoAssignId = autoAssignId, multiplicity = multiplicity)
+    var type = Type(organization = organization, name = typeName, autoId = autoId)
     type = try {
       typeJpaRepository.save(type)
     } catch (exception: Exception) {
@@ -59,80 +61,15 @@ class TypeService(
     }
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
-      val keyType: Type =
-          if (keyJson.get(KeyConstants.KEY_TYPE).isJsonObject) {
-            val nestedType: Type = try {
-              createType(keyJson.get(KeyConstants.KEY_TYPE).asJsonObject.apply {
-                addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
-              }, typeOrganization = organization, globalTypes = validGlobalTypes, localTypes = validLocalTypes)
-            } catch (exception: CustomJsonException) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: '${exception.message}'}}}")
-            }
-            validLocalTypes.add(nestedType)
-            nestedType
-          } else {
-            if (keyJson.get(KeyConstants.KEY_TYPE).asString.contains("::")) {
-              val keySuperTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").first()
-              val keyTypeName: String = keyJson.get(KeyConstants.KEY_TYPE).asString.split("::").last()
-              val referentialLocalType: Type = typeRepository.findType(organizationId = type.organization.id, superTypeName = keySuperTypeName, name = keyTypeName)
-                  ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-              referentialLocalType
-            } else {
-              // key refers to global type
-              try {
-                validGlobalTypes.first { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString }
-              } catch (exception: Exception) {
-                throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-              }
-            }
-          }
+      val keyType: Type = try {
+        validTypes.first { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString }
+      } catch (exception: Exception) {
+        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
+      }
       if (keyType.name != TypeConstants.FORMULA) {
         val keyOrder: Int = keyJson.get(KeyConstants.ORDER).asInt
         val key = Key(parentType = type, name = keyName, keyOrder = keyOrder, type = keyType)
         when (keyType.name) {
-          TypeConstants.LIST -> {
-            val listType: Type =
-                if (keyJson.get(KeyConstants.LIST_TYPE).isJsonObject) {
-                  val nestedType: Type = try {
-                    createType(keyJson.get(KeyConstants.LIST_TYPE).asJsonObject.apply {
-                      addProperty("superTypeName", if (superTypeName == GLOBAL_TYPE) typeName else superTypeName)
-                    }, typeOrganization = organization, globalTypes = validGlobalTypes, localTypes = validLocalTypes)
-                  } catch (exception: CustomJsonException) {
-                    throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: '${exception.message}'}}}")
-                  }
-                  validLocalTypes.add(nestedType)
-                  nestedType
-                } else {
-                  if (keyJson.get(KeyConstants.LIST_TYPE).asString.contains("::")) {
-                    val keySuperTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").first()
-                    val keyTypeName: String = keyJson.get(KeyConstants.LIST_TYPE).asString.split("::").last()
-                    if (keySuperTypeName == "") {
-                      // key refers to some local type
-                      try {
-                        validLocalTypes.first { it.name == keyTypeName }
-                      } catch (exception: Exception) {
-                        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
-                      }
-                    } else {
-                      // key refers to local type inside some other global type
-                      val referentialLocalType: Type = typeRepository.findType(organizationId = type.organization.id, superTypeName = keySuperTypeName, name = keyTypeName)
-                          ?: throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
-                      referentialLocalType
-                    }
-                  } else {
-                    // key refers to global type
-                    try {
-                      validGlobalTypes.first { it.name == keyJson.get(KeyConstants.LIST_TYPE).asString }
-                    } catch (exception: Exception) {
-                      throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type is not valid'}}}")
-                    }
-                  }
-                }
-            if (!primitiveTypes.contains(listType.name))
-              key.list = TypeList(type = listType, min = keyJson.get(KeyConstants.LIST_MIN_SIZE).asInt, max = keyJson.get(KeyConstants.LIST_MAX_SIZE).asInt)
-            else
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.LIST_TYPE}: 'List type cannot be a primitive type'}}}")
-          }
           else -> setValueForKey(key = key, keyJson = keyJson)
         }
         type.keys.add(keyJpaRepository.save(key))
@@ -146,11 +83,11 @@ class TypeService(
     for ((keyName, json) in keys.entrySet()) {
       val keyJson = json.asJsonObject
       if (!keyJson.get(KeyConstants.KEY_TYPE).isJsonObject && keyJson.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
-        val key = Key(parentType = type, name = keyName, keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validGlobalTypes.first { it.name == TypeConstants.FORMULA })
+        val key = Key(parentType = type, name = keyName, keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validTypes.first { it.name == TypeConstants.FORMULA })
         when (keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) {
           in formulaReturnTypes -> {
             val returnType: Type = try {
-              validGlobalTypes.first { it.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString }
+              validTypes.first { it.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString }
             } catch (exception: Exception) {
               throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
             }
@@ -179,35 +116,17 @@ class TypeService(
         type.keys.add(keyJpaRepository.save(key))
       }
     }
-    type.depth = type.keys.map { 1 + it.type.depth }.maxOrNull() ?: 0
     type = try {
       typeJpaRepository.save(type)
     } catch (exception: Exception) {
       throw CustomJsonException("{typeName: 'Unable to create Type'}")
     }
-    if (type.superTypeName == GLOBAL_TYPE) {
-      val typeList: TypeList = try {
-        typeListJpaRepository.save(TypeList(type = type, max = 0, min = 0))
-      } catch (exception: Exception) {
-        throw CustomJsonException("{typeName: 'Unable to create Type'}")
-      }
-      val superList: VariableList = try {
-        variableListJpaRepository.save(VariableList(listType = typeList))
-      } catch (exception: Exception) {
-        throw CustomJsonException("{typeName: 'Unable to create Type'}")
-      }
-      type.superList = superList
-      type = try {
-        typeJpaRepository.save(type)
-      } catch (exception: Exception) {
-        throw CustomJsonException("{typeName: 'Unable to create Type'}")
-      }
-      type.permissions.addAll(createDefaultPermissionsForType(type))
-      createPermissionsForType(jsonParams = jsonParams)
-      assignTypePermissionsToRoles(jsonParams = jsonParams)
-      if (jsonParams.has("variables?"))
-        createVariablesForType(jsonParams = jsonParams)
-    }
+    type.permissions.addAll(createDefaultPermissionsForType(type))
+    createPermissionsForType(jsonParams = jsonParams)
+    assignTypePermissionsToRoles(jsonParams = jsonParams)
+    createTypeUniquenessConstraints(jsonParams = jsonParams)
+    if (jsonParams.has("variables?"))
+      createVariablesForType(jsonParams = jsonParams)
     return type
   }
 
@@ -221,15 +140,24 @@ class TypeService(
       TypeConstants.DATE -> key.defaultDateValue = if (defaultValue != null) java.sql.Date(dateFormat.parse(defaultValue.asString).time) else null
       TypeConstants.TIMESTAMP -> key.defaultTimestampValue = if (defaultValue != null) Timestamp(defaultValue.asLong) else null
       TypeConstants.TIME -> key.defaultTimeValue = if (defaultValue != null) java.sql.Time(defaultValue.asLong) else null
-      TypeConstants.LIST, TypeConstants.FORMULA, TypeConstants.BLOB -> {
+      TypeConstants.FORMULA, TypeConstants.BLOB -> {
       }
-      else -> {
-        // Default values for variable references only makes sense when they refer a Global variable
-        if (key.type.superTypeName == GLOBAL_TYPE && defaultValue != null) {
-          key.referencedVariable = variableRepository.findByTypeAndName(superList = key.type.superList!!, type = key.type, name = defaultValue.asString)
-              ?: throw CustomJsonException("{keys: {${key.name}: {default: 'Variable reference is not correct'}}}")
-        }
+      else -> if (defaultValue != null) {
+        key.referencedVariable = variableRepository.findByTypeAndName(type = key.type, name = defaultValue.asString)
+            ?: throw CustomJsonException("{keys: {${key.name}: {default: 'Variable reference is not correct'}}}")
       }
+    }
+  }
+
+  @Transactional(rollbackFor = [CustomJsonException::class])
+  fun createTypeUniquenessConstraints(jsonParams: JsonObject) {
+    for ((constraintName, jsonKeys) in jsonParams.get("uniqueConstraints").asJsonObject.entrySet()) {
+      uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
+        addProperty("orgId", jsonParams.get("orgId").asString)
+        addProperty("typeName", jsonParams.get("typeName").asString)
+        addProperty("constraintName", constraintName)
+        add("keys", jsonKeys.asJsonArray)
+      })
     }
   }
 
@@ -319,7 +247,7 @@ class TypeService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun getTypeDetails(jsonParams: JsonObject): Type {
-    return typeRepository.findType(organizationId = jsonParams.get("orgId").asLong, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
+    return typeRepository.findType(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
   }
 }

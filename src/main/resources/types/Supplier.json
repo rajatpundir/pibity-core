@@ -3,61 +3,51 @@
     "typeName": "Supplier",
     "displayName": "Supplier",
     "keys": {
-      "general": {
-        "type":{
-          "typeName": "SupplierGeneralDetails",
-          "displayName": "Supplier General Details",
-          "keys": {
-            "currency": {
-              "type": "Currency",
-              "displayName": "Supplier Currency",
-              "order": 1
-            },
-            "paymentTerm": {
-              "type": "PaymentTerm",
-              "displayName": "Payment Term",
-              "order": 2
-            },
-            "taxRule": {
-              "type": "TaxRule",
-              "displayName": "Tax Rule",
-              "order": 3
-            },
-            "status": {
-              "type": "Status",
-              "displayName": "status",
-              "order": 4
-            },
-            "defaultCarrier": {
-              "type": "CarrierService",
-              "displayName": "Default Carrier",
-              "order": 5
-            },
-            "taxNumber": {
-              "type": "Text",
-              "displayName": "Tax Number",
-              "order": 6
-            },
-            "discount": {
-              "type": "Decimal",
-              "displayName": "Discount",
-              "order": 7
-            },
-            "attributeSet": {
-              "type": "AttributeSet",
-              "displayName": "Attribute Set",
-              "order": 8,
-              "default": "Not Defined"
-            },
-            "comments": {
-              "type": "Text",
-              "displayName": "comments",
-              "order": 9
-            }
-          }
-        },
-        "displayName": "General",
+      "general_currency": {
+        "type": "Currency",
+        "displayName": "Supplier Currency",
         "order": 1
+      },
+      "general_paymentTerm": {
+        "type": "PaymentTerm",
+        "displayName": "Payment Term",
+        "order": 2
+      },
+      "general_taxRule": {
+        "type": "TaxRule",
+        "displayName": "Tax Rule",
+        "order": 3
+      },
+      "general_status": {
+        "type": "Status",
+        "displayName": "status",
+        "order": 4
+      },
+      "general_defaultCarrier": {
+        "type": "CarrierService",
+        "displayName": "Default Carrier",
+        "order": 5
+      },
+      "general_taxNumber": {
+        "type": "Text",
+        "displayName": "Tax Number",
+        "order": 6
+      },
+      "general_discount": {
+        "type": "Decimal",
+        "displayName": "Discount",
+        "order": 7
+      },
+      "general_attributeSet": {
+        "type": "AttributeSet",
+        "displayName": "Attribute Set",
+        "order": 8,
+        "default": "Not Defined"
+      },
+      "general_comments": {
+        "type": "Text",
+        "displayName": "comments",
+        "order": 9
       },
       "addresses": {
         "type": "List",

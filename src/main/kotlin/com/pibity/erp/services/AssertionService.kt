@@ -9,7 +9,6 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.GLOBAL_TYPE
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.lisp.getSymbolPaths
@@ -34,7 +33,7 @@ class AssertionService(
 
   @Transactional(rollbackFor = [CustomJsonException::class])
   fun createAssertion(jsonParams: JsonObject): TypeAssertion {
-    val type: Type = typeRepository.findType(organizationId = jsonParams.get("orgId").asLong, superTypeName = GLOBAL_TYPE, name = jsonParams.get("typeName").asString)
+    val type: Type = typeRepository.findType(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("typeName").asString)
         ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
     val keyDependencies: MutableSet<Key> = mutableSetOf()
     val typeDependencies: MutableSet<Type> = mutableSetOf()

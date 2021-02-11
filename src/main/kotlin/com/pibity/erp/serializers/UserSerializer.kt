@@ -17,7 +17,6 @@ fun serialize(user: User): JsonObject {
   val json = JsonObject()
   json.addProperty("orgId", user.organization.id)
   json.addProperty("username", user.username)
-//  json.addProperty("version", user.version.time)
   json.addProperty("active", user.active)
   json.addProperty("email", user.email)
   json.addProperty("firstName", user.firstName)

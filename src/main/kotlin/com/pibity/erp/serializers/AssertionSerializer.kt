@@ -18,7 +18,6 @@ fun serialize(typeAssertion: TypeAssertion): JsonObject {
   json.addProperty("orgId", typeAssertion.type.organization.id)
   json.addProperty("type", typeAssertion.type.name)
   json.addProperty("assertionName", typeAssertion.name)
-//  json.addProperty("version", assertion.version.time)
   json.add("assertion", gson.fromJson(typeAssertion.expression, JsonObject::class.java))
   return json
 }

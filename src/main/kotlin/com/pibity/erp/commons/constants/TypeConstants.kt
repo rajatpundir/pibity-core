@@ -8,33 +8,30 @@
 
 package com.pibity.erp.commons.constants
 
-const val GLOBAL_TYPE = "Any"
-
 val primitiveTypes = listOf(
-    TypeConstants.TEXT,
-    TypeConstants.NUMBER,
-    TypeConstants.DECIMAL,
-    TypeConstants.BOOLEAN,
-    TypeConstants.LIST,
-    TypeConstants.FORMULA,
-    TypeConstants.DATE,
-    TypeConstants.TIMESTAMP,
-    TypeConstants.TIME,
-    TypeConstants.BLOB
+  TypeConstants.TEXT,
+  TypeConstants.NUMBER,
+  TypeConstants.DECIMAL,
+  TypeConstants.BOOLEAN,
+  TypeConstants.FORMULA,
+  TypeConstants.DATE,
+  TypeConstants.TIMESTAMP,
+  TypeConstants.TIME,
+  TypeConstants.BLOB
 )
 
 val formulaReturnTypes = listOf(
-    TypeConstants.TEXT,
-    TypeConstants.NUMBER,
-    TypeConstants.DECIMAL,
-    TypeConstants.BOOLEAN)
+  TypeConstants.TEXT,
+  TypeConstants.NUMBER,
+  TypeConstants.DECIMAL,
+  TypeConstants.BOOLEAN
+)
 
 object TypeConstants {
   const val TEXT = "Text"
   const val NUMBER = "Number"
   const val DECIMAL = "Decimal"
   const val BOOLEAN = "Boolean"
-  const val LIST = "List"
   const val FORMULA = "Formula"
   const val DATE = "Date"
   const val TIMESTAMP = "Timestamp"

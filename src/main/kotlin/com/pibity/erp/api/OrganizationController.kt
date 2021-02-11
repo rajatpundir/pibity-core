@@ -12,10 +12,10 @@ import com.google.gson.JsonObject
 import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.services.OrganizationService
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.utils.gson
+import com.pibity.erp.services.OrganizationService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -31,7 +31,7 @@ class OrganizationController(val organizationService: OrganizationService) {
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createOrganization" to getExpectedParams("organization", "createOrganization")
+    "createOrganization" to getExpectedParams("organization", "createOrganization")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])

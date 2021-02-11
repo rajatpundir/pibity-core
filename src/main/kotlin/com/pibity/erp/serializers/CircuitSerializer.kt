@@ -27,7 +27,7 @@ fun serialize(circuit: Circuit): JsonObject {
           TypeConstants.NUMBER -> addProperty(KeyConstants.DEFAULT, circuitInput.defaultLongValue!!)
           TypeConstants.DECIMAL -> addProperty(KeyConstants.DEFAULT, circuitInput.defaultDoubleValue!!)
           TypeConstants.BOOLEAN -> addProperty(KeyConstants.DEFAULT, circuitInput.defaultBooleanValue!!)
-          TypeConstants.FORMULA, TypeConstants.LIST -> {
+          TypeConstants.FORMULA -> {
           }
           else -> if (circuitInput.referencedVariable != null)
             addProperty(KeyConstants.DEFAULT, circuitInput.referencedVariable!!.name)

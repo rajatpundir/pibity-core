@@ -6,14 +6,14 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.commons.constants
+package com.pibity.erp.repositories.jpa
 
-object KeyConstants {
-  const val KEY_TYPE = "type"
-  const val ORDER = "order"
-  const val DEFAULT = "default"
-  const val FORMULA_EXPRESSION = "expression"
-  const val FORMULA_RETURN_TYPE = "returnType"
-  const val FORMULA_SYMBOLS = "symbols"
-  const val VALUE = "value"
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
+import org.springframework.data.repository.CrudRepository
+import org.springframework.transaction.annotation.Transactional
+
+interface TypeUniquenessJpaRepository : CrudRepository<TypeUniqueness, Long> {
+
+  @Transactional(readOnly = true)
+  fun getById(id: Long): TypeUniqueness?
 }
