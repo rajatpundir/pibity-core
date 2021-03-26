@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,15 +8,18 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.constants.ApplicationConstants
+import com.pibity.erp.entities.assertion.VariableAssertion
 import java.io.Serializable
 import java.math.BigDecimal
+import java.sql.Blob
 import java.sql.Date
 import java.sql.Time
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "value", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["parent_variable_id", "key_id"])])
+@Table(name = "value", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["parent_variable_id", "key_id"])])
 data class Value(
 
     @Id
@@ -51,42 +54,49 @@ data class Value(
     @Column(name = "value_date")
     var dateValue: Date? = null,
 
-    @Column(name = "value_time")
-    var timeValue: Time? = null,
-
     @Column(name = "value_timestamp")
     var timestampValue: Timestamp? = null,
 
+    @Column(name = "value_time")
+    var timeValue: Time? = null,
+
     @Lob
     @Column(name = "value_blob")
-    var blobValue: ByteArray? = null,
+    var blobValue: Blob? = null,
 
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null,
 
     @ManyToMany
-    @JoinTable(name = "mapping_value_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_value_id", referencedColumnName = "id")])
+    @JoinTable(name = "mapping_value_dependencies", schema = ApplicationConstants.SCHEMA, joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_value_id", referencedColumnName = "id")])
     var valueDependencies: MutableSet<Value> = HashSet(),
 
     @ManyToMany(mappedBy = "valueDependencies")
     val dependentValues: MutableSet<Value> = HashSet(),
 
-    @ManyToMany
-    @JoinTable(name = "mapping_value_variable_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "value_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "dependency_variable_id", referencedColumnName = "id")])
-    val variableDependencies: MutableSet<Variable> = HashSet(),
-
     @ManyToMany(mappedBy = "valueDependencies")
-    val dependentVariableAssertions: MutableSet<VariableAssertion> = HashSet()
+    val dependentVariableAssertions: MutableSet<VariableAssertion> = HashSet(),
+
+    @Column(name = "created", nullable = false)
+    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "updated")
+    var updated: Timestamp? = null
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as Value
-    return this.variable == other.variable && this.key == other.key
-  }
+    @PreUpdate
+    fun setUpdatedTimestamp() {
+        updated = Timestamp(System.currentTimeMillis())
+    }
 
-  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as Value
+        return this.variable == other.variable && this.key == other.key
+    }
+
+    override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

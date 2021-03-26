@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,8 @@
 
 package com.pibity.erp.entities.function
 
+import com.pibity.erp.commons.constants.ApplicationConstants
+import com.pibity.erp.commons.constants.FunctionConstants
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import java.io.Serializable
@@ -16,7 +18,7 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_output", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
+@Table(name = "function_output", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionOutput(
 
     @Id
@@ -39,27 +41,41 @@ data class FunctionOutput(
     @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     val type: Type,
 
+    @Column(name = "operation", nullable = false)
+    val operation: Int = FunctionConstants.CREATE,
+
+    @Lob
     @Column(name = "variable_name", nullable = false)
     val variableName: String,
 
     @ManyToMany
-    @JoinTable(name = "mapping_function_output_variable_name_dependencies", schema = "inventory",
+    @JoinTable(name = "mapping_function_output_variable_name_dependencies", schema = ApplicationConstants.SCHEMA,
         joinColumns = [JoinColumn(name = "function_output_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "dependency_key_id", referencedColumnName = "id")])
     val variableNameKeyDependencies: MutableSet<Key> = HashSet(),
 
-    @OneToOne
-    @JoinColumns(*[JoinColumn(name = "function_output_type_id", referencedColumnName = "id")])
-    var values: FunctionOutputType? = null
+    @OneToMany(mappedBy = "functionInput", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val values: MutableSet<FunctionOutputKey> = HashSet(),
+
+    @Column(name = "created", nullable = false)
+    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "updated")
+    var updated: Timestamp? = null
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as FunctionOutput
-    return this.function == other.function && this.name == other.name
-  }
+    @PreUpdate
+    fun setUpdatedTimestamp() {
+        updated = Timestamp(System.currentTimeMillis())
+    }
 
-  override fun hashCode(): Int = Objects.hash(id)
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as FunctionOutput
+        return this.function == other.function && this.name == other.name
+    }
+
+    override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

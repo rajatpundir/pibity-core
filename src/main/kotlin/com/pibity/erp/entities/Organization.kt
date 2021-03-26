@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -9,30 +9,42 @@
 package com.pibity.erp.entities
 
 import com.google.gson.annotations.Expose
+import com.pibity.erp.commons.constants.ApplicationConstants
 import java.io.Serializable
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "organization", schema = "inventory")
+@Table(name = "organization", schema = ApplicationConstants.SCHEMA)
 data class Organization(
 
-    @Expose
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organization_generator")
-    @SequenceGenerator(name="organization_generator", sequenceName = "organization_sequence")
-    @Column(name = "id", updatable = false, nullable = false)
-    val id: Long = -1L,
+  @Expose
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "organization_generator")
+  @SequenceGenerator(name="organization_generator", sequenceName = "organization_sequence")
+  @Column(name = "id", updatable = false, nullable = false)
+  val id: Long = -1L,
 
-    @Expose
-    @Column(name = "name", unique = true, nullable = false)
-    var name: String,
+  @Expose
+  @Column(name = "name", unique = true, nullable = false)
+  var name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis())
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

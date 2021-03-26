@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.function
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
@@ -19,7 +20,7 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_input", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
+@Table(name = "function_input", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionInput(
 
     @Id
@@ -42,18 +43,18 @@ data class FunctionInput(
     @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
     val type: Type,
 
+    @Lob
     @Column(name = "variable_name")
-    val variableName: String? = null,
+    var variableName: String? = null,
 
     @ManyToMany
-    @JoinTable(name = "mapping_function_input_variable_name_dependencies", schema = "inventory",
+    @JoinTable(name = "mapping_function_input_variable_name_dependencies", schema = ApplicationConstants.SCHEMA,
         joinColumns = [JoinColumn(name = "function_input_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "dependency_key_id", referencedColumnName = "id")])
-    val variableNameKeyDependencies: MutableSet<Key> = HashSet(),
+    var variableNameKeyDependencies: MutableSet<Key> = HashSet(),
 
-    @OneToOne
-    @JoinColumns(*[JoinColumn(name = "values_function_input_type_id", referencedColumnName = "id")])
-    var values: FunctionInputType? = null,
+    @OneToMany(mappedBy = "functionInput", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val values: MutableSet<FunctionInputKey> = HashSet(),
 
     @Column(name = "value_string")
     var defaultStringValue: String? = null,
@@ -70,24 +71,39 @@ data class FunctionInput(
     @Column(name = "value_date")
     var defaultDateValue: Date? = null,
 
-    @Column(name = "value_time")
-    var defaultTimeValue: Time? = null,
-
     @Column(name = "value_timestamp")
     var defaultTimestampValue: Timestamp? = null,
 
+    @Column(name = "value_time")
+    var defaultTimeValue: Time? = null,
+
+    @Lob
+    @Column(name = "value_blob")
+    var defaultBlobValue: ByteArray? = null,
+
     @ManyToOne
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
-    var referencedVariable: Variable? = null
+    var referencedVariable: Variable? = null,
+
+    @Column(name = "created", nullable = false)
+    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "updated")
+    var updated: Timestamp? = null
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as FunctionInput
-    return this.function == other.function && this.name == other.name
-  }
+    @PreUpdate
+    fun setUpdatedTimestamp() {
+        updated = Timestamp(System.currentTimeMillis())
+    }
 
-  override fun hashCode(): Int = Objects.hash(id)
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as FunctionInput
+        return this.function == other.function && this.name == other.name
+    }
+
+    override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

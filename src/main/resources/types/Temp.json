@@ -11,16 +11,35 @@
         "type": "Number",
         "order": 2,
         "default": 2
+      },
+      "c": {
+        "type": "Number",
+        "order": 3,
+        "default": 7
       }
     },
     "uniqueConstraints": {
       "Constraint1": [
-        "a",
-        "b"
-      ],
-      "Constraint2": [
-        "a"
+        "a", "b"
       ]
+    },
+    "assertions": {
+      "Assertion1": {
+        "op": ">",
+        "types": ["Number"],
+        "args": [
+          {
+            "op": ".",
+            "types": [],
+            "args": ["a"]
+          },
+          {
+            "op": ".",
+            "types": [],
+            "args": ["b"]
+          }
+        ]
+      }
     },
     "permissions": [],
     "roles": {
@@ -32,11 +51,30 @@
       ]
     },
     "variables": {
-      "aa": {
-        "a": 6
+      "a1v1": {
+        "a": 6,
+        "b": 13,
+        "c": 316
       },
-      "aa1": {
-        "a": 7
+      "a1v2": {
+        "a": 7,
+        "b": 12,
+        "c": 315
+      },
+      "a1v3": {
+        "a": 7,
+        "b": 14,
+        "c": 314
+      },
+      "a1v4": {
+        "a": 7,
+        "b": 19,
+        "c": 312
+      },
+      "a1v5": {
+        "a": 7,
+        "b": 21,
+        "c": 313
       }
     }
   },
@@ -64,10 +102,47 @@
       ]
     },
     "uniqueConstraints": {
-         },
+    },
     "variables": {
       "bb": {
         "d": 23.42
+      }
+    }
+  },
+  {
+    "typeName": "A3",
+    "keys": {
+      "x": {
+        "type": "Number",
+        "order": 1,
+        "default": 3
+      },
+      "y": {
+        "type": "Decimal",
+        "order": 2,
+        "default": 2
+      },
+      "z": {
+        "type": "A2",
+        "order": 3
+      }
+    },
+    "permissions": [],
+    "roles": {
+      "ADMIN": [
+        "WRITE_ALL"
+      ],
+      "USER": [
+        "READ_ALL"
+      ]
+    },
+    "uniqueConstraints": {
+    },
+    "variables": {
+      "x1": {
+        "x": 1,
+        "y": 1,
+        "z": "bb"
       }
     }
   }

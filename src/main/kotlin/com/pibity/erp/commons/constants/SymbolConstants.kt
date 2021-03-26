@@ -6,9 +6,10 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.repositories.function.jpa
+package com.pibity.erp.commons.constants
 
-import com.pibity.erp.entities.function.FunctionInputType
-import org.springframework.data.repository.CrudRepository
-
-interface FunctionInputTypeJpaRepository : CrudRepository<FunctionInputType, Long>
+object SymbolConstants {
+  const val SYMBOL_TYPE = "type"
+  const val SYMBOL_VALUE = "value"
+  const val SYMBOL_VALUES = "values"
+}

@@ -6,9 +6,12 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.repositories.function.jpa
+package com.pibity.erp.commons.constants
 
-import com.pibity.erp.entities.function.FunctionOutputType
-import org.springframework.data.repository.CrudRepository
-
-interface FunctionOutputTypeJpaRepository : CrudRepository<FunctionOutputType, Long>
+object MapperConstants {
+  const val MAPPER_NAME = "mapperName"
+  const val QUERY = "query"
+  const val QUERY_PARAMS = "queryParams"
+  const val FUNCTION_INPUT = "functionInput"
+  const val ARGS = "args"
+}

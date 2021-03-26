@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.circuit
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.function.FunctionInput
 import com.pibity.erp.entities.function.FunctionOutput
 import java.io.Serializable
@@ -15,7 +16,7 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "circuit_computation_connection", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["parent_circuit_computation_id", "function_input_id", "circuit_input_id"])])
+@Table(name = "circuit_computation_connection", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["parent_circuit_computation_id", "function_input_id", "circuit_input_id"])])
 data class CircuitComputationConnection(
 
     @Id
@@ -39,9 +40,6 @@ data class CircuitComputationConnection(
     @Column(name = "version", nullable = false)
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @Column(name = "connected_to_computation", nullable = false)
-    val connectedToComputation: Boolean,
-
     @ManyToOne
     @JoinColumn(name = "connected_circuit_input_id")
     val connectedCircuitInput: CircuitInput? = null,
@@ -56,16 +54,27 @@ data class CircuitComputationConnection(
 
     @ManyToOne
     @JoinColumn(name = "connected_circuit_computation_circuit_output_id")
-    val connectedCircuitComputationCircuitOutput: CircuitOutput? = null
+    val connectedCircuitComputationCircuitOutput: CircuitOutput? = null,
+
+    @Column(name = "created", nullable = false)
+    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "updated")
+    var updated: Timestamp? = null
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as CircuitComputationConnection
-    return this.parentComputation == other.parentComputation && this.functionInput == other.functionInput && this.circuitInput == other.circuitInput
-  }
+    @PreUpdate
+    fun setUpdatedTimestamp() {
+        updated = Timestamp(System.currentTimeMillis())
+    }
 
-  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as CircuitComputationConnection
+        return this.parentComputation == other.parentComputation && this.functionInput == other.functionInput && this.circuitInput == other.circuitInput
+    }
+
+    override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
 }

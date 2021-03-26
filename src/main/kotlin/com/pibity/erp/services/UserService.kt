@@ -10,6 +10,9 @@ package com.pibity.erp.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.FunctionConstants
+import com.pibity.erp.commons.constants.MessageConstants
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.createKeycloakUser
@@ -35,7 +38,8 @@ import com.pibity.erp.repositories.query.RoleRepository
 import com.pibity.erp.repositories.query.UserRepository
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 
 @Service
 class UserService(
@@ -51,10 +55,9 @@ class UserService(
     @Lazy val variableService: VariableService
 ) {
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createUser(jsonParams: JsonObject): User {
-    val organization: Organization = organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
-        ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
+  fun createUser(jsonParams: JsonObject, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis()), files: List<MultipartFile>): User {
+    val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
+      ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val keycloakId: String = try {
       getKeycloakId(jsonParams.get("email").asString)
     } catch (exception: Exception) {
@@ -75,77 +78,74 @@ class UserService(
       val roleName: String = try {
         it.asString
       } catch (exception: Exception) {
-        throw CustomJsonException("{roles: 'Unexpected value for parameter'}")
+        throw CustomJsonException("{roles: ${MessageConstants.UNEXPECTED_VALUE}}")
       }
-      val role: Role = roleRepository.findRole(organizationId = organization.id, name = roleName)
-          ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
+      val role: Role = roleRepository.findRole(orgId = organization.id, name = roleName)
+        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
       user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role)))
     }
     user = userJpaRepository.save(user)
     user.details = try {
       variableService.createVariable(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("typeName", "User")
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+        addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
+        addProperty(OrganizationConstants.TYPE_NAME, "User")
         addProperty("variableName", keycloakId)
         add("values", jsonParams.get("details").asJsonObject)
-      }).first
+      }, defaultTimestamp = defaultTimestamp, files = files).first
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{details: ${exception.message}}")
     }
     return try {
       userJpaRepository.save(user)
     } catch (exception: Exception) {
-      throw CustomJsonException("{username: 'User could not be created'}")
+      throw CustomJsonException("{${OrganizationConstants.USERNAME}: 'User could not be created'}")
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateUserGroups(jsonParams: JsonObject): User {
-    val user: User = userRepository.findUser(organizationId = jsonParams.get("orgId").asLong, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{username: 'User could not be determined'}")
-    val group: Group = groupRepository.findGroup(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("groupName").asString)
-        ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
+    val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
+      ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+    val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
+      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}")
     when (jsonParams.get("operation").asString) {
       "add" -> user.userGroups.add(UserGroup(id = UserGroupId(user = user, group = group)))
       "remove" -> {
         userGroupRepository.delete(UserGroup(id = UserGroupId(user = user, group = group)))
         user.userGroups.remove(UserGroup(id = UserGroupId(user = user, group = group)))
       }
-      else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+      else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return try {
       userJpaRepository.save(user)
     } catch (exception: Exception) {
-      throw CustomJsonException("{username: 'Unable to update group for user'}")
+      throw CustomJsonException("{${OrganizationConstants.USERNAME}: 'Unable to update group for user'}")
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateUserRoles(jsonParams: JsonObject): User {
-    val user: User = userRepository.findUser(organizationId = jsonParams.get("orgId").asLong, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{username: 'User could not be determined'}")
-    val role: Role = roleRepository.findRole(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("roleName").asString)
-        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
+    val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
+      ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+    val role: Role = roleRepository.findRole(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("roleName").asString)
+      ?: throw CustomJsonException("{roleName: ${MessageConstants.UNEXPECTED_VALUE}}")
     when (jsonParams.get("operation").asString) {
       "add" -> user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role)))
       "remove" -> {
         userRoleRepository.delete(UserRole(id = UserRoleId(user = user, role = role)))
         user.userRoles.remove(UserRole(id = UserRoleId(user = user, role = role)))
       }
-      else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+      else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return try {
       userJpaRepository.save(user)
     } catch (exception: Exception) {
-      throw CustomJsonException("{username: 'Unable to update role for user'}")
+      throw CustomJsonException("{${OrganizationConstants.USERNAME}: 'Unable to update role for user'}")
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun updateUserDetails(jsonParams: JsonObject): User {
-    val user: User = userRepository.findUser(organizationId = jsonParams.get("orgId").asLong, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{username: 'User could not be determined'}")
+    val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
+      ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     if (jsonParams.has("active?"))
       user.active = jsonParams.get("active?").asBoolean
     if (jsonParams.has("email?"))
@@ -157,41 +157,37 @@ class UserService(
     return try {
       userJpaRepository.save(user)
     } catch (exception: Exception) {
-      throw CustomJsonException("{username: 'Unable to update user details'}")
+      throw CustomJsonException("{${OrganizationConstants.USERNAME}: 'Unable to update user details'}")
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserDetails(jsonParams: JsonObject): User {
-    return (userRepository.findUser(organizationId = jsonParams.get("orgId").asLong, username = jsonParams.get("username").asString)
-        ?: throw CustomJsonException("{username: 'User could not be determined'}"))
+    return (userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
+    ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserTypePermissions(jsonParams: JsonObject): Set<TypePermission> {
-    return (userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString))
+    return (userRepository.getUserTypePermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString))
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getUserFunctionPermissions(jsonParams: JsonObject): Set<FunctionPermission> {
-    return (userRepository.getUserFunctionPermissions(organizationId = jsonParams.get("orgId").asLong, functionName = jsonParams.get("functionName").asString, username = jsonParams.get("username").asString))
+    return (userRepository.getUserFunctionPermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString))
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun superimposeUserTypePermissions(jsonParams: JsonObject): TypePermission {
-    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(organizationId = jsonParams.get("orgId").asLong, typeName = jsonParams.get("typeName").asString, username = jsonParams.get("username").asString)
+    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(orgId = jsonParams.get(
+      OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
     if (typePermissions.isNotEmpty())
       return typePermissionService.superimposeTypePermissions(typePermissions = typePermissions, type = typePermissions.first().type)
     else
-      throw CustomJsonException("{error: 'Unauthorized Access'}")
+      throw CustomJsonException("{${OrganizationConstants.ERROR}: ${MessageConstants.UNAUTHORIZED_ACCESS}}")
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun superimposeUserFunctionPermissions(jsonParams: JsonObject): FunctionPermission {
-    val functionPermissions: Set<FunctionPermission> = userRepository.getUserFunctionPermissions(organizationId = jsonParams.get("orgId").asLong, functionName = jsonParams.get("functionName").asString, username = jsonParams.get("username").asString)
+    val functionPermissions: Set<FunctionPermission> = userRepository.getUserFunctionPermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
     if (functionPermissions.isNotEmpty())
       return functionPermissionService.superimposeFunctionPermissions(functionPermissions = functionPermissions, function = functionPermissions.first().function)
     else
-      throw CustomJsonException("{error: 'Unauthorized Access'}")
+      throw CustomJsonException("{${OrganizationConstants.ERROR}: ${MessageConstants.UNAUTHORIZED_ACCESS}}")
   }
 }

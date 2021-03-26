@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.permission
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.mappings.RoleTypePermission
 import com.pibity.erp.serializers.serialize
@@ -17,38 +18,49 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "type_permission", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])])
+@Table(name = "type_permission", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])])
 data class TypePermission(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "type_permission_generator")
-    @SequenceGenerator(name = "type_permission_generator", sequenceName = "type_permission_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "type_permission_generator")
+  @SequenceGenerator(name = "type_permission_generator", sequenceName = "type_permission_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
-    val type: Type,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+  val type: Type,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @Column(name = "create_permission", nullable = false)
-    var creatable: Boolean,
+  @Column(name = "create_permission", nullable = false)
+  var creatable: Boolean = false,
 
-    @Column(name = "deletion_permission", nullable = false)
-    var deletable: Boolean,
+  @Column(name = "deletion_permission", nullable = false)
+  var deletable: Boolean = false,
 
-    @OneToMany(mappedBy = "typePermission", cascade = [CascadeType.ALL])
-    var keyPermissions: MutableSet<KeyPermission> = HashSet(),
+  @OneToMany(mappedBy = "typePermission", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var keyPermissions: MutableSet<KeyPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
-    val permissionRoles: MutableSet<RoleTypePermission> = HashSet()
+  @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val permissionRoles: MutableSet<RoleTypePermission> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

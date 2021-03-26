@@ -31,12 +31,12 @@ class VariableRepository(val entityManager: EntityManager) {
   }
 
   @Transactional(readOnly = true)
-  fun findVariable(organizationId: Long, typeName: String, name: String = ""): Variable? {
+  fun findVariable(orgId: Long, typeName: String, name: String = ""): Variable? {
     val hql =
-      "SELECT v FROM Variable v WHERE v.type.organization.id = :organizationId AND v.type.name = :typeName AND v.name = :name"
+      "SELECT v FROM Variable v WHERE v.type.organization.id = :orgId AND v.type.name = :typeName AND v.name = :name"
     return try {
       entityManager.createQuery(hql, Variable::class.java).apply {
-        setParameter("organizationId", organizationId)
+        setParameter("orgId", orgId)
         setParameter("typeName", typeName)
         setParameter("name", name)
       }.singleResult

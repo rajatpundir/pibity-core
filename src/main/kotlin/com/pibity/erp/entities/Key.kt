@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,15 +8,17 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.entities.assertion.TypeAssertion
 import com.pibity.erp.entities.function.FunctionInput
 import com.pibity.erp.entities.function.FunctionInputKey
 import com.pibity.erp.entities.function.FunctionOutput
 import com.pibity.erp.entities.function.FunctionOutputKey
 import com.pibity.erp.entities.permission.KeyPermission
-import com.pibity.erp.entities.uniqueness.KeyUniqueness
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.math.BigDecimal
+import java.sql.Blob
 import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
@@ -25,8 +27,8 @@ import javax.persistence.*
 @Entity
 @Table(name = "keys", schema = "inventory",
     uniqueConstraints = [
-      UniqueConstraint(columnNames = ["parent_type_id", "name"]),
-      UniqueConstraint(columnNames = ["parent_type_id", "key_order"])
+        UniqueConstraint(columnNames = ["parent_type_id", "name"]),
+        UniqueConstraint(columnNames = ["parent_type_id", "key_order"])
     ])
 data class Key(
 
@@ -71,41 +73,41 @@ data class Key(
     @Column(name = "value_date")
     var defaultDateValue: Date? = null,
 
-    @Column(name = "value_time")
-    var defaultTimeValue: Time? = null,
-
     @Column(name = "value_timestamp")
     var defaultTimestampValue: Timestamp? = null,
 
+    @Column(name = "value_time")
+    var defaultTimeValue: Time? = null,
+
     @Lob
     @Column(name = "value_blob")
-    var defaultBlobValue: ByteArray? = null,
+    var defaultBlobValue: Blob? = null,
 
     @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
     var referencedVariable: Variable? = null,
 
-    @OneToOne(cascade = [CascadeType.ALL])
+    @OneToOne(cascade = [CascadeType.PERSIST, CascadeType.REMOVE])
     @JoinColumns(*[JoinColumn(name = "formula_id", referencedColumnName = "id")])
     var formula: Formula? = null,
 
     @Column(name = "is_formula_dependency", nullable = false)
     var isFormulaDependency: Boolean = false,
 
-    @Column(name = "is_assertion_dependency", nullable = false)
-    var isAssertionDependency: Boolean = false,
-
-    @Column(name = "is_variable_dependency", nullable = false)
-    var isVariableDependency: Boolean = false,
-
-    @ManyToMany(mappedBy = "key")
-    val dependentKeyUniquenesses: Set<KeyUniqueness> = HashSet(),
-
     @ManyToMany(mappedBy = "keyDependencies")
     val dependentFormulas: Set<Formula> = HashSet(),
 
+    @Column(name = "is_assertion_dependency", nullable = false)
+    var isAssertionDependency: Boolean = false,
+
     @ManyToMany(mappedBy = "keyDependencies")
     val dependentAssertions: Set<TypeAssertion> = HashSet(),
+
+    @Column(name = "is_uniqueness_dependency", nullable = false)
+    var isUniquenessDependency: Boolean = false,
+
+    @ManyToMany(mappedBy = "keys")
+    val dependentTypeUniquenesses: Set<TypeUniqueness> = HashSet(),
 
     @ManyToMany(mappedBy = "variableNameKeyDependencies")
     val dependentFunctionInputVariableNames: Set<FunctionInput> = HashSet(),
@@ -117,18 +119,29 @@ data class Key(
     val dependentFunctionOutputVariableNames: Set<FunctionOutput> = HashSet(),
 
     @ManyToMany(mappedBy = "keyDependencies")
-    val dependentFunctionOutputKeys: Set<FunctionOutputKey> = HashSet()
+    val dependentFunctionOutputKeys: Set<FunctionOutputKey> = HashSet(),
+
+    @Column(name = "created", nullable = false)
+    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+    @Column(name = "updated")
+    var updated: Timestamp? = null
 
 ) : Serializable {
 
-  override fun equals(other: Any?): Boolean {
-    other ?: return false
-    if (this === other) return true
-    other as Key
-    return this.parentType == other.parentType && this.name == other.name
-  }
+    @PreUpdate
+    fun setUpdatedTimestamp() {
+        updated = Timestamp(System.currentTimeMillis())
+    }
 
-  override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
+    override fun equals(other: Any?): Boolean {
+        other ?: return false
+        if (this === other) return true
+        other as Key
+        return this.parentType == other.parentType && this.name == other.name
+    }
 
-  override fun toString(): String = serialize(this).toString()
+    override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
+
+    override fun toString(): String = serialize(this).toString()
 }

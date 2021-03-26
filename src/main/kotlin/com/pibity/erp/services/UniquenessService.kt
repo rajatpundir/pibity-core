@@ -9,60 +9,38 @@
 package com.pibity.erp.services
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.MessageConstants
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.typeIdentifierPattern
-import com.pibity.erp.entities.Key
-import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.Type
-import com.pibity.erp.entities.uniqueness.KeyUniqueness
 import com.pibity.erp.entities.uniqueness.TypeUniqueness
-import com.pibity.erp.repositories.jpa.KeyUniquenessJpaRepository
 import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.jpa.TypeUniquenessJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UniquenessService(
     val organizationJpaRepository: OrganizationJpaRepository,
     val typeRepository: TypeRepository,
-    val typeUniquenessJpaRepository: TypeUniquenessJpaRepository,
-    val keyUniquenessJpaRepository: KeyUniquenessJpaRepository
+    val typeUniquenessJpaRepository: TypeUniquenessJpaRepository
 ) {
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun createUniqueness(jsonParams: JsonObject): TypeUniqueness {
-    val organization: Organization = organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
-        ?: throw CustomJsonException("{orgId : 'Organization can not be found'}")
-    val type: Type = typeRepository.findType(organizationId = organization.id, name = jsonParams.get("typeName").asString)
-        ?: throw CustomJsonException("{typeName : 'Type can not be determined'}")
+    val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+        ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME} : ${MessageConstants.UNEXPECTED_VALUE}}")
     val constraintName: String = jsonParams.get("constraintName").asString
-    if (!typeIdentifierPattern.matcher(constraintName).matches())
+    if (!typeIdentifierPattern.matcher(constraintName).matches() || jsonParams.get("keys").asJsonArray.size() == 0)
       throw CustomJsonException("{constraintName: 'Constraint name $constraintName is not a valid identifier'}")
-    val typeUniqueness: TypeUniqueness = try {
-      typeUniquenessJpaRepository.save(TypeUniqueness(type = type, name = constraintName))
+    return try {
+      typeUniquenessJpaRepository.save(TypeUniqueness(type = type, name = constraintName).apply {
+        keys.addAll(jsonParams.get("keys").asJsonArray.map { json ->
+          type.keys.single { it.name == json.asString }.apply { isUniquenessDependency = true }
+        })
+      })
     } catch (exception: Exception) {
-      throw CustomJsonException("{constraintName: 'Unable to create Type Uniqueness constraint'}")
+      throw CustomJsonException("{constraintName: ''Unable to create Type Uniqueness constraint}")
     }
-    for (json in jsonParams.get("keys").asJsonArray) {
-      val keyName: String = try {
-        json.asString
-      } catch (exception: Exception) {
-        throw CustomJsonException("{keys: 'Unexpected value for parameter'}")
-      }
-      val key: Key = try {
-        type.keys.single { it.name == keyName }
-      } catch (exception: Exception) {
-        throw CustomJsonException("{keys: {${keyName}: 'Unexpected value for parameter'}}")
-      }
-      val keyUniqueness: KeyUniqueness = try {
-        keyUniquenessJpaRepository.save(KeyUniqueness(typeUniqueness = typeUniqueness, key = key))
-      } catch (exception: Exception) {
-        throw CustomJsonException("{constraintName: 'Unable to create Type Uniqueness constraint'}")
-      }
-      typeUniqueness.keyUniquenessConstraints.add(keyUniqueness)
-    }
-    return typeUniqueness
   }
 }

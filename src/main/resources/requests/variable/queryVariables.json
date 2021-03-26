@@ -2,7 +2,7 @@
   "orgId": {
     "type": "Long"
   },
-   "typeName": {
+  "typeName": {
     "type": "String"
   },
   "limit": {

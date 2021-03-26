@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.uniqueness
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.Variable
 import java.io.Serializable
 import java.sql.Timestamp
@@ -15,44 +16,55 @@ import javax.persistence.*
 
 @Entity
 @Table(
-    name = "variable_uniqueness",
-    schema = "inventory",
-    uniqueConstraints = [
-      UniqueConstraint(columnNames = ["type_uniqueness_id", "variable_id"]),
-      UniqueConstraint(columnNames = ["type_uniqueness_id", "level", "hash"])
-    ]
+  name = "variable_uniqueness",
+  schema = ApplicationConstants.SCHEMA,
+  uniqueConstraints = [
+    UniqueConstraint(columnNames = ["type_uniqueness_id", "variable_id"]),
+    UniqueConstraint(columnNames = ["type_uniqueness_id", "level", "hash"])
+  ]
 )
 data class VariableUniqueness(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_uniqueness_generator")
-    @SequenceGenerator(name = "variable_uniqueness_generator", sequenceName = "variable_uniqueness_sequence")
-    @Column(name = "id", updatable = false, nullable = false)
-    val id: Long = -1L,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_uniqueness_generator")
+  @SequenceGenerator(name = "variable_uniqueness_generator", sequenceName = "variable_uniqueness_sequence")
+  @Column(name = "id", updatable = false, nullable = false)
+  val id: Long = -1L,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id")])
-    val typeUniqueness: TypeUniqueness,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id")])
+  val typeUniqueness: TypeUniqueness,
 
-    @Column(name = "level", nullable = false)
-    var level: Int = 0,
+  @Column(name = "level", nullable = false)
+  var level: Int = 0,
 
-    @Column(name = "hash", nullable = false)
-    var hash: String,
+  @Column(name = "hash", nullable = false)
+  var hash: String,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "variable_id", referencedColumnName = "id")])
-    val variable: Variable,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "variable_id", referencedColumnName = "id")])
+  val variable: Variable,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "next_variable_uniqueness_id", referencedColumnName = "id")])
-    var nextVariableUniqueness: VariableUniqueness? = null,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "next_variable_uniqueness_id", referencedColumnName = "id")])
+  var nextVariableUniqueness: VariableUniqueness? = null,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis())
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
@@ -62,6 +74,4 @@ data class VariableUniqueness(
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
-
-//  override fun toString(): String = serialize(this).toString()
 }

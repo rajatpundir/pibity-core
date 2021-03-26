@@ -8,246 +8,254 @@
 
 package com.pibity.erp.services
 
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.KeyConstants
-import com.pibity.erp.commons.constants.TypeConstants
-import com.pibity.erp.commons.constants.formulaReturnTypes
+import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.exceptions.CustomJsonException
-import com.pibity.erp.commons.lisp.getSymbolPaths
 import com.pibity.erp.commons.lisp.validateSymbols
 import com.pibity.erp.commons.utils.*
-import com.pibity.erp.entities.Formula
-import com.pibity.erp.entities.Key
-import com.pibity.erp.entities.Organization
-import com.pibity.erp.entities.Type
+import com.pibity.erp.entities.*
+import com.pibity.erp.entities.assertion.TypeAssertion
 import com.pibity.erp.entities.permission.TypePermission
+import com.pibity.erp.entities.uniqueness.TypeUniqueness
+import com.pibity.erp.repositories.jpa.FormulaJpaRepository
 import com.pibity.erp.repositories.jpa.KeyJpaRepository
 import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.jpa.TypeJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import com.pibity.erp.repositories.query.VariableRepository
+import org.hibernate.engine.jdbc.BlobProxy
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
 
 @Service
 class TypeService(
-    val organizationJpaRepository: OrganizationJpaRepository,
-    val typeRepository: TypeRepository,
-    val typeJpaRepository: TypeJpaRepository,
-    val keyJpaRepository: KeyJpaRepository,
-    val uniquenessService: UniquenessService,
-    val variableRepository: VariableRepository,
-    val variableService: VariableService,
-    val typePermissionService: TypePermissionService,
-    val roleService: RoleService) {
+  val organizationJpaRepository: OrganizationJpaRepository,
+  val typeRepository: TypeRepository,
+  val typeJpaRepository: TypeJpaRepository,
+  val keyJpaRepository: KeyJpaRepository,
+  val formulaJpaRepository: FormulaJpaRepository,
+  val uniquenessService: UniquenessService,
+  val assertionService: AssertionService,
+  val variableRepository: VariableRepository,
+  val variableService: VariableService,
+  val typePermissionService: TypePermissionService,
+  val roleService: RoleService
+) {
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createType(jsonParams: JsonObject, typeOrganization: Organization? = null, globalTypes: MutableSet<Type>? = null, localTypes: MutableSet<Type>? = null): Type {
-     val typeName: String = validateTypeName(jsonParams.get("typeName").asString)
-    val autoId: Boolean = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
-    val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject)
-    val organization: Organization = typeOrganization
-        ?: organizationJpaRepository.getById(jsonParams.get("orgId").asLong)
-        ?: throw CustomJsonException("{orgId: 'Organization could not be found'}")
-    val validTypes: MutableSet<Type> = globalTypes
-        ?: typeRepository.findGlobalTypes(organizationId = organization.id) as MutableSet<Type>
-    var type = Type(organization = organization, name = typeName, autoId = autoId)
-    type = try {
-      typeJpaRepository.save(type)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{typeName: 'Unable to create Type'}")
-    }
-    for ((keyName, json) in keys.entrySet()) {
-      val keyJson = json.asJsonObject
-      val keyType: Type = try {
-        validTypes.first { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString }
-      } catch (exception: Exception) {
-        throw CustomJsonException("{keys: {$keyName: {${KeyConstants.KEY_TYPE}: 'Key type is not valid'}}}")
-      }
-      if (keyType.name != TypeConstants.FORMULA) {
-        val keyOrder: Int = keyJson.get(KeyConstants.ORDER).asInt
-        val key = Key(parentType = type, name = keyName, keyOrder = keyOrder, type = keyType)
-        when (keyType.name) {
-          else -> setValueForKey(key = key, keyJson = keyJson)
+  @Suppress("UNCHECKED_CAST")
+  fun createType(jsonParams: JsonObject, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis()), files: List<MultipartFile>): Type {
+    val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
+      ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: 'Organization could not be found'}")
+    val validTypes: MutableSet<Type> = typeRepository.findTypes(orgId = organization.id) as MutableSet<Type>
+    val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject, validTypes = validTypes, files = files)
+    val type = typeJpaRepository.save(Type(organization = organization, name = validateTypeName(jsonParams.get(OrganizationConstants.TYPE_NAME).asString),
+        autoId = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
+    ))
+    type.keys.addAll(
+      keys.entrySet()
+        .filter { (_, json) -> json.asJsonObject.get(KeyConstants.KEY_TYPE).asString != TypeConstants.FORMULA }
+        .sortedBy { (_, json) -> json.asJsonObject.get(KeyConstants.ORDER).asLong }
+        .map { (keyName, json) ->
+          val keyJson: JsonObject = json.asJsonObject
+          keyJpaRepository.save(
+            Key(
+              parentType = type,
+              name = keyName,
+              type = validTypes.single { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString },
+              keyOrder = keyJson.get(KeyConstants.ORDER).asInt
+            ).apply {
+              when (this.type.name) {
+                TypeConstants.TEXT -> defaultStringValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) keyJson.get(KeyConstants.DEFAULT).asString else ""
+                TypeConstants.NUMBER -> defaultLongValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) keyJson.get(KeyConstants.DEFAULT).asLong else 0
+                TypeConstants.DECIMAL -> defaultDecimalValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) keyJson.get(KeyConstants.DEFAULT).asBigDecimal else (0.0).toBigDecimal()
+                TypeConstants.BOOLEAN -> defaultBooleanValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) keyJson.get(KeyConstants.DEFAULT).asBoolean else false
+                TypeConstants.DATE -> defaultDateValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) java.sql.Date(keyJson.get(KeyConstants.DEFAULT).asLong) else null
+                TypeConstants.TIMESTAMP -> defaultTimestampValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) Timestamp(keyJson.get(KeyConstants.DEFAULT).asLong) else null
+                TypeConstants.TIME -> defaultTimeValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) java.sql.Time(keyJson.get(KeyConstants.DEFAULT).asLong) else null
+                TypeConstants.BLOB -> defaultBlobValue =
+                  if (keyJson.has(KeyConstants.DEFAULT)) BlobProxy.generateProxy(files[keyJson.get(KeyConstants.DEFAULT).asInt].bytes) else BlobProxy.generateProxy("".toByteArray())
+                else -> {
+                  if (keyJson.has(KeyConstants.DEFAULT)) {
+                    referencedVariable = variableRepository.findByTypeAndName(
+                      type = this.type,
+                      name = keyJson.get(KeyConstants.DEFAULT).asString
+                    )
+                      ?: throw CustomJsonException("{keys: {${this.name}: {default: 'Variable reference is not correct'}}}")
+                  }
+                }
+              }
+            })
+        })
+    type.keys.addAll(keys.entrySet()
+      .filter { (_, json) -> json.asJsonObject.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA }
+      .sortedBy { (_, json) -> json.asJsonObject.get(KeyConstants.ORDER).asLong }
+      .map { (keyName, json) ->
+        val keyJson: JsonObject = json.asJsonObject
+        keyJpaRepository.save(
+          Key(
+            parentType = type,
+            name = keyName,
+            type = validTypes.single { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString },
+            keyOrder = keyJson.get(KeyConstants.ORDER).asInt
+          )
+        ).apply {
+          val keyDependencies: MutableSet<Key> = mutableSetOf()
+          val symbolPaths: Set<String> = validateOrEvaluateExpression(expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject,
+            symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) as Set<String>
+          val symbols: JsonObject = validateSymbols(getSymbols(type = type, symbolPaths = symbolPaths.toMutableSet(), keyDependencies = keyDependencies, symbolsForFormula = true))
+          formula = formulaJpaRepository.save(
+            Formula(
+              key = this,
+              returnType = validTypes.single { it.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString },
+              expression = (validateOrEvaluateExpression(expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject, symbols = symbols,
+                mode = LispConstants.REFLECT, expectedReturnType = keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) as JsonObject).toString(),
+              symbolPaths = gson.toJson(symbolPaths),
+              keyDependencies = keyDependencies
+            )
+          )
         }
-        type.keys.add(keyJpaRepository.save(key))
-      }
-    }
-    type = try {
-      typeJpaRepository.save(type)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{typeName: 'Unable to create Type'}")
-    }
-    for ((keyName, json) in keys.entrySet()) {
-      val keyJson = json.asJsonObject
-      if (!keyJson.get(KeyConstants.KEY_TYPE).isJsonObject && keyJson.get(KeyConstants.KEY_TYPE).asString == TypeConstants.FORMULA) {
-        val key = Key(parentType = type, name = keyName, keyOrder = keyJson.get(KeyConstants.ORDER).asInt, type = validTypes.first { it.name == TypeConstants.FORMULA })
-        when (keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) {
-          in formulaReturnTypes -> {
-            val returnType: Type = try {
-              validTypes.first { it.name == keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString }
-            } catch (exception: Exception) {
-              throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
-            }
-            val keyDependencies: MutableSet<Key> = mutableSetOf()
-            val typeDependencies: MutableSet<Type> = mutableSetOf()
-            val symbolPaths = validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.deepCopy().apply {
-              addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
-            }, mode = "collect", symbols = JsonObject()) as Set<String>
-            val symbols: JsonObject = validateSymbols(jsonParams = getSymbols(type = type, prefix = "", symbolPaths = symbolPaths.toMutableSet(), level = 0, keyDependencies = keyDependencies, typeDependencies = typeDependencies, symbolsForFormula = true))
-            try {
-              validateOrEvaluateExpression(jsonParams = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.deepCopy().apply {
-                addProperty("expectedReturnType", keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString)
-              }, mode = "validate", symbols = symbols) as String
-            } catch (exception: CustomJsonException) {
-              throw CustomJsonException("{keys: {$keyName: {expression: ${exception.message}}}}")
-            }
-            val formula = Formula(returnType = returnType,
-                expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject.toString(),
-                symbolPaths = gson.toJson(getSymbolPaths(jsonParams = symbols)),
-                keyDependencies = keyDependencies,
-                typeDependencies = typeDependencies)
-            key.formula = formula
-          }
-          else -> throw CustomJsonException("{keys: {$keyName: {${KeyConstants.FORMULA_RETURN_TYPE}: 'Return type is not valid'}}}")
-        }
-        type.keys.add(keyJpaRepository.save(key))
-      }
-    }
-    type = try {
-      typeJpaRepository.save(type)
-    } catch (exception: Exception) {
-      throw CustomJsonException("{typeName: 'Unable to create Type'}")
-    }
-    type.permissions.addAll(createDefaultPermissionsForType(type))
-    createPermissionsForType(jsonParams = jsonParams)
+      })
+    type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams))
+    type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams))
+    type.permissions.addAll(createDefaultPermissionsForType(type = type))
+    type.permissions.addAll(createPermissionsForType(jsonParams = jsonParams))
     assignTypePermissionsToRoles(jsonParams = jsonParams)
-    createTypeUniquenessConstraints(jsonParams = jsonParams)
     if (jsonParams.has("variables?"))
-      createVariablesForType(jsonParams = jsonParams)
+      createVariablesForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp, files = files)
     return type
   }
 
-  private fun setValueForKey(key: Key, keyJson: JsonObject) {
-    val defaultValue: JsonElement? = if (keyJson.has("default")) keyJson.get("default") else null
-    when (key.type.name) {
-      TypeConstants.TEXT -> key.defaultStringValue = defaultValue?.asString ?: ""
-      TypeConstants.NUMBER -> key.defaultLongValue = defaultValue?.asLong ?: 0
-      TypeConstants.DECIMAL -> key.defaultDecimalValue = defaultValue?.asBigDecimal ?: (0).toBigDecimal()
-      TypeConstants.BOOLEAN -> key.defaultBooleanValue = defaultValue?.asBoolean ?: false
-      TypeConstants.DATE -> key.defaultDateValue = if (defaultValue != null) java.sql.Date(dateFormat.parse(defaultValue.asString).time) else null
-      TypeConstants.TIMESTAMP -> key.defaultTimestampValue = if (defaultValue != null) Timestamp(defaultValue.asLong) else null
-      TypeConstants.TIME -> key.defaultTimeValue = if (defaultValue != null) java.sql.Time(defaultValue.asLong) else null
-      TypeConstants.FORMULA, TypeConstants.BLOB -> {
-      }
-      else -> if (defaultValue != null) {
-        key.referencedVariable = variableRepository.findByTypeAndName(type = key.type, name = defaultValue.asString)
-            ?: throw CustomJsonException("{keys: {${key.name}: {default: 'Variable reference is not correct'}}}")
-      }
-    }
-  }
-
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createTypeUniquenessConstraints(jsonParams: JsonObject) {
+  fun createTypeUniquenessConstraints(jsonParams: JsonObject): Set<TypeUniqueness> {
+    val uniqueConstraints: MutableSet<TypeUniqueness> = mutableSetOf()
     for ((constraintName, jsonKeys) in jsonParams.get("uniqueConstraints").asJsonObject.entrySet()) {
-      uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("typeName", jsonParams.get("typeName").asString)
+      uniqueConstraints.add(uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+        addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         addProperty("constraintName", constraintName)
         add("keys", jsonKeys.asJsonArray)
-      })
+      }))
     }
+    return uniqueConstraints
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createPermissionsForType(jsonParams: JsonObject) {
+  fun createTypeAssertions(jsonParams: JsonObject): Set<TypeAssertion> {
+    val assertions: MutableSet<TypeAssertion> = mutableSetOf()
+    for ((assertionName, assertionExpression) in jsonParams.get("assertions").asJsonObject.entrySet()) {
+      assertions.add(assertionService.createAssertion(jsonParams = JsonObject().apply {
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+        addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+        addProperty("assertionName", assertionName)
+        add("expression", assertionExpression.asJsonObject)
+      }))
+    }
+    return assertions
+  }
+
+  fun createPermissionsForType(jsonParams: JsonObject): Set<TypePermission> {
+    val typePermissions: MutableSet<TypePermission> = mutableSetOf()
     for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
       if (jsonPermission.isJsonObject) {
-        typePermissionService.createTypePermission(jsonParams = JsonObject().apply {
-          addProperty("orgId", jsonParams.get("orgId").asString)
-          addProperty("typeName", jsonParams.get("typeName").asString)
+        val (typePermission, _) = typePermissionService.createTypePermission(jsonParams = JsonObject().apply {
+          addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+          addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
           try {
             addProperty("permissionName", jsonParams.get("permissionName").asString)
           } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {permissionName: 'Unexpected value for parameter'}}")
+            throw CustomJsonException("{permissions: {permissionName: ${MessageConstants.UNEXPECTED_VALUE}}}")
           }
           try {
             addProperty("creatable", jsonParams.get("creatable").asBoolean)
           } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {creatable: 'Unexpected value for parameter'}}")
+            throw CustomJsonException("{permissions: {creatable: ${MessageConstants.UNEXPECTED_VALUE}}}")
           }
           try {
             addProperty("deletable", jsonParams.get("deletable").asBoolean)
           } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {deletable: 'Unexpected value for parameter'}}")
+            throw CustomJsonException("{permissions: {deletable: ${MessageConstants.UNEXPECTED_VALUE}}}")
           }
           try {
             add("permissions", jsonParams.get("permissions").asJsonArray)
           } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {permissions: 'Unexpected value for parameter'}}")
+            throw CustomJsonException("{permissions: {permissions: ${MessageConstants.UNEXPECTED_VALUE}}}")
           }
         })
-      } else throw CustomJsonException("{permissions: 'Unexpected value for parameter'}")
+        typePermissions.add(typePermission)
+      } else throw CustomJsonException("{permissions: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
+    return typePermissions
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun assignTypePermissionsToRoles(jsonParams: JsonObject) {
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
           roleService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
-            addProperty("orgId", jsonParams.get("orgId").asString)
-            addProperty("typeName", jsonParams.get("typeName").asString)
+            addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+            addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
             addProperty("roleName", roleName)
             try {
               addProperty("permissionName", permissionName.asString)
             } catch (exception: Exception) {
-              throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}")
+              throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}")
             }
             addProperty("operation", "add")
           })
         }
-      } else throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}}")
+      } else throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}}")
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
-  fun createVariablesForType(jsonParams: JsonObject) {
+  fun createVariablesForType(jsonParams: JsonObject, defaultTimestamp: Timestamp, files: List<MultipartFile>) {
     for ((variableName, values) in jsonParams.get("variables?").asJsonObject.entrySet()) {
       val jsonVariableParams = JsonObject()
       jsonVariableParams.apply {
-        addProperty("orgId", jsonParams.get("orgId").asString)
-        addProperty("username", jsonParams.get("username").asString)
-        addProperty("typeName", jsonParams.get("typeName").asString)
-        addProperty("variableName", variableName)
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+        addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
+        addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+        addProperty(VariableConstants.VARIABLE_NAME, variableName)
         try {
-          add("values", values.asJsonObject)
+          add(VariableConstants.VALUES, values.asJsonObject)
         } catch (exception: Exception) {
-          throw CustomJsonException("{variables: {$variableName: {values: 'Unexpected value for parameter'}}}")
+          throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: {$variableName: {${VariableConstants.VALUES}: ${MessageConstants.UNEXPECTED_VALUE}}}}")
         }
       }
       try {
-        variableService.createVariable(jsonParams = jsonVariableParams)
+        variableService.createVariable(jsonParams = jsonVariableParams, defaultTimestamp = defaultTimestamp, files = files)
       } catch (exception: CustomJsonException) {
         throw CustomJsonException("{variables: {$variableName: ${exception.message}}}")
       }
     }
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun createDefaultPermissionsForType(type: Type): Set<TypePermission> {
     val defaultPermissions = mutableSetOf<TypePermission>()
-    defaultPermissions.add(typePermissionService.createDefaultTypePermission(type = type, permissionName = "READ_ALL", accessLevel = 1))
-    defaultPermissions.add(typePermissionService.createDefaultTypePermission(type = type, permissionName = "WRITE_ALL", accessLevel = 2))
+    defaultPermissions.add(
+      typePermissionService.createDefaultTypePermission(
+        type = type,
+        permissionName = "READ_ALL",
+        accessLevel = 1
+      )
+    )
+    defaultPermissions.add(
+      typePermissionService.createDefaultTypePermission(
+        type = type,
+        permissionName = "WRITE_ALL",
+        accessLevel = 2
+      )
+    )
     return defaultPermissions
   }
 
-  @Transactional(rollbackFor = [CustomJsonException::class])
   fun getTypeDetails(jsonParams: JsonObject): Type {
-    return typeRepository.findType(organizationId = jsonParams.get("orgId").asLong, name = jsonParams.get("typeName").asString)
-        ?: throw CustomJsonException("{typeName: 'Type could not be determined'}")
+    return typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+      ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
   }
 }

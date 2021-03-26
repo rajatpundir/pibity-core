@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.permission
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.function.Function
 import com.pibity.erp.entities.mappings.RoleFunctionPermission
 import com.pibity.erp.serializers.serialize
@@ -17,35 +18,46 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function_permission", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
+@Table(name = "function_permission", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["function_id", "name"])])
 data class FunctionPermission(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_permission_generator")
-    @SequenceGenerator(name="function_permission_generator", sequenceName = "function_permission_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_permission_generator")
+  @SequenceGenerator(name="function_permission_generator", sequenceName = "function_permission_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
-    val function: Function,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+  val function: Function,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL])
-    var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
+  @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL])
-    var functionOutputPermissions: MutableSet<FunctionOutputPermission> = HashSet(),
+  @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL], orphanRemoval = true)
+  var functionOutputPermissions: MutableSet<FunctionOutputPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL])
-    val permissionRoles: MutableSet<RoleFunctionPermission> = HashSet()
+  @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val permissionRoles: MutableSet<RoleFunctionPermission> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

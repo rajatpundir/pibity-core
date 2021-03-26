@@ -9,6 +9,7 @@
 package com.pibity.erp.commons.utils
 
 import com.google.gson.*
+import com.pibity.erp.commons.constants.MessageConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
@@ -16,64 +17,64 @@ import org.keycloak.representations.AccessToken
 import java.io.File
 import java.security.MessageDigest
 
+data class Quadruple<T1, T2, T3, T4>(val t1: T1, val t2: T2, val t3: T3, val t4: T4)
+
 val gson: Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
-fun getExpectedParams(controller: String, filename: String): JsonObject = gson.fromJson(File("src/main/resources/requests/$controller/$filename.json").readText(), JsonObject::class.java)
+fun getExpectedParams(controller: String, filename: String): JsonObject {
+  return gson.fromJson(File("src/main/resources/requests/$controller/$filename.json").readText(), JsonObject::class.java)
+}
 
-// Parses JSON from request to generate JSON Object with whitelisted properties
-// Raises exception if expected property is missing or of incorrect type
 fun getJsonParams(request: String, expectedParams: JsonObject): JsonObject {
-  // Parse request body to get a JsonObject
   val json: JsonObject = try {
     JsonParser.parseString(request).asJsonObject
   } catch (exception: Exception) {
     throw CustomJsonException("{'error': 'Unable to parse request body'}")
   }
-  // Get whitelisted params into another JsonObject
-  // Raise exception if expected parameter is missing or of incorrect type
-  val jsonParams = JsonObject()
-  for ((param, paramType) in expectedParams.entrySet()) {
-    if (param.endsWith("?")) {
-      val optionalParam: String = param.substringBefore("?")
-      if (json.has(optionalParam)) {
-        try {
-          when (paramType.asJsonObject.get("type").asString) {
-            "String" -> jsonParams.addProperty(param, json[optionalParam].asString)
-            "Int" -> jsonParams.addProperty(param, json[optionalParam].asInt)
-            "Long" -> jsonParams.addProperty(param, json[optionalParam].asLong)
-            "Double" -> jsonParams.addProperty(param, json[optionalParam].asDouble)
-            "Boolean" -> jsonParams.addProperty(param, json[optionalParam].asBoolean)
-            "Object" -> jsonParams.add(param, json[optionalParam].asJsonObject)
-            "Array" -> jsonParams.add(param, json[optionalParam].asJsonArray)
+  return expectedParams.entrySet().fold(JsonObject()) { acc, (param, paramType) ->
+    acc.apply {
+      if (param.endsWith("?")) {
+        val optionalParam: String = param.substringBefore("?")
+        if (json.has(optionalParam)) {
+          try {
+            when (paramType.asJsonObject.get("type").asString) {
+              "String" -> addProperty(param, json[optionalParam].asString)
+              "Int" -> addProperty(param, json[optionalParam].asInt)
+              "Long" -> addProperty(param, json[optionalParam].asLong)
+              "Double" -> addProperty(param, json[optionalParam].asDouble)
+              "Boolean" -> addProperty(param, json[optionalParam].asBoolean)
+              "Object" -> add(param, json[optionalParam].asJsonObject)
+              "Array" -> add(param, json[optionalParam].asJsonArray)
+            }
+          } catch (exception: Exception) {
+            throw CustomJsonException("{'$optionalParam': ${MessageConstants.UNEXPECTED_VALUE}}")
           }
-        } catch (exception: Exception) {
-          throw CustomJsonException("{'$optionalParam': 'Unexpected value for parameter'}")
         }
-      }
-    } else {
-      if (!json.has(param))
-        throw CustomJsonException("{'$param': 'Field is missing in request body'}")
-      else {
-        try {
-          when (paramType.asJsonObject.get("type").asString) {
-            "String" -> jsonParams.addProperty(param, json[param].asString)
-            "Int" -> jsonParams.addProperty(param, json[param].asInt)
-            "Long" -> jsonParams.addProperty(param, json[param].asLong)
-            "Double" -> jsonParams.addProperty(param, json[param].asDouble)
-            "Boolean" -> jsonParams.addProperty(param, json[param].asBoolean)
-            "Object" -> jsonParams.add(param, json[param].asJsonObject)
-            "Array" -> jsonParams.add(param, json[param].asJsonArray)
+      } else {
+        if (!json.has(param))
+          throw CustomJsonException("{'$param': ${MessageConstants.MISSING_FIELD}}")
+        else {
+          try {
+            when (paramType.asJsonObject.get("type").asString) {
+              "String" -> addProperty(param, json[param].asString)
+              "Int" -> addProperty(param, json[param].asInt)
+              "Long" -> addProperty(param, json[param].asLong)
+              "Double" -> addProperty(param, json[param].asDouble)
+              "Boolean" -> addProperty(param, json[param].asBoolean)
+              "Object" -> add(param, json[param].asJsonObject)
+              "Array" -> add(param, json[param].asJsonArray)
+            }
+          } catch (exception: Exception) {
+            throw CustomJsonException("{'$param': ${MessageConstants.UNEXPECTED_VALUE}}")
           }
-        } catch (exception: Exception) {
-          throw CustomJsonException("{'$param': 'Unexpected value for parameter'}")
         }
       }
     }
   }
-  return jsonParams
 }
 
 // TODO. If subGroupName is USER, then ADMIN will also suffice, but not vice versa.
+@Suppress("UNCHECKED_CAST")
 fun validateOrganizationClaim(authentication: KeycloakAuthenticationToken, jsonParams: JsonObject, subGroupName: String) {
   val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
   val claims: Map<String, String> = token.otherClaims as Map<String, String>

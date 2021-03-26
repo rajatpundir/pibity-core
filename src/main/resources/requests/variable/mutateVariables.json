@@ -3,6 +3,6 @@
     "type": "Long"
   },
   "queue": {
-    "type": "Array"
+    "type": "Object"
   }
 }

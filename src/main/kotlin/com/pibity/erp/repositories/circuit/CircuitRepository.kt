@@ -12,29 +12,26 @@ import com.pibity.erp.entities.circuit.Circuit
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
-import javax.persistence.LockModeType
 import javax.persistence.TypedQuery
 
 @Repository
 class CircuitRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findCircuit(organizationId: Long, name: String): Circuit? {
-    val hql = "SELECT c FROM Circuit c WHERE c.organization.id = :organizationId AND c.name = :name"
+  fun findCircuit(orgId: Long, name: String): Circuit? {
+    val hql = "SELECT c FROM Circuit c WHERE c.organization.id = :orgId AND c.name = :name"
     val query: TypedQuery<Circuit> = entityManager.createQuery(hql, Circuit::class.java).apply {
-      lockMode = LockModeType.OPTIMISTIC_FORCE_INCREMENT
-      setParameter("organizationId", organizationId)
+      setParameter("orgId", orgId)
       setParameter("name", name)
     }
     return query.singleResult
   }
 
   @Transactional(readOnly = true)
-  fun findCircuits(organizationId: Long): Set<Circuit> {
-    val hql = "SELECT DISTINCT c FROM Circuit c WHERE c.organization.id = :organizationId"
+  fun findCircuits(orgId: Long): Set<Circuit> {
+    val hql = "SELECT DISTINCT c FROM Circuit c WHERE c.organization.id = :orgId"
     val query: TypedQuery<Circuit> = entityManager.createQuery(hql, Circuit::class.java).apply {
-      lockMode = LockModeType.OPTIMISTIC_FORCE_INCREMENT
-      setParameter("organizationId", organizationId)
+      setParameter("orgId", orgId)
     }
     return query.resultList.toSet()
   }

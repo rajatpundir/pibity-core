@@ -19,11 +19,11 @@ import javax.persistence.TypedQuery
 class GroupRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findGroup(organizationId: Long, name: String): Group? {
-    val hql = "SELECT g FROM Group g WHERE g.organization.id = :organizationId AND g.name = :name"
+  fun findGroup(orgId: Long, name: String): Group? {
+    val hql = "SELECT g FROM Group g WHERE g.organization.id = :orgId AND g.name = :name"
     return try {
       entityManager.createQuery(hql, Group::class.java).apply {
-        setParameter("organizationId", organizationId)
+        setParameter("orgId", orgId)
         setParameter("name", name)
       }.singleResult
     } catch (exception: Exception) {

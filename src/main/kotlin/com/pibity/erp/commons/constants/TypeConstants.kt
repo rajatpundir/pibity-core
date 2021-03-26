@@ -13,18 +13,10 @@ val primitiveTypes = listOf(
   TypeConstants.NUMBER,
   TypeConstants.DECIMAL,
   TypeConstants.BOOLEAN,
-  TypeConstants.FORMULA,
   TypeConstants.DATE,
   TypeConstants.TIMESTAMP,
   TypeConstants.TIME,
   TypeConstants.BLOB
-)
-
-val formulaReturnTypes = listOf(
-  TypeConstants.TEXT,
-  TypeConstants.NUMBER,
-  TypeConstants.DECIMAL,
-  TypeConstants.BOOLEAN
 )
 
 object TypeConstants {

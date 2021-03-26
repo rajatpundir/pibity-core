@@ -8,7 +8,7 @@
 
 package com.pibity.erp.repositories.jpa
 
-import com.pibity.erp.entities.TypeAssertion
+import com.pibity.erp.entities.assertion.TypeAssertion
 import org.springframework.data.repository.CrudRepository
 
 interface AssertionJpaRepository : CrudRepository<TypeAssertion, Long>

@@ -10,55 +10,47 @@ package com.pibity.erp.commons.utils
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.LispConstants
+import com.pibity.erp.commons.constants.MessageConstants
+import com.pibity.erp.commons.constants.OperatorConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.lisp.*
 
-fun validateOrEvaluateExpression(jsonParams: JsonObject, mode: String, symbols: JsonObject): Any {
-  val op: String = if (!jsonParams.has("op"))
-    throw CustomJsonException("{op: 'Field is missing in request body'}")
-  else try {
-    jsonParams.get("op").asString
+fun validateOrEvaluateExpression(expression: JsonObject, symbols: JsonObject, mode: String, expectedReturnType: String): Any {
+  val op: String = try {
+    expression.get(LispConstants.OPERATION).asString
   } catch (exception: Exception) {
-    throw CustomJsonException("{op: 'Unexpected value for parameter'}")
+    throw CustomJsonException("{${LispConstants.OPERATION}: ${MessageConstants.UNEXPECTED_VALUE}}")
   }
-  val args: List<JsonElement> = if (!jsonParams.has("args"))
-    throw CustomJsonException("{args: 'Field is missing in request body'}")
-  else try {
-    jsonParams.get("args").asJsonArray.map { it }
+  val args: List<JsonElement> = try {
+    expression.get(LispConstants.ARGS).asJsonArray.map { it }
   } catch (exception: Exception) {
-    throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+    throw CustomJsonException("{${LispConstants.ARGS}: ${MessageConstants.UNEXPECTED_VALUE}}")
   }
-  val types: MutableList<String> = if (!jsonParams.has("types"))
-    throw CustomJsonException("{types: 'Field is missing in request body'}")
-  else try {
-    jsonParams.get("types").asJsonArray.map { it.asString } as MutableList<String>
+  val types: MutableList<String> = try {
+    expression.get(LispConstants.TYPES).asJsonArray.map { it.asString } as MutableList<String>
   } catch (exception: Exception) {
-    throw CustomJsonException("{types: 'Unexpected value for parameter'}")
-  }
-  val expectedReturnType: String = if (!jsonParams.has("expectedReturnType"))
-    throw CustomJsonException("{expectedReturnType: 'Field is missing in request body'}")
-  else try {
-    jsonParams.get("expectedReturnType").asString
-  } catch (exception: Exception) {
-    throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+    throw CustomJsonException("{${LispConstants.TYPES}: ${MessageConstants.UNEXPECTED_VALUE}}")
   }
   return try {
     when (op) {
-      "+" -> add(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "*" -> multiply(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "-" -> subtract(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "/" -> divide(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "^" -> power(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "%" -> modulus(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "==", ">", "<", ">=", "<=" -> compare(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols, operator = op)
-      "and" -> and(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "or" -> or(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "not" -> not(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "if" -> ifThenElse(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "let" -> let(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "." -> dot(args = args, expectedReturnType = expectedReturnType, mode = mode, symbols = symbols)
-      "id" -> identity(args = args, types = types, expectedReturnType = expectedReturnType, mode = mode)
-      else -> throw CustomJsonException("Invalid operation")
+      OperatorConstants.ADD -> add(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.MULTIPLY -> multiply(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.SUBTRACT -> subtract(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.DIVIDE -> divide(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.POWER -> power(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.MODULUS -> modulus(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.EQUALS, OperatorConstants.GREATER_THAN, OperatorConstants.LESS_THAN, OperatorConstants.GREATER_OR_EQUALS, OperatorConstants.LESS_OR_EQUALS ->
+        compare(operator = op, types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.AND -> and(args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.OR -> or(args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.NOT -> not(args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.IF_THEN_ELSE -> ifThenElse(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.LET -> let(args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.DOT -> dot(args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.IDENTITY -> identity( types = types,args = args, mode = mode, expectedReturnType = expectedReturnType)
+      OperatorConstants.CONCAT -> concat(types = types, args = args, symbols = symbols, mode = mode, expectedReturnType = expectedReturnType)
+      else -> throw CustomJsonException(MessageConstants.UNEXPECTED_VALUE)
     }
   } catch (exception: CustomJsonException) {
     throw CustomJsonException("{${op}: ${exception.message}}")

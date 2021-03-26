@@ -19,11 +19,11 @@ import javax.persistence.TypedQuery
 class RoleRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findRole(organizationId: Long, name: String): Role? {
-    val hql = "SELECT r FROM Role r WHERE r.organization.id = :organizationId AND r.name = :name"
+  fun findRole(orgId: Long, name: String): Role? {
+    val hql = "SELECT r FROM Role r WHERE r.organization.id = :orgId AND r.name = :name"
     return try {
       entityManager.createQuery(hql, Role::class.java).apply {
-        setParameter("organizationId", organizationId)
+        setParameter("orgId", orgId)
         setParameter("name", name)
       }.singleResult
     } catch (exception: Exception) {

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities.function
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.Organization
 import com.pibity.erp.entities.permission.FunctionPermission
 import com.pibity.erp.serializers.serialize
@@ -17,38 +18,50 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "function", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
+@Table(name = "function", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Function(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_generator")
-    @SequenceGenerator(name="function_generator", sequenceName = "function_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "function_generator")
+  @SequenceGenerator(name="function_generator", sequenceName = "function_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", nullable = false)
-    val organization: Organization,
+  @ManyToOne
+  @JoinColumn(name = "organization_id", nullable = false)
+  val organization: Organization,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @Column(name = "symbol_paths", nullable = false)
-    val symbolPaths: String,
+  @Lob
+  @Column(name = "symbol_paths", nullable = false)
+  val symbolPaths: String,
 
-    @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL])
-    val inputs: MutableSet<FunctionInput> = HashSet(),
+  @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val inputs: MutableSet<FunctionInput> = HashSet(),
 
-    @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL])
-    val outputs: MutableSet<FunctionOutput> = HashSet(),
+  @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val outputs: MutableSet<FunctionOutput> = HashSet(),
 
-    @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL])
-    val permissions: MutableSet<FunctionPermission> = HashSet()
+  @OneToMany(mappedBy = "function", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val permissions: MutableSet<FunctionPermission> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

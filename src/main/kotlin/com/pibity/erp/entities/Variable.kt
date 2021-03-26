@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,53 +8,59 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.constants.ApplicationConstants
+import com.pibity.erp.entities.assertion.VariableAssertion
 import com.pibity.erp.entities.uniqueness.VariableUniqueness
-import com.pibity.erp.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "variable", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])])
+@Table(name = "variable", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])])
 data class Variable(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_generator")
-    @SequenceGenerator(name = "variable_generator", sequenceName = "variable_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "variable_generator")
+  @SequenceGenerator(name = "variable_generator", sequenceName = "variable_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    val type: Type,
+  @ManyToOne
+  val type: Type,
 
-    @Column(name = "name", nullable = false)
-    var name: String,
+  @Column(name = "name", nullable = false)
+  var name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @Column(name = "active", nullable = false)
-    var active: Boolean = true,
+  @Column(name = "active", nullable = false)
+  var active: Boolean = true,
 
-    @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL])
-    val values: MutableSet<Value> = HashSet(),
+  @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val values: MutableSet<Value> = HashSet(),
 
-    @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL])
-    val variableUniquenesses: MutableSet<VariableUniqueness> = HashSet(),
+  @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val variableUniquenesses: MutableSet<VariableUniqueness> = HashSet(),
 
-    @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL])
-    val variableAssertions: MutableSet<VariableAssertion> = HashSet(),
+  @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val variableAssertions: MutableSet<VariableAssertion> = HashSet(),
 
-    @OneToMany(mappedBy = "referencedVariable", cascade = [CascadeType.ALL])
-    val referencingValues: Set<Value> = HashSet(),
+  @OneToMany(mappedBy = "referencedVariable", cascade = [CascadeType.ALL])
+  val referencingValues: Set<Value> = HashSet(),
 
-    @ManyToMany(mappedBy = "variableDependencies", cascade = [CascadeType.ALL])
-    val dependentValues: MutableSet<Value> = HashSet(),
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @ManyToMany(mappedBy = "variableDependencies", cascade = [CascadeType.ALL])
-    val dependentAssertions: MutableSet<VariableAssertion> = HashSet()
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false
@@ -64,6 +70,4 @@ data class Variable(
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
-
-  override fun toString(): String = serialize(this).toString()
 }

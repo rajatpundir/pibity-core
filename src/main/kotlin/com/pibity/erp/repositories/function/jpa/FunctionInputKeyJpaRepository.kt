@@ -6,15 +6,9 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.erp.repositories.jpa
+package com.pibity.erp.repositories.function.jpa
 
-import com.pibity.erp.entities.uniqueness.KeyUniqueness
-import com.pibity.erp.entities.uniqueness.TypeUniqueness
+import com.pibity.erp.entities.function.FunctionInputKey
 import org.springframework.data.repository.CrudRepository
-import org.springframework.transaction.annotation.Transactional
 
-interface KeyUniquenessJpaRepository : CrudRepository<KeyUniqueness, Long> {
-
-  @Transactional(readOnly = true)
-  fun getById(id: Long): KeyUniqueness?
-}
+interface FunctionInputKeyJpaRepository : CrudRepository<FunctionInputKey, Long>
