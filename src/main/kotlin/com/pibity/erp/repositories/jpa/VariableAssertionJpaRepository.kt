@@ -8,7 +8,7 @@
 
 package com.pibity.erp.repositories.jpa
 
-import com.pibity.erp.entities.VariableAssertion
+import com.pibity.erp.entities.assertion.VariableAssertion
 import org.springframework.data.repository.CrudRepository
 
 interface VariableAssertionJpaRepository : CrudRepository<VariableAssertion, Long>

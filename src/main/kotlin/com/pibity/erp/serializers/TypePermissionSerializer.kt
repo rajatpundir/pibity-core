@@ -10,34 +10,25 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.commons.constants.PermissionConstants
 import com.pibity.erp.entities.permission.TypePermission
 
-fun serialize(typePermission: TypePermission): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", typePermission.type.organization.id)
-  json.addProperty("typeName", typePermission.type.name)
-  json.addProperty("permissionName", typePermission.name)
-  json.addProperty("creatable", typePermission.creatable)
-  json.addProperty("deletable", typePermission.deletable)
-  val jsonKeyPermissions = JsonObject()
-  for (keyPermission in typePermission.keyPermissions) {
-    jsonKeyPermissions.addProperty(
-      keyPermission.key.name,
-      when (keyPermission.accessLevel) {
+fun serialize(typePermission: TypePermission): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, typePermission.type.organization.id)
+  addProperty(OrganizationConstants.TYPE_NAME, typePermission.type.name)
+  addProperty("permissionName", typePermission.name)
+  addProperty("creatable", typePermission.creatable)
+  addProperty("deletable", typePermission.deletable)
+  add("permissions", typePermission.keyPermissions.fold(JsonObject()) { acc, keyPermission ->
+    acc.apply {
+      addProperty(keyPermission.key.name, when (keyPermission.accessLevel) {
         PermissionConstants.READ_ACCESS -> "READ"
         PermissionConstants.WRITE_ACCESS -> "WRITE"
         else -> "NONE"
-      }
-    )
-  }
-  json.add("permissions", jsonKeyPermissions)
-  return json
+      })
+    }
+  })
 }
 
-fun serialize(entities: Set<TypePermission>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<TypePermission>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

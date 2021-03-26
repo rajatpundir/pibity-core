@@ -10,32 +10,17 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.entities.Type
 
-fun serialize(type: Type): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", type.organization.id)
-  json.addProperty("typeName", type.name)
-  json.addProperty("autoId", type.autoId)
-  val jsonKeys = JsonObject()
-  for (key in type.keys)
-    jsonKeys.add(key.name, serialize(key))
-  json.add("keys", jsonKeys)
-  json.add("uniqueConstraints", serialize(type.uniqueConstraints))
-  val jsonUniquenessConstraints = JsonObject()
-  for (typeUniqueness in type.uniqueConstraints) {
-    jsonUniquenessConstraints.add(typeUniqueness.name, JsonArray().apply {
-      typeUniqueness.keyUniquenessConstraints.forEach { add(it.key.name) }
-    })
-  }
-  json.add("uniqueConstraints", jsonUniquenessConstraints)
-  json.add("permissions", serialize(type.permissions))
-  return json
+fun serialize(type: Type): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, type.organization.id)
+  addProperty(OrganizationConstants.TYPE_NAME, type.name)
+  addProperty("autoId", type.autoId)
+  add("keys", type.keys.fold(JsonObject()) { acc, key -> acc.apply { add(key.name, serialize(key)) } })
+  add("uniqueConstraints", serialize(type.uniqueConstraints))
+  add("assertions", serialize(type.typeAssertions))
+  add("permissions", serialize(type.permissions))
 }
 
-fun serialize(entities: Set<Type>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<Type>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

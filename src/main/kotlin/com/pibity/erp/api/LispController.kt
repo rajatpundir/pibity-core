@@ -9,6 +9,7 @@
 package com.pibity.erp.api
 
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.LispConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.getExpectedParams
@@ -34,8 +35,8 @@ class LispController {
   fun evaluateLispExpression(@RequestBody request: String): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["evaluateExpression"] ?: JsonObject())
-      ResponseEntity(validateOrEvaluateExpression(jsonParams = jsonParams, mode = "validate", symbols = JsonObject()).toString()
-          + " " + validateOrEvaluateExpression(jsonParams = jsonParams, mode = "evaluate", symbols = JsonObject()).toString(), HttpStatus.OK)
+      ResponseEntity(validateOrEvaluateExpression(expression = jsonParams, symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = jsonParams.get(LispConstants.EXPECTED_RETURN_TYPE).asString).toString()
+          + " " + validateOrEvaluateExpression(expression = jsonParams, symbols = JsonObject(), mode = LispConstants.EVALUATE, expectedReturnType = jsonParams.get(LispConstants.EXPECTED_RETURN_TYPE).asString).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

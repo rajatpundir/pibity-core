@@ -8,9 +8,19 @@
 
 package com.pibity.erp.commons.constants
 
-const val ORDER = "order"
-const val LEVEL = "level"
-const val EXECUTE = "exec"
-const val CONNECT = "connect"
-const val INPUT = "input"
-const val COMPUTATION = "computation"
+object CircuitConstants {
+  const val CIRCUIT_NAME = "circuitName"
+  const val INPUTS = "inputs"
+  const val OUTPUTS = "outputs"
+  const val ARGS = "args"
+  const val ORDER = "order"
+  const val LEVEL = "level"
+  const val EXECUTE = "exec"
+  const val CONNECT = "connect"
+  const val INPUT = "input"
+  const val COMPUTATION = "computation"
+  const val COMPUTATIONS = "computations"
+  const val FUNCTION = "Function"
+  const val MAPPER = "Mapper"
+  const val CIRCUIT = "Circuit"
+}

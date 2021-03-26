@@ -10,21 +10,15 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.entities.Role
 import com.pibity.erp.serializers.mappings.serialize
 
-fun serialize(role: Role): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", role.organization.id)
-  json.addProperty("roleName", role.name)
-  json.add("typePermissions", serialize(role.roleTypePermissions))
-  json.add("functionPermissions", serialize(role.roleFunctionPermissions))
-  return json
+fun serialize(role: Role): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, role.organization.id)
+  addProperty("roleName", role.name)
+  add("typePermissions", serialize(role.roleTypePermissions))
+  add("functionPermissions", serialize(role.roleFunctionPermissions))
 }
 
-fun serialize(entities: Set<Role>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<Role>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,7 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.entities.mappings.RoleFunctionPermission
 import com.pibity.erp.entities.mappings.RoleTypePermission
@@ -18,38 +19,49 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "role", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
+@Table(name = "role", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Role(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_generator")
-    @SequenceGenerator(name = "role_generator", sequenceName = "role_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_generator")
+  @SequenceGenerator(name = "role_generator", sequenceName = "role_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", nullable = false)
-    val organization: Organization,
+  @ManyToOne
+  @JoinColumn(name = "organization_id", nullable = false)
+  val organization: Organization,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
-    val roleTypePermissions: MutableSet<RoleTypePermission> = HashSet(),
+  @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val roleTypePermissions: MutableSet<RoleTypePermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL])
-    val roleFunctionPermissions: MutableSet<RoleFunctionPermission> = HashSet(),
+  @OneToMany(mappedBy = "id.role", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val roleFunctionPermissions: MutableSet<RoleFunctionPermission> = HashSet(),
 
-    @OneToMany(mappedBy = "id.role")
-    val roleGroups: Set<GroupRole> = HashSet(),
+  @OneToMany(mappedBy = "id.role", orphanRemoval = true)
+  val roleGroups: Set<GroupRole> = HashSet(),
 
-    @OneToMany(mappedBy = "id.role")
-    val roleUsers: Set<UserRole> = HashSet()
+  @OneToMany(mappedBy = "id.role", orphanRemoval = true)
+  val roleUsers: Set<UserRole> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

@@ -10,26 +10,20 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.entities.User
 import com.pibity.erp.serializers.mappings.serialize
 
-fun serialize(user: User): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", user.organization.id)
-  json.addProperty("username", user.username)
-  json.addProperty("active", user.active)
-  json.addProperty("email", user.email)
-  json.addProperty("firstName", user.firstName)
-  json.addProperty("lastName", user.lastName)
-  json.add("details", serialize(user.details!!))
-  json.add("groups", serialize(user.userGroups))
-  json.add("roles", serialize(user.userRoles))
-  return json
+fun serialize(user: User): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, user.organization.id)
+  addProperty(OrganizationConstants.USERNAME, user.username)
+  addProperty("active", user.active)
+  addProperty("email", user.email)
+  addProperty("firstName", user.firstName)
+  addProperty("lastName", user.lastName)
+  add("details", serialize(user.details!!))
+  add("groups", serialize(user.userGroups))
+  add("roles", serialize(user.userRoles))
 }
 
-fun serialize(entities: Set<User>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<User>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

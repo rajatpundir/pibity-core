@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -39,12 +40,12 @@ class TypeController(val typeService: TypeService) {
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun createType(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun createType(@RequestParam("files") files: List<MultipartFile>, @RequestParam("request") request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createType"]
           ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams, files = files)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

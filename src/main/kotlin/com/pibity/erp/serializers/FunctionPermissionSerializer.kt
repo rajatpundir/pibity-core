@@ -10,27 +10,22 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.FunctionConstants
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.entities.permission.FunctionPermission
 
-fun serialize(functionPermission: FunctionPermission): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", functionPermission.function.organization.id)
-  json.addProperty("functionName", functionPermission.function.name)
-  json.addProperty("permissionName", functionPermission.name)
-  json.add("permissions", JsonObject().apply {
-    add("inputs", JsonObject().apply {
-      functionPermission.functionInputPermissions.forEach { addProperty(it.functionInput.name, it.accessLevel) }
-    })
-    add("outputs", JsonObject().apply {
-      functionPermission.functionOutputPermissions.forEach { addProperty(it.functionOutput.name, it.accessLevel) }
-    })
+fun serialize(functionPermission: FunctionPermission): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, functionPermission.function.organization.id)
+  addProperty(FunctionConstants.FUNCTION_NAME, functionPermission.function.name)
+  addProperty("permissionName", functionPermission.name)
+  add("permissions", JsonObject().apply {
+    functionPermission.functionInputPermissions.fold(JsonObject()) { acc, functionInputPermission ->
+      acc.apply { addProperty(functionInputPermission.functionInput.name, functionInputPermission.accessLevel) }
+    }
+    functionPermission.functionOutputPermissions.fold(JsonObject()) { acc, functionOutputPermission ->
+      acc.apply { addProperty(functionOutputPermission.functionOutput.name, functionOutputPermission.accessLevel) }
+    }
   })
-  return json
 }
 
-fun serialize(entities: Set<FunctionPermission>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<FunctionPermission>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

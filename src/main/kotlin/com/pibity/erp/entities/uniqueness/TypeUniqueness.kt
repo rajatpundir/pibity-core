@@ -8,6 +8,8 @@
 
 package com.pibity.erp.entities.uniqueness
 
+import com.pibity.erp.commons.constants.ApplicationConstants
+import com.pibity.erp.entities.Key
 import com.pibity.erp.entities.Type
 import com.pibity.erp.serializers.serialize
 import java.io.Serializable
@@ -18,7 +20,7 @@ import javax.persistence.*
 @Entity
 @Table(
   name = "type_uniqueness",
-  schema = "inventory",
+  schema = ApplicationConstants.SCHEMA,
   uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])]
 )
 data class TypeUniqueness(
@@ -34,16 +36,30 @@ data class TypeUniqueness(
   val type: Type,
 
   @Column(name = "name", nullable = false)
-  var name: String,
+  val name: String,
 
-  @OneToMany(mappedBy = "typeUniqueness", cascade = [CascadeType.ALL])
-  var keyUniquenessConstraints: MutableSet<KeyUniqueness> = HashSet(),
+  @ManyToMany
+  @JoinTable(name = "mapping_type_uniqueness_keys", schema = ApplicationConstants.SCHEMA,
+    joinColumns = [JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
+  val keys: MutableSet<Key> = HashSet(),
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis())
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

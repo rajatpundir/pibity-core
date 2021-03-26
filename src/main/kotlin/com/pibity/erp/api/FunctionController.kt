@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -38,12 +39,12 @@ class FunctionController(val functionService: FunctionService) {
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun createFunction(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun createFunction(@RequestParam("files") files: List<MultipartFile>, @RequestParam("request") request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.createFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -53,12 +54,12 @@ class FunctionController(val functionService: FunctionService) {
 
   @PostMapping(path = ["/execute"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_USER)
-  fun executeFunction(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun executeFunction(@RequestParam("files") files: MutableList<MultipartFile>, @RequestParam("request") request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

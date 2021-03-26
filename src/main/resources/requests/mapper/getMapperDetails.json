@@ -2,10 +2,7 @@
   "orgId": {
     "type": "Long"
   },
-  "typeName": {
-    "type": "String"
-  },
-  "assertionName": {
+  "mapperName": {
     "type": "String"
   }
 }

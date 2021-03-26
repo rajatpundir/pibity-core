@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,6 +8,8 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.constants.ApplicationConstants
+import com.pibity.erp.entities.assertion.TypeAssertion
 import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.entities.uniqueness.TypeUniqueness
 import com.pibity.erp.serializers.serialize
@@ -16,56 +18,58 @@ import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "type", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
+@Table(name = "type", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
 data class Type(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "type_generator")
-    @SequenceGenerator(name="type_generator", sequenceName = "type_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "type_generator")
+  @SequenceGenerator(name="type_generator", sequenceName = "type_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumn(name = "organization_id", nullable = false)
-    val organization: Organization,
+  @ManyToOne
+  @JoinColumn(name = "organization_id", nullable = false)
+  val organization: Organization,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Column(name = "auto_id", nullable = false)
-    var autoId: Boolean = false,
+  @Column(name = "auto_id", nullable = false)
+  var autoId: Boolean = false,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @Column(name = "primitive_type", nullable = false)
-    var primitiveType: Boolean = false,
+  @Column(name = "primitive_type", nullable = false)
+  var primitiveType: Boolean = false,
 
-    @Column(name = "is_formula_dependency", nullable = false)
-    var isFormulaDependency: Boolean = false,
+  @OneToMany(mappedBy = "parentType", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+  val keys: MutableSet<Key> = HashSet(),
 
-    @Column(name = "has_assertion_dependency", nullable = false)
-    var isAssertionDependency: Boolean = false,
+  @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
+  val referencingKeys: Set<Key> = HashSet(),
 
-    @Column(name = "has_assertions", nullable = false)
-    var hasAssertions: Boolean = false,
+  @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+  val uniqueConstraints: MutableSet<TypeUniqueness> = HashSet(),
 
-    @OneToMany(mappedBy = "parentType", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    val keys: MutableSet<Key> = HashSet(),
+  @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+  val typeAssertions: MutableSet<TypeAssertion> = HashSet(),
 
-    @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
-    val referencingKeys: Set<Key> = HashSet(),
+  @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val permissions: MutableSet<TypePermission> = HashSet(),
 
-    @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    val uniqueConstraints: MutableSet<TypeUniqueness> = HashSet(),
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @OneToMany(mappedBy = "type", cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    val typeAssertions: MutableSet<TypeAssertion> = HashSet(),
-
-    @OneToMany(mappedBy = "type", cascade = [CascadeType.ALL])
-    val permissions: MutableSet<TypePermission> = HashSet()
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

@@ -10,124 +10,105 @@ package com.pibity.erp.commons.lisp
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.LispConstants
+import com.pibity.erp.commons.constants.MessageConstants
 import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.utils.validateOrEvaluateExpression
+import java.util.*
 
-fun and(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
-  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT)
+@Suppress("UNCHECKED_CAST")
+fun and(args: List<JsonElement>, symbols: JsonObject, mode: String, expectedReturnType: String): Any {
+  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT, TypeConstants.BLOB)
   return when (mode) {
-    "validate" -> {
+    LispConstants.VALIDATE -> {
       if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+        throw CustomJsonException("{${LispConstants.EXPECTED_RETURN_TYPE}: ${MessageConstants.UNEXPECTED_VALUE}}")
+      val collectedSymbols = mutableSetOf<String>()
       args.forEach {
         if (it.isJsonObject)
-          validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as String
+          collectedSymbols.addAll(validateOrEvaluateExpression(expression = it.asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Set<String>)
         else {
           try {
             it.asBoolean
           } catch (exception: Exception) {
-            throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+            throw CustomJsonException("{${LispConstants.ARGS}: ${MessageConstants.UNEXPECTED_VALUE}}")
           }
         }
-      }
-      expectedReturnType
-    }
-    "collect" -> {
-      val collectedSymbols = mutableSetOf<String>()
-      if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
-      args.forEach {
-        if (it.isJsonObject)
-          collectedSymbols.addAll(validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
       }
       collectedSymbols
     }
     else -> {
       val result: Boolean = args.fold(true) { acc, arg ->
         acc && if (arg.isJsonObject)
-          validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = "evaluate", symbols = symbols) as Boolean
+          validateOrEvaluateExpression(expression = arg.asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Boolean
         else
           arg.asBoolean
       }
       when (expectedReturnType) {
         TypeConstants.BOOLEAN -> result
-        else -> result.toString()
+        TypeConstants.TEXT -> result.toString()
+        else -> Base64.getDecoder().decode(result.toString())
       }
     }
   }
 }
 
-fun or(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
-  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT)
+@Suppress("UNCHECKED_CAST")
+fun or(args: List<JsonElement>, symbols: JsonObject, mode: String, expectedReturnType: String): Any {
+  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT, TypeConstants.BLOB)
   return when (mode) {
-    "validate" -> {
+    LispConstants.VALIDATE -> {
       if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+        throw CustomJsonException("{${LispConstants.EXPECTED_RETURN_TYPE}: ${MessageConstants.UNEXPECTED_VALUE}}")
+      val collectedSymbols = mutableSetOf<String>()
       args.forEach {
         if (it.isJsonObject)
-          validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as String
+          collectedSymbols.addAll(validateOrEvaluateExpression(expression = it.asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Set<String>)
         else {
           try {
             it.asBoolean
           } catch (exception: Exception) {
-            throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+            throw CustomJsonException("{${LispConstants.ARGS}: ${MessageConstants.UNEXPECTED_VALUE}}")
           }
         }
-      }
-      expectedReturnType
-    }
-    "collect" -> {
-      val collectedSymbols = mutableSetOf<String>()
-      if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
-      args.forEach {
-        if (it.isJsonObject)
-          collectedSymbols.addAll(validateOrEvaluateExpression(it.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
       }
       collectedSymbols
     }
     else -> {
       val result: Boolean = args.fold(false) { acc, arg ->
         acc || if (arg.isJsonObject)
-          validateOrEvaluateExpression(arg.asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = "evaluate", symbols = symbols) as Boolean
+          validateOrEvaluateExpression(expression = arg.asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Boolean
         else
           arg.asBoolean
       }
       when (expectedReturnType) {
         TypeConstants.BOOLEAN -> result
-        else -> result.toString()
+        TypeConstants.TEXT -> result.toString()
+        else -> Base64.getDecoder().decode(result.toString())
       }
     }
   }
 }
 
-fun not(args: List<JsonElement>, expectedReturnType: String, mode: String, symbols: JsonObject): Any {
-  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT)
+@Suppress("UNCHECKED_CAST")
+fun not(args: List<JsonElement>, symbols: JsonObject, mode: String, expectedReturnType: String): Any {
+  val expectedReturnTypes = listOf(TypeConstants.BOOLEAN, TypeConstants.TEXT, TypeConstants.BLOB)
   return when (mode) {
-    "validate" -> {
+    LispConstants.VALIDATE -> {
       if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
+        throw CustomJsonException("{${LispConstants.EXPECTED_RETURN_TYPE}: ${MessageConstants.UNEXPECTED_VALUE}}")
+      val collectedSymbols = mutableSetOf<String>()
       if (args.isNotEmpty()) {
         if (args.first().isJsonObject)
-          validateOrEvaluateExpression(args.first().asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as String
+          collectedSymbols.addAll(validateOrEvaluateExpression(expression = args.first().asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Set<String>)
         else {
           try {
             args.first().asBoolean
           } catch (exception: Exception) {
-            throw CustomJsonException("{args: 'Unexpected value for parameter'}")
+            throw CustomJsonException("{${LispConstants.ARGS}: ${MessageConstants.UNEXPECTED_VALUE}}")
           }
         }
-      }
-      expectedReturnType
-    }
-    "collect" -> {
-      val collectedSymbols = mutableSetOf<String>()
-      if (!expectedReturnTypes.contains(expectedReturnType))
-        throw CustomJsonException("{expectedReturnType: 'Unexpected value for parameter'}")
-      if (args.isNotEmpty()) {
-        if (args.first().isJsonObject)
-          collectedSymbols.addAll(validateOrEvaluateExpression(args.first().asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = mode, symbols = symbols) as Set<String>)
       }
       collectedSymbols
     }
@@ -135,13 +116,14 @@ fun not(args: List<JsonElement>, expectedReturnType: String, mode: String, symbo
       val result: Boolean = if (args.isEmpty()) false
       else {
         if (args.first().isJsonObject)
-          !(validateOrEvaluateExpression(args.first().asJsonObject.apply { addProperty("expectedReturnType", TypeConstants.BOOLEAN) }, mode = "evaluate", symbols = symbols) as Boolean)
+          !(validateOrEvaluateExpression(expression = args.first().asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.BOOLEAN) as Boolean)
         else
           !args.first().asBoolean
       }
       when (expectedReturnType) {
         TypeConstants.BOOLEAN -> result
-        else -> result.toString()
+        TypeConstants.TEXT -> result.toString()
+        else -> result.toString().toByteArray()
       }
     }
   }

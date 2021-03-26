@@ -17,27 +17,19 @@ import javax.persistence.EntityManager
 class TypeRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findByOrganization(organizationId: Long): Set<Type> {
-    val hql = "SELECT t FROM Type t WHERE t.organization.id = :organizationId"
+  fun findTypes(orgId: Long): Set<Type> {
+    val hql = "SELECT t FROM Type t WHERE t.organization.id = :orgId"
     return entityManager.createQuery(hql, Type::class.java).apply {
-      setParameter("organizationId", organizationId)
+      setParameter("orgId", orgId)
     }.resultList.toSet()
   }
 
   @Transactional(readOnly = true)
-  fun findGlobalTypes(organizationId: Long): Set<Type> {
-    val hql = "SELECT t FROM Type t WHERE t.organization.id = :organizationId"
-    return entityManager.createQuery(hql, Type::class.java).apply {
-      setParameter("organizationId", organizationId)
-    }.resultList.toSet()
-  }
-
-  @Transactional(readOnly = true)
-  fun findType(organizationId: Long, name: String): Type? {
-    val hql = "SELECT t FROM Type t WHERE t.organization.id = :organizationId AND t.name = :name"
+  fun findType(orgId: Long, name: String): Type? {
+    val hql = "SELECT t FROM Type t WHERE t.organization.id = :orgId AND t.name = :name"
     return try {
       entityManager.createQuery(hql, Type::class.java).apply {
-        setParameter("organizationId", organizationId)
+        setParameter("orgId", orgId)
         setParameter("name", name)
       }.singleResult
     } catch (exception: Exception) {

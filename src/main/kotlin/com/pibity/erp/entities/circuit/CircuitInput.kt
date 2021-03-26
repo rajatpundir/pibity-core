@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,56 +8,85 @@
 
 package com.pibity.erp.entities.circuit
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import java.io.Serializable
+import java.math.BigDecimal
+import java.sql.Time
 import java.sql.Timestamp
+import java.util.*
 import javax.persistence.*
+import kotlin.collections.HashSet
 
 @Entity
-@Table(name = "circuit_input", schema = "inventory", uniqueConstraints = [UniqueConstraint(columnNames = ["parent_circuit_id", "name"])])
+@Table(name = "circuit_input", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["parent_circuit_id", "name"])])
 data class CircuitInput(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "circuit_input_generator")
-    @SequenceGenerator(name = " circuit_input_generator", sequenceName = "circuit_input_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "circuit_input_generator")
+  @SequenceGenerator(name = " circuit_input_generator", sequenceName = "circuit_input_sequence")
+  val id: Long = -1,
 
-    @ManyToOne
-    @JoinColumn(name = "parent_circuit_id", nullable = false)
-    val parentCircuit: Circuit,
+  @ManyToOne
+  @JoinColumn(name = "parent_circuit_id", nullable = false)
+  val parentCircuit: Circuit,
 
-    @Column(name = "name", nullable = false)
-    val name: String,
+  @Column(name = "name", nullable = false)
+  val name: String,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
-    val type: Type,
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+  val type: Type?,
 
-    @Column(name = "value_string")
-    var defaultStringValue: String? = null,
+  @Column(name = "value_string")
+  var defaultStringValue: String? = null,
 
-    @Column(name = "value_long")
-    var defaultLongValue: Long? = null,
+  @Column(name = "value_long")
+  var defaultLongValue: Long? = null,
 
-    @Column(name = "value_double")
-    var defaultDoubleValue: Double? = null,
+  @Column(name = "value_decimal")
+  var defaultDecimalValue: BigDecimal? = null,
 
-    @Column(name = "value_boolean")
-    var defaultBooleanValue: Boolean? = null,
+  @Column(name = "value_boolean")
+  var defaultBooleanValue: Boolean? = null,
 
-    @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
-    var referencedVariable: Variable? = null,
+  @Column(name = "value_date")
+  var defaultDateValue: Date? = null,
 
-    @OneToMany(mappedBy = "connectedCircuitInput", cascade = [CascadeType.ALL])
-    val referencingCircuitComputationConnections: Set<CircuitComputationConnection> = HashSet()
+  @Column(name = "value_timestamp")
+  var defaultTimestampValue: Timestamp? = null,
+
+  @Column(name = "value_time")
+  var defaultTimeValue: Time? = null,
+
+  @Lob
+  @Column(name = "value_blob")
+  var defaultBlobValue: ByteArray? = null,
+
+  @ManyToOne
+  @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
+  var referencedVariable: Variable? = null,
+
+  @OneToMany(mappedBy = "connectedCircuitInput", cascade = [CascadeType.ALL])
+  val referencingCircuitComputationConnections: Set<CircuitComputationConnection> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

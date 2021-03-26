@@ -10,90 +10,94 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.pibity.erp.commons.constants.KeyConstants
-import com.pibity.erp.commons.constants.TypeConstants
+import com.pibity.erp.commons.constants.*
 import com.pibity.erp.commons.utils.gson
 import com.pibity.erp.entities.function.Function
-import com.pibity.erp.entities.function.FunctionInputType
-import com.pibity.erp.entities.function.FunctionOutputType
+import com.pibity.erp.entities.function.FunctionInputKey
+import com.pibity.erp.entities.function.FunctionOutputKey
 
-fun serialize(function: Function): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", function.organization.id)
-  json.addProperty("functionName", function.name)
-  json.add("inputs", JsonObject().apply {
-    for (input in function.inputs) {
+fun serialize(function: Function): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, function.organization.id)
+  addProperty(FunctionConstants.FUNCTION_NAME, function.name)
+  add(FunctionConstants.INPUTS, function.inputs.fold(JsonObject()) { acc, input ->
+    acc.apply {
       when (input.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
+        in primitiveTypes ->
           addProperty(input.name, input.type.name)
         TypeConstants.FORMULA -> {
         }
-        else ->
-          add(input.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, input.type.name)
-            if (input.variableName != null)
-              add("variableName", gson.fromJson(input.variableName, JsonObject::class.java))
-            if (input.values != null)
-              add("values", serialize(input.values!!))
-          })
+        else -> add(input.name, JsonObject().apply {
+          addProperty(KeyConstants.KEY_TYPE, input.type.name)
+          if (input.variableName != null)
+            add(VariableConstants.VARIABLE_NAME, gson.fromJson(input.variableName, JsonObject::class.java))
+          if (input.values.isNotEmpty())
+            add(VariableConstants.VALUES, serialize(input.values))
+        })
       }
     }
   })
-  json.add("outputs", JsonObject().apply {
-    for (output in function.outputs) {
+  add(FunctionConstants.OUTPUTS, function.outputs.fold(JsonObject()) { acc, output ->
+    acc.apply {
       when (output.type.name) {
-        TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN, TypeConstants.DATE, TypeConstants.TIMESTAMP, TypeConstants.TIME -> {
+        in primitiveTypes -> {
           add(output.name, JsonObject().apply {
             addProperty(KeyConstants.KEY_TYPE, output.type.name)
-            add("values", gson.fromJson(output.variableName, JsonObject::class.java))
+            add(VariableConstants.VALUES, gson.fromJson(output.variableName, JsonObject::class.java))
           })
         }
         TypeConstants.FORMULA -> {
         }
         else ->
           add(output.name, JsonObject().apply {
-            addProperty(KeyConstants.KEY_TYPE, output.type.name)
-            add("variableName", gson.fromJson(output.variableName, JsonObject::class.java))
-            add("values", serialize(output.values!!))
+            when (output.operation) {
+              FunctionConstants.CREATE -> {
+                addProperty(VariableConstants.OPERATION, VariableConstants.CREATE)
+                addProperty(KeyConstants.KEY_TYPE, output.type.name)
+                add(VariableConstants.VARIABLE_NAME, gson.fromJson(output.variableName, JsonObject::class.java))
+                add(VariableConstants.VALUES, serialize(output.values.toList()))
+              }
+              FunctionConstants.UPDATE -> {
+                addProperty(VariableConstants.OPERATION, VariableConstants.UPDATE)
+                addProperty(KeyConstants.KEY_TYPE, output.type.name)
+                add(VariableConstants.VARIABLE_NAME, gson.fromJson(output.variableName, JsonObject::class.java))
+                if (output.values.isNotEmpty())
+                  add(VariableConstants.VALUES, serialize(output.values.toList()))
+              }
+              FunctionConstants.DELETE -> {
+                addProperty(VariableConstants.OPERATION, VariableConstants.DELETE)
+                addProperty(KeyConstants.KEY_TYPE, output.type.name)
+                add(VariableConstants.VARIABLE_NAME, gson.fromJson(output.variableName, JsonObject::class.java))
+              }
+            }
           })
       }
     }
   })
-  json.add("permissions", serialize(function.permissions))
-  return json
+  add("permissions", serialize(function.permissions))
 }
 
-fun serialize(entities: Set<Function>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<Function>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }
 
-fun serialize(functionInputType: FunctionInputType): JsonObject {
-  val json = JsonObject()
-  for (functionInputKey in functionInputType.functionInputKeys) {
+fun serialize(functionInputKeys: Set<FunctionInputKey>): JsonObject = functionInputKeys.fold(JsonObject()) { acc, functionInputKey ->
+  acc.apply {
     when (functionInputKey.key.type.name) {
-      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-        json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
+      in primitiveTypes ->
+        add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
       TypeConstants.FORMULA, TypeConstants.BLOB -> {
       }
-      else -> json.add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
+      else -> add(functionInputKey.key.name, gson.fromJson(functionInputKey.expression, JsonObject::class.java))
     }
   }
-  return json
 }
 
-fun serialize(functionOutputType: FunctionOutputType): JsonObject {
-  val json = JsonObject()
-  for (functionOutputKey in functionOutputType.functionOutputKeys) {
+fun serialize(functionOutputKeys: List<FunctionOutputKey>): JsonObject = functionOutputKeys.fold(JsonObject()) { acc, functionOutputKey ->
+  acc.apply {
     when (functionOutputKey.key.type.name) {
-      TypeConstants.TEXT, TypeConstants.NUMBER, TypeConstants.DECIMAL, TypeConstants.BOOLEAN ->
-        json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
+      in primitiveTypes ->
+        add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
       TypeConstants.FORMULA -> {
       }
-      else -> json.add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
+      else -> add(functionOutputKey.key.name, gson.fromJson(functionOutputKey.expression, JsonObject::class.java))
     }
   }
-  return json
 }

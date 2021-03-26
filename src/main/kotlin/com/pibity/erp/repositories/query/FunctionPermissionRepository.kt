@@ -19,11 +19,11 @@ import javax.persistence.TypedQuery
 class FunctionPermissionRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findFunctionPermission(organizationId: Long, functionName: String, name: String): FunctionPermission? {
-    val hql = "SELECT p FROM FunctionPermission p WHERE p.function.organization.id = :organizationId AND p.function.name = :functionName AND p.name = :name"
+  fun findFunctionPermission(orgId: Long, functionName: String, name: String): FunctionPermission? {
+    val hql = "SELECT p FROM FunctionPermission p WHERE p.function.organization.id = :orgId AND p.function.name = :functionName AND p.name = :name"
     return try {
       entityManager.createQuery(hql, FunctionPermission::class.java).apply {
-        setParameter("organizationId", organizationId)
+        setParameter("orgId", orgId)
         setParameter("functionName", functionName)
         setParameter("name", name)
       }.singleResult

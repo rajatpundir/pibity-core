@@ -1,0 +1,20 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "mapperName": {
+    "type": "String"
+  },
+  "query": {
+    "type": "Boolean"
+  },
+  "queryParams": {
+    "type": "Array"
+  },
+  "functionName": {
+    "type": "String"
+  },
+  "functionInput": {
+    "type": "String"
+  }
+}

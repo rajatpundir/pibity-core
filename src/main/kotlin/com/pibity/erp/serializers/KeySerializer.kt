@@ -15,59 +15,24 @@ import com.pibity.erp.commons.constants.TypeConstants
 import com.pibity.erp.commons.utils.gson
 import com.pibity.erp.entities.Key
 
-fun serialize(key: Key): JsonObject {
-  val json = JsonObject()
-  json.addProperty(KeyConstants.ORDER, key.keyOrder)
+fun serialize(key: Key): JsonObject = JsonObject().apply {
+  addProperty(KeyConstants.ORDER, key.keyOrder)
+  addProperty(KeyConstants.KEY_TYPE, key.type.name)
   when (key.type.name) {
-    TypeConstants.TEXT -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultStringValue!!)
-    }
-    TypeConstants.NUMBER -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultLongValue!!)
-    }
-    TypeConstants.DECIMAL -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultDecimalValue!!)
-    }
-    TypeConstants.BOOLEAN -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue!!)
-    }
-    TypeConstants.DATE -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultTimeValue.toString())
-    }
-    TypeConstants.TIME -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultTimestampValue.toString())
-    }
-    TypeConstants.TIMESTAMP -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultDateValue.toString())
-    }
-    TypeConstants.BLOB -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.DEFAULT, key.defaultBlobValue.toString())
-    }
+    TypeConstants.TEXT -> addProperty(KeyConstants.DEFAULT, key.defaultStringValue!!)
+    TypeConstants.NUMBER -> addProperty(KeyConstants.DEFAULT, key.defaultLongValue!!)
+    TypeConstants.DECIMAL -> addProperty(KeyConstants.DEFAULT, key.defaultDecimalValue!!)
+    TypeConstants.BOOLEAN -> addProperty(KeyConstants.DEFAULT, key.defaultBooleanValue!!)
+    TypeConstants.DATE -> addProperty(KeyConstants.DEFAULT, key.defaultDateValue!!.time)
+    TypeConstants.TIMESTAMP -> addProperty(KeyConstants.DEFAULT, key.defaultTimestampValue!!.time)
+    TypeConstants.TIME -> addProperty(KeyConstants.DEFAULT, key.defaultTimeValue!!.time)
+    TypeConstants.BLOB -> addProperty(KeyConstants.DEFAULT, key.defaultBlobValue.toString())
     TypeConstants.FORMULA -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      json.addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula!!.returnType.name)
-      json.add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula!!.expression, JsonObject::class.java))
+      addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula!!.returnType.name)
+      add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula!!.expression, JsonObject::class.java))
     }
-    else -> {
-      json.addProperty(KeyConstants.KEY_TYPE, key.type.name)
-      if (key.referencedVariable != null)
-        json.add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))
-    }
+    else -> if (key.referencedVariable != null) add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))
   }
-  return json
 }
 
-fun serialize(entities: Set<Key>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<Key>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

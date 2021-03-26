@@ -2,13 +2,13 @@
   "orgId": {
     "type": "Long"
   },
-  "typeName": {
+  "mapperName": {
     "type": "String"
   },
-  "assertionName": {
-    "type": "String"
-  },
-  "assertion": {
+  "queryParams?": {
     "type": "Object"
+  },
+  "args": {
+    "type": "Array"
   }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -8,42 +8,56 @@
 
 package com.pibity.erp.entities
 
+import com.pibity.erp.commons.constants.ApplicationConstants
 import java.io.Serializable
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "formula", schema = "inventory")
+@Table(name = "formula", schema = ApplicationConstants.SCHEMA)
 data class Formula(
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "formula_generator")
-    @SequenceGenerator(name="formula_generator", sequenceName = "formula_sequence")
-    val id: Long = -1,
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "formula_generator")
+  @SequenceGenerator(name="formula_generator", sequenceName = "formula_sequence")
+  val id: Long = -1,
 
-    @Version
-    @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
-    @OneToOne
-    @JoinColumns(*[JoinColumn(name = "return_type_id", referencedColumnName = "id")])
-    var returnType: Type,
+  @OneToOne
+  @JoinColumns(*[JoinColumn(name = "key_id", referencedColumnName = "id")])
+  val key: Key,
 
-    @Column(name = "symbol_paths", nullable = false)
-    var symbolPaths: String,
+  @OneToOne
+  @JoinColumns(*[JoinColumn(name = "return_type_id", referencedColumnName = "id")])
+  var returnType: Type,
 
-    @Column(name = "expression", nullable = false)
-    var expression: String,
+  @Lob
+  @Column(name = "symbol_paths", nullable = false)
+  var symbolPaths: String,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_formula_key_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
-    val keyDependencies: MutableSet<Key> = HashSet(),
+  @Lob
+  @Column(name = "expression", nullable = false)
+  var expression: String,
 
-    @ManyToMany
-    @JoinTable(name = "mapping_formula_type_dependencies", schema = "inventory", joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "type_id", referencedColumnName = "id")])
-    val typeDependencies: MutableSet<Type> = HashSet()
+  @ManyToMany
+  @JoinTable(name = "mapping_formula_key_dependencies", schema = ApplicationConstants.SCHEMA, joinColumns = [JoinColumn(name = "formula_id", referencedColumnName = "id")], inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
+  val keyDependencies: MutableSet<Key> = HashSet(),
+
+  @Column(name = "created", nullable = false)
+  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+
+  @Column(name = "updated")
+  var updated: Timestamp? = null
 
 ) : Serializable {
+
+  @PreUpdate
+  fun setUpdatedTimestamp() {
+    updated = Timestamp(System.currentTimeMillis())
+  }
 
   override fun equals(other: Any?): Boolean {
     other ?: return false

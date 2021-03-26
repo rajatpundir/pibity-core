@@ -10,21 +10,15 @@ package com.pibity.erp.serializers
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.erp.commons.constants.OrganizationConstants
 import com.pibity.erp.commons.utils.gson
-import com.pibity.erp.entities.TypeAssertion
+import com.pibity.erp.entities.assertion.TypeAssertion
 
-fun serialize(typeAssertion: TypeAssertion): JsonObject {
-  val json = JsonObject()
-  json.addProperty("orgId", typeAssertion.type.organization.id)
-  json.addProperty("type", typeAssertion.type.name)
-  json.addProperty("assertionName", typeAssertion.name)
-  json.add("assertion", gson.fromJson(typeAssertion.expression, JsonObject::class.java))
-  return json
+fun serialize(typeAssertion: TypeAssertion): JsonObject = JsonObject().apply {
+  addProperty(OrganizationConstants.ORGANIZATION_ID, typeAssertion.type.organization.id)
+  addProperty(OrganizationConstants.TYPE_NAME, typeAssertion.type.name)
+  addProperty("assertionName", typeAssertion.name)
+  add("expression", gson.fromJson(typeAssertion.expression, JsonObject::class.java))
 }
 
-fun serialize(entities: Set<TypeAssertion>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<TypeAssertion>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }

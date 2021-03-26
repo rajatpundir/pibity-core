@@ -13,13 +13,6 @@ import com.google.gson.JsonObject
 import com.pibity.erp.entities.mappings.GroupRole
 import com.pibity.erp.serializers.serialize
 
-fun serialize(groupRole: GroupRole): JsonObject {
-  return serialize(groupRole.id.role)
-}
+fun serialize(groupRole: GroupRole): JsonObject = serialize(groupRole.id.role)
 
-fun serialize(entities: Set<GroupRole>): JsonArray {
-  val json = JsonArray()
-  for (entity in entities)
-    json.add(serialize(entity))
-  return json
-}
+fun serialize(entities: Set<GroupRole>): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity)) } }
