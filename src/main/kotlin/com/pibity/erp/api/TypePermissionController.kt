@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -44,7 +45,7 @@ class TypePermissionController(val typePermissionService: TypePermissionService)
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(typePermissionService.createTypePermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typePermissionService.createTypePermission(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis())).first).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

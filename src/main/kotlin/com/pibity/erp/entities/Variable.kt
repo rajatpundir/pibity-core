@@ -41,7 +41,7 @@ data class Variable(
   val values: MutableSet<Value> = HashSet(),
 
   @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val variableUniquenesses: MutableSet<VariableUniqueness> = HashSet(),
+  val variableUniqueness: MutableSet<VariableUniqueness> = HashSet(),
 
   @OneToMany(mappedBy = "variable", cascade = [CascadeType.ALL], orphanRemoval = true)
   val variableAssertions: MutableSet<VariableAssertion> = HashSet(),
@@ -50,7 +50,7 @@ data class Variable(
   val referencingValues: Set<Value> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -58,7 +58,7 @@ data class Variable(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

@@ -19,6 +19,7 @@ import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.jpa.TypeUniquenessJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
 
 @Service
 class UniquenessService(
@@ -27,14 +28,14 @@ class UniquenessService(
     val typeUniquenessJpaRepository: TypeUniquenessJpaRepository
 ) {
 
-  fun createUniqueness(jsonParams: JsonObject): TypeUniqueness {
+  fun createUniqueness(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypeUniqueness {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME} : ${MessageConstants.UNEXPECTED_VALUE}}")
     val constraintName: String = jsonParams.get("constraintName").asString
     if (!typeIdentifierPattern.matcher(constraintName).matches() || jsonParams.get("keys").asJsonArray.size() == 0)
       throw CustomJsonException("{constraintName: 'Constraint name $constraintName is not a valid identifier'}")
     return try {
-      typeUniquenessJpaRepository.save(TypeUniqueness(type = type, name = constraintName).apply {
+      typeUniquenessJpaRepository.save(TypeUniqueness(type = type, name = constraintName, created = defaultTimestamp).apply {
         keys.addAll(jsonParams.get("keys").asJsonArray.map { json ->
           type.keys.single { it.name == json.asString }.apply { isUniquenessDependency = true }
         })

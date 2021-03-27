@@ -28,11 +28,11 @@ data class Value(
     val id: Long = -1,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "parent_variable_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "parent_variable_id", referencedColumnName = "id"))
     val variable: Variable,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "key_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "key_id", referencedColumnName = "id"))
     val key: Key,
 
     @Version
@@ -65,7 +65,7 @@ data class Value(
     var blobValue: Blob? = null,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id"))
     var referencedVariable: Variable? = null,
 
     @ManyToMany
@@ -79,7 +79,7 @@ data class Value(
     val dependentVariableAssertions: MutableSet<VariableAssertion> = HashSet(),
 
     @Column(name = "created", nullable = false)
-    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+    val created: Timestamp,
 
     @Column(name = "updated")
     var updated: Timestamp? = null
@@ -87,7 +87,7 @@ data class Value(
 ) : Serializable {
 
     @PreUpdate
-    fun setUpdatedTimestamp() {
+    fun onUpdate() {
         updated = Timestamp(System.currentTimeMillis())
     }
 

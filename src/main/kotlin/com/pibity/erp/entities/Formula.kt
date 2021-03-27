@@ -27,11 +27,11 @@ data class Formula(
   val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
   @OneToOne
-  @JoinColumns(*[JoinColumn(name = "key_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "key_id", referencedColumnName = "id"))
   val key: Key,
 
   @OneToOne
-  @JoinColumns(*[JoinColumn(name = "return_type_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "return_type_id", referencedColumnName = "id"))
   var returnType: Type,
 
   @Lob
@@ -47,7 +47,7 @@ data class Formula(
   val keyDependencies: MutableSet<Key> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -55,7 +55,7 @@ data class Formula(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

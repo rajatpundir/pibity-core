@@ -39,10 +39,10 @@ class OrganizationService(
     val functionService: FunctionService
 ) {
 
-  fun createOrganization(jsonParams: JsonObject, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis()), files: List<MultipartFile>): Organization {
+  fun createOrganization(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Organization {
     val organizationName: String = jsonParams.get("organization").asString
     val organization: Organization = try {
-      organizationJpaRepository.save(Organization(name = organizationName))
+      organizationJpaRepository.save(Organization(name = organizationName, created = defaultTimestamp))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization $organizationName is already present'}")
     }
@@ -52,8 +52,8 @@ class OrganizationService(
     } catch (exception: Exception) {
       println("Keycloak Group already exists")
     }
-    createDefaultRoles(organization = organization)
-    createPrimitiveTypes(organization = organization)
+    createDefaultRoles(organization = organization, defaultTimestamp = defaultTimestamp)
+    createPrimitiveTypes(organization = organization, defaultTimestamp = defaultTimestamp)
     val superuserId: String = try {
       getKeycloakId(KeycloakConstants.SUPERUSER_USERNAME)
     } catch (exception: Exception) {
@@ -65,15 +65,16 @@ class OrganizationService(
       })
     }
     var superuser = User(organization = organization, username = superuserId,
-        active = true,
-        email = KeycloakConstants.SUPERUSER_USERNAME,
-        firstName = "System",
-        lastName = "Administrator"
+      active = true,
+      email = KeycloakConstants.SUPERUSER_USERNAME,
+      firstName = "System",
+      lastName = "Administrator",
+      created = defaultTimestamp
     )
     superuser = userJpaRepository.save(superuser)
     val role: Role = roleRepository.findRole(orgId = organization.id, name = RoleConstants.ADMIN)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-    superuser.userRoles.add(UserRole(id = UserRoleId(user = superuser, role = role)))
+    superuser.userRoles.add(UserRole(id = UserRoleId(user = superuser, role = role), created = defaultTimestamp))
     superuser = userJpaRepository.save(superuser)
     createCustomTypes(organization = organization, username = superuser.username, defaultTimestamp = defaultTimestamp, files = files)
     superuser.details = try {
@@ -92,7 +93,7 @@ class OrganizationService(
     } catch (exception: Exception) {
       throw CustomJsonException("{${OrganizationConstants.USERNAME}: 'User could not be created'}")
     }
-    createCustomFunctions(organization = organization, username = superuser.username, files = files)
+    createCustomFunctions(organization = organization, username = superuser.username, files = files, defaultTimestamp = defaultTimestamp)
     userService.createUser(JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, organization.id)
       addProperty(OrganizationConstants.USERNAME, superuserId)
@@ -107,20 +108,20 @@ class OrganizationService(
     return organization
   }
 
-  fun createDefaultRoles(organization: Organization) {
+  fun createDefaultRoles(organization: Organization, defaultTimestamp: Timestamp) {
     val jsonRoles: JsonArray = gson.fromJson(FileReader("src/main/resources/roles/index.json"), JsonArray::class.java)
     for (jsonRole in jsonRoles) {
       roleService.createRole(JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, organization.id)
         addProperty("roleName", jsonRole.asString)
-      })
+      }, defaultTimestamp = defaultTimestamp)
     }
   }
 
-  fun createPrimitiveTypes(organization: Organization) {
+  fun createPrimitiveTypes(organization: Organization, defaultTimestamp: Timestamp) {
     try {
       for (primitiveType in primitiveTypes)
-        typeJpaRepository.save(Type(organization = organization, name = primitiveType, primitiveType = true))
+        typeJpaRepository.save(Type(organization = organization, name = primitiveType, primitiveType = true, created = defaultTimestamp))
     } catch (exception: Exception) {
       throw CustomJsonException("{'organization': 'Organization ${organization.id} could not be created'}")
     }
@@ -141,7 +142,7 @@ class OrganizationService(
     }
   }
 
-  fun createCustomFunctions(organization: Organization, username: String, files: List<MultipartFile>) {
+  fun createCustomFunctions(organization: Organization, username: String, files: List<MultipartFile>, defaultTimestamp: Timestamp) {
     val customTypeFilenames: JsonArray = gson.fromJson(FileReader("src/main/resources/functions/index.json"), JsonArray::class.java)
     for (filename in customTypeFilenames) {
       val functions: JsonArray = gson.fromJson(FileReader("src/main/resources/functions/${filename.asString}.json"), JsonArray::class.java)
@@ -151,7 +152,7 @@ class OrganizationService(
         }
         functionService.createFunction(jsonParams = getJsonParams(functionRequest.toString(), getExpectedParams("function", "createFunction")).apply {
           addProperty(OrganizationConstants.USERNAME, username)
-        }, files = files)
+        }, files = files, defaultTimestamp = defaultTimestamp)
       }
     }
   }

@@ -26,32 +26,32 @@ class QueryService(
     val typePermissionRepository: TypePermissionRepository,
 ) {
 
-  fun queryVariables(jsonParams: JsonObject): List<Variable> {
+  fun queryVariables(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<List<Variable>, TypePermission> {
     val typePermission: TypePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
       addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
       addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-    })
+    }, defaultTimestamp = defaultTimestamp)
     val (generatedQuery, _, injectedValues) = try {
-      generateQuery(jsonParams.get(QueryConstants.QUERY).asJsonObject, username = jsonParams.get(OrganizationConstants.USERNAME).asString, typePermission = typePermission)
+      generateQuery(jsonParams.get(QueryConstants.QUERY).asJsonObject, username = jsonParams.get(OrganizationConstants.USERNAME).asString, typePermission = typePermission, defaultTimestamp = defaultTimestamp)
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{${QueryConstants.QUERY} : ${exception.message}}")
     }
-    return valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt)
+    return Pair(valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
   }
 
-  fun queryPublicVariables(jsonParams: JsonObject): List<Variable> {
+  fun queryPublicVariables(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<List<Variable>, TypePermission> {
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = QueryConstants.PUBLIC_USER)
         ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}")
     val (generatedQuery, _, injectedValues) = try {
-      generateQuery(jsonParams.get(QueryConstants.QUERY).asJsonObject, username = QueryConstants.PUBLIC_USER, typePermission = typePermission)
+      generateQuery(jsonParams.get(QueryConstants.QUERY).asJsonObject, username = QueryConstants.PUBLIC_USER, typePermission = typePermission, defaultTimestamp = defaultTimestamp)
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{${QueryConstants.QUERY} : ${exception.message}}")
     }
-    return valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt)
+    return Pair(valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
   }
 
-  fun generateQuery(queryJson: JsonObject, username: String, typePermission: TypePermission, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null): Triple<String, Int, MutableMap<String, Any>> {
+  fun generateQuery(queryJson: JsonObject, username: String, typePermission: TypePermission, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null, defaultTimestamp: Timestamp): Triple<String, Int, MutableMap<String, Any>> {
     val valuesJson: JsonObject = if (!queryJson.has(VariableConstants.VALUES))
       throw CustomJsonException("${VariableConstants.VALUES}: ${MessageConstants.MISSING_FIELD}}")
     else {
@@ -673,8 +673,8 @@ class QueryService(
                                   addProperty(OrganizationConstants.ORGANIZATION_ID, key.parentType.organization.id)
                                   addProperty(OrganizationConstants.USERNAME, username)
                                   addProperty(OrganizationConstants.TYPE_NAME, key.type.name)
-                                })
-                              })
+                                }, defaultTimestamp = defaultTimestamp)
+                              }, defaultTimestamp = defaultTimestamp)
                         } catch (exception: CustomJsonException) {
                           throw CustomJsonException("{${key.name}: {${QueryOperators.EQUALS}: ${exception.message}}}")
                         }

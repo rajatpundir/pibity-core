@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -13,12 +13,13 @@ import com.pibity.erp.commons.constants.KeycloakConstants
 import com.pibity.erp.commons.constants.RoleConstants
 import com.pibity.erp.commons.exceptions.CustomJsonException
 import com.pibity.erp.commons.logger.Logger
-import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.QueryService
 import com.pibity.erp.services.VariableService
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.utils.validateOrganizationClaim
+import com.pibity.erp.entities.Variable
+import com.pibity.erp.entities.permission.TypePermission
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.keycloak.representations.AccessToken
@@ -27,6 +28,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -37,8 +39,8 @@ class VariableController(val variableService: VariableService, val queryService:
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "mutateVariables" to getExpectedParams("variable", "mutateVariables"),
-      "queryVariables" to getExpectedParams("variable", "queryVariables")
+    "mutateVariables" to getExpectedParams("variable", "mutateVariables"),
+    "queryVariables" to getExpectedParams("variable", "queryVariables")
   )
 
   @PostMapping(path = ["/mutate"], produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -47,9 +49,9 @@ class VariableController(val variableService: VariableService, val queryService:
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["mutateVariables"]
-          ?: JsonObject()).apply { addProperty("username", token.subject) }
+        ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(variableService.executeQueue(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(variableService.executeQueue(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -63,9 +65,10 @@ class VariableController(val variableService: VariableService, val queryService:
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryVariables"]
-          ?: JsonObject()).apply { addProperty("username", token.subject) }
+        ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(serialize(queryService.queryVariables(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (variables: List<Variable>, typePermission: TypePermission) = queryService.queryVariables(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(variableService.serialize(variables = variables.toSet(), typePermission = typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -77,7 +80,8 @@ class VariableController(val variableService: VariableService, val queryService:
   fun queryPublicVariables(@RequestBody request: String): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryVariables"] ?: JsonObject())
-      ResponseEntity(serialize(queryService.queryPublicVariables(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (variables: List<Variable>, typePermission: TypePermission) = queryService.queryPublicVariables(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(variableService.serialize(variables = variables.toSet(), typePermission = typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

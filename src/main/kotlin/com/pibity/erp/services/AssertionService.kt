@@ -22,6 +22,7 @@ import com.pibity.erp.entities.Type
 import com.pibity.erp.repositories.jpa.AssertionJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
 
 @Service
 class AssertionService(
@@ -30,7 +31,7 @@ class AssertionService(
 ) {
 
   @Suppress("UNCHECKED_CAST")
-  fun createAssertion(jsonParams: JsonObject): TypeAssertion {
+  fun createAssertion(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypeAssertion {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val assertionName: String = if (typeIdentifierPattern.matcher(jsonParams.get("assertionName").asString).matches())
@@ -47,7 +48,7 @@ class AssertionService(
         symbolPaths = gson.toJson(symbolPaths),
         expression = (validateOrEvaluateExpression(expression = jsonParams.get("expression").asJsonObject, symbols = symbols,
           mode = LispConstants.REFLECT, expectedReturnType = TypeConstants.BOOLEAN) as JsonObject).toString(),
-        keyDependencies = keyDependencies)
+        keyDependencies = keyDependencies, created = defaultTimestamp)
       )
     } catch (exception: Exception) {
       throw CustomJsonException("{assertionName: 'Unable to create Type Assertion'}")

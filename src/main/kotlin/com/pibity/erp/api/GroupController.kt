@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -44,7 +45,7 @@ class GroupController(val groupService: GroupService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -58,7 +59,7 @@ class GroupController(val groupService: GroupService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

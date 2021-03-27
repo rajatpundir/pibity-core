@@ -21,11 +21,11 @@ import javax.persistence.ManyToOne
 data class RoleFunctionPermissionId(
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "role_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "role_id", referencedColumnName = "id"))
     val role: Role,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "function_permission_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "function_permission_id", referencedColumnName = "id"))
     val permission: FunctionPermission
 
 ) : Serializable {

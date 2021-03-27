@@ -24,11 +24,11 @@ data class KeyPermission(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_permission_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_permission_id", referencedColumnName = "id"))
   val typePermission: TypePermission,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "key_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "key_id", referencedColumnName = "id"))
   val key: Key,
 
   @Version
@@ -39,7 +39,7 @@ data class KeyPermission(
   var accessLevel: Int = 0,
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -47,7 +47,7 @@ data class KeyPermission(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

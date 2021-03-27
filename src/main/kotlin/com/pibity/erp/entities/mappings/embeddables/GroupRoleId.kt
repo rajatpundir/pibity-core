@@ -21,11 +21,11 @@ import javax.persistence.ManyToOne
 data class GroupRoleId(
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "group_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "group_id", referencedColumnName = "id"))
     val group: Group,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "role_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "role_id", referencedColumnName = "id"))
     val role: Role
 
 ) : Serializable {

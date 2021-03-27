@@ -47,15 +47,15 @@ data class CircuitComputation(
   val level: Int,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_id", referencedColumnName = "id"))
   val function: Function? = null,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "circuit_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "circuit_id", referencedColumnName = "id"))
   val circuit: Circuit? = null,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "mapper_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "mapper_id", referencedColumnName = "id"))
   val mapper: Mapper? = null,
 
   @ManyToOne
@@ -74,7 +74,7 @@ data class CircuitComputation(
   val connections: MutableSet<CircuitComputationConnection> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -82,7 +82,7 @@ data class CircuitComputation(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

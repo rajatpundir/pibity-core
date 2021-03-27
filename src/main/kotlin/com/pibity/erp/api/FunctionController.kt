@@ -23,6 +23,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -44,7 +45,7 @@ class FunctionController(val functionService: FunctionService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -59,7 +60,7 @@ class FunctionController(val functionService: FunctionService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

@@ -22,6 +22,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -40,7 +41,7 @@ class OrganizationController(val organizationService: OrganizationService) {
   fun createOrganization(@RequestParam("files") files: List<MultipartFile>, @RequestParam("request") request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createOrganization"] ?: JsonObject())
-      ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = jsonParams, files = files)), HttpStatus.OK)
+      ResponseEntity(gson.toJson(organizationService.createOrganization(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis()))), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

@@ -27,7 +27,7 @@ data class FunctionPermission(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_id", referencedColumnName = "id"))
   val function: Function,
 
   @Column(name = "name", nullable = false)
@@ -47,7 +47,7 @@ data class FunctionPermission(
   val permissionRoles: MutableSet<RoleFunctionPermission> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -55,7 +55,7 @@ data class FunctionPermission(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

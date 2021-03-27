@@ -24,6 +24,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -45,7 +46,7 @@ class TypeController(val typeService: TypeService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createType"]
           ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams, files = files)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

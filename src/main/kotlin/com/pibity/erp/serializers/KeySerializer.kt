@@ -31,7 +31,7 @@ fun serialize(key: Key): JsonObject = JsonObject().apply {
       addProperty(KeyConstants.FORMULA_RETURN_TYPE, key.formula!!.returnType.name)
       add(KeyConstants.FORMULA_EXPRESSION, gson.fromJson(key.formula!!.expression, JsonObject::class.java))
     }
-    else -> if (key.referencedVariable != null) add(KeyConstants.DEFAULT, serialize(key.referencedVariable!!))
+    else -> if (key.referencedVariable != null) addProperty(KeyConstants.DEFAULT, key.referencedVariable!!.name)
   }
 }
 

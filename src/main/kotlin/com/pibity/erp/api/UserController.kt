@@ -16,6 +16,8 @@ import com.pibity.erp.commons.logger.Logger
 import com.pibity.erp.commons.utils.getExpectedParams
 import com.pibity.erp.commons.utils.getJsonParams
 import com.pibity.erp.commons.utils.validateOrganizationClaim
+import com.pibity.erp.entities.User
+import com.pibity.erp.entities.permission.TypePermission
 import com.pibity.erp.serializers.serialize
 import com.pibity.erp.services.UserService
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
@@ -26,6 +28,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -54,7 +57,8 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.createUser(jsonParams = jsonParams, files = files)).toString(), HttpStatus.OK)
+      val (user: User, typePermission: TypePermission) = userService.createUser(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -68,7 +72,8 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserGroups"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.updateUserGroups(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (user: User, typePermission: TypePermission) = userService.updateUserGroups(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -82,7 +87,8 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserRoles"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.updateUserRoles(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (user: User, typePermission: TypePermission) = userService.updateUserRoles(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -96,7 +102,8 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(serialize(userService.getUserDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      val (user: User, typePermission: TypePermission) = userService.getUserDetails(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -140,7 +147,7 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserTypePermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -156,7 +163,7 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserFunctionPermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
