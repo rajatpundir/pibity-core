@@ -14,6 +14,7 @@ import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import java.io.Serializable
 import java.math.BigDecimal
+import java.sql.Blob
 import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
@@ -29,7 +30,7 @@ data class FunctionInput(
     val id: Long = -1,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "function_id", referencedColumnName = "id"))
     val function: Function,
 
     @Column(name = "name", nullable = false)
@@ -40,7 +41,7 @@ data class FunctionInput(
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
     val type: Type,
 
     @Lob
@@ -79,10 +80,10 @@ data class FunctionInput(
 
     @Lob
     @Column(name = "value_blob")
-    var defaultBlobValue: ByteArray? = null,
+    var defaultBlobValue: Blob? = null,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id"))
     var referencedVariable: Variable? = null,
 
     @Column(name = "created", nullable = false)
@@ -94,7 +95,7 @@ data class FunctionInput(
 ) : Serializable {
 
     @PreUpdate
-    fun setUpdatedTimestamp() {
+    fun onUpdate() {
         updated = Timestamp(System.currentTimeMillis())
     }
 

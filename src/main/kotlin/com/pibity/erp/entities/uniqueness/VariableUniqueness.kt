@@ -32,7 +32,7 @@ data class VariableUniqueness(
   val id: Long = -1L,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id"))
   val typeUniqueness: TypeUniqueness,
 
   @Column(name = "level", nullable = false)
@@ -42,11 +42,11 @@ data class VariableUniqueness(
   var hash: String,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "variable_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "variable_id", referencedColumnName = "id"))
   val variable: Variable,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "next_variable_uniqueness_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "next_variable_uniqueness_id", referencedColumnName = "id"))
   var nextVariableUniqueness: VariableUniqueness? = null,
 
   @Version
@@ -54,7 +54,7 @@ data class VariableUniqueness(
   val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -62,7 +62,7 @@ data class VariableUniqueness(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

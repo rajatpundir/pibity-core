@@ -26,6 +26,7 @@ import com.pibity.erp.repositories.function.jpa.*
 import com.pibity.erp.repositories.jpa.OrganizationJpaRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import com.pibity.erp.repositories.query.VariableRepository
+import org.hibernate.engine.jdbc.BlobProxy
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
@@ -51,12 +52,12 @@ class FunctionService(
 ) {
 
   @Suppress("UNCHECKED_CAST")
-  fun createFunction(jsonParams: JsonObject, files: List<MultipartFile>): Function {
+  fun createFunction(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Function {
     val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: 'Organization could not be found'}")
     val validTypes: MutableSet<Type> = typeRepository.findTypes(orgId = organization.id) as MutableSet<Type>
     val (functionName: String, inputs: JsonObject, outputs: JsonObject, symbols: JsonObject) = validateFunction(jsonParams = jsonParams, validTypes = validTypes)
-    val function: Function = functionJpaRepository.save(Function(organization = organization, name = functionName, symbolPaths = gson.toJson(getSymbolPaths(symbols = symbols))))
+    val function: Function = functionJpaRepository.save(Function(organization = organization, name = functionName, symbolPaths = gson.toJson(getSymbolPaths(symbols = symbols)), created = defaultTimestamp))
     function.inputs.addAll(inputs.entrySet().map { (inputName, input) ->
         val inputJson: JsonObject = input.asJsonObject
         val type: Type = validTypes.single { it.name == inputJson.get(KeyConstants.KEY_TYPE).asString }
@@ -71,7 +72,7 @@ class FunctionService(
                 TypeConstants.DATE -> defaultDateValue = if (inputJson.has(KeyConstants.DEFAULT)) Date(inputJson.get(KeyConstants.DEFAULT).asLong) else null
                 TypeConstants.TIMESTAMP -> defaultTimestampValue = if (inputJson.has(KeyConstants.DEFAULT)) Timestamp(inputJson.get(KeyConstants.DEFAULT).asLong) else null
                 TypeConstants.TIME -> defaultTimeValue = if (inputJson.has(KeyConstants.DEFAULT)) Time(inputJson.get(KeyConstants.DEFAULT).asLong) else null
-                TypeConstants.BLOB -> defaultBlobValue = if (inputJson.has(KeyConstants.DEFAULT)) files[inputJson.get(KeyConstants.DEFAULT).asInt].bytes else Base64.getEncoder().encode("".toByteArray())
+                TypeConstants.BLOB -> defaultBlobValue = if (inputJson.has(KeyConstants.DEFAULT)) BlobProxy.generateProxy(files[inputJson.get(KeyConstants.DEFAULT).asInt].bytes) else BlobProxy.generateProxy(Base64.getEncoder().encode("".toByteArray()))
               }
             }
             TypeConstants.FORMULA -> {}
@@ -103,7 +104,7 @@ class FunctionService(
                         symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT ) as Set<String>).toMutableSet(),
                         inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
                           acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
-                        })
+                        }), created = defaultTimestamp
                     )
                   )
                 }
@@ -124,7 +125,7 @@ class FunctionService(
               symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = type.name) as Set<String>).toMutableSet(),
               inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
                 acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
-              }))
+              }), created = defaultTimestamp)
         }
         TypeConstants.FORMULA -> throw CustomJsonException("{}")
         else -> {
@@ -140,7 +141,7 @@ class FunctionService(
               symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = TypeConstants.TEXT) as Set<String>).toMutableSet(),
               inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
                 acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
-              }))).apply {
+              }), created = defaultTimestamp)).apply {
             when (operation) {
               VariableConstants.CREATE -> {
                 val valuesJson: JsonObject = outputJson.get(VariableConstants.VALUES).asJsonObject
@@ -151,8 +152,7 @@ class FunctionService(
                         symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT) as Set<String>).toMutableSet(),
                         inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
                           acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
-                        })
-                    ))
+                        }), created = defaultTimestamp))
                 })
               }
               VariableConstants.UPDATE -> {
@@ -166,8 +166,7 @@ class FunctionService(
                           symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT) as Set<String>).toMutableSet(),
                           inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
                             acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
-                          })
-                      ))
+                          }), created = defaultTimestamp))
                   })
               }
               VariableConstants.DELETE -> {}
@@ -177,13 +176,13 @@ class FunctionService(
         }
       }
     })
-    function.permissions.add(functionPermissionService.createDefaultFunctionPermission(function = function))
-    function.permissions.addAll(createPermissionsForFunction(jsonParams = jsonParams))
-    assignFunctionPermissionsToRoles(jsonParams = jsonParams)
+    function.permissions.add(functionPermissionService.createDefaultFunctionPermission(function = function, defaultTimestamp = defaultTimestamp))
+    function.permissions.addAll(createPermissionsForFunction(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    assignFunctionPermissionsToRoles(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp)
     return function
   }
 
-  fun createPermissionsForFunction(jsonParams: JsonObject): Set<FunctionPermission> = jsonParams.get("permissions").asJsonArray.fold(mutableSetOf()) { acc, jsonPermission ->
+  fun createPermissionsForFunction(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<FunctionPermission> = jsonParams.get("permissions").asJsonArray.fold(mutableSetOf()) { acc, jsonPermission ->
     acc.apply {
       try {
         add(functionPermissionService.createFunctionPermission(jsonParams = JsonObject().apply {
@@ -191,14 +190,14 @@ class FunctionService(
           addProperty(FunctionConstants.FUNCTION_NAME, jsonParams.get(FunctionConstants.FUNCTION_NAME).asString)
           addProperty("permissionName", jsonPermission.asJsonObject.get("permissionName").asString)
           add("permissions", jsonPermission.asJsonObject.get("permissions").asJsonArray)
-        }))
+        }, defaultTimestamp = defaultTimestamp))
       } catch (exception: Exception) {
         throw CustomJsonException("{permissions: {permissionName: 'Unexpected value for parameter'}}")
       }
     }
   }
 
-  fun assignFunctionPermissionsToRoles(jsonParams: JsonObject) {
+  fun assignFunctionPermissionsToRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
@@ -212,19 +211,19 @@ class FunctionService(
               throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}")
             }
             addProperty("operation", "add")
-          })
+          }, defaultTimestamp = defaultTimestamp)
         }
       } else throw CustomJsonException("{roles: {${roleName}: 'Unexpected value for parameter'}}")
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun executeFunction(jsonParams: JsonObject, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis()), files: MutableList<MultipartFile>): JsonObject {
+  fun executeFunction(jsonParams: JsonObject, files: MutableList<MultipartFile>, defaultTimestamp: Timestamp): JsonObject {
     val functionPermission: FunctionPermission = userService.superimposeUserFunctionPermissions(jsonParams = JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
       addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
       addProperty(FunctionConstants.FUNCTION_NAME, jsonParams.get(FunctionConstants.FUNCTION_NAME).asString)
-    })
+    }, defaultTimestamp = defaultTimestamp)
     val inputs: Set<FunctionInput> = functionPermission.function.inputs
     val args: JsonObject = validateFunctionArgs(args = jsonParams.get(FunctionConstants.ARGS).asJsonObject, inputs = functionPermission.functionInputPermissions, defaultTimestamp = defaultTimestamp, files = files)
     val symbolPaths: Set<String> = gson.fromJson(functionPermission.function.symbolPaths, JsonArray::class.java).map { it.asString }.toSet()
@@ -358,7 +357,7 @@ class FunctionService(
               val (variable: Variable, typePermission: TypePermission) = when(output.operation) {
                 FunctionConstants.CREATE -> variableService.createVariable(jsonParams = variableParams, defaultTimestamp = defaultTimestamp, files = files)
                 FunctionConstants.UPDATE -> variableService.updateVariable(jsonParams = variableParams, defaultTimestamp = defaultTimestamp, files = files)
-                FunctionConstants.DELETE -> variableService.deleteVariable(jsonParams = variableParams)
+                FunctionConstants.DELETE -> variableService.deleteVariable(jsonParams = variableParams, defaultTimestamp = defaultTimestamp)
                 else -> throw CustomJsonException("{}")
               }
               if (outputPermission.accessLevel)

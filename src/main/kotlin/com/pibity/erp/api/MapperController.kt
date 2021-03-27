@@ -26,6 +26,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -46,7 +47,7 @@ class MapperController(val mapperService: MapperService) {
   fun createMapper(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createMapper"] ?: JsonObject())
-      ResponseEntity(mapperService.createMapper(jsonParams = jsonParams).toString(), HttpStatus.OK)
+      ResponseEntity(mapperService.createMapper(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -77,7 +78,7 @@ class MapperController(val mapperService: MapperService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeMapper"]
         ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(mapperService.executeMapper(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(mapperService.executeMapper(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

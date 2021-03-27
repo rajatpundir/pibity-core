@@ -22,6 +22,7 @@ import com.pibity.erp.repositories.jpa.TypePermissionJpaRepository
 import com.pibity.erp.repositories.query.TypePermissionRepository
 import com.pibity.erp.repositories.query.TypeRepository
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
 
 @Service
 class TypePermissionService(
@@ -31,16 +32,16 @@ class TypePermissionService(
   val typePermissionJpaRepository: TypePermissionJpaRepository
   ) {
 
-  fun createTypePermission(jsonParams: JsonObject): Pair<TypePermission, Int> {
+  fun createTypePermission(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<TypePermission, Int> {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val typePermission = typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get("permissionName").asString).apply {
+    val typePermission = typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get("permissionName").asString, created = defaultTimestamp).apply {
       if (jsonParams.has("creatable"))
         creatable = jsonParams.get("creatable").asBoolean
       if (jsonParams.has("deletable"))
         deletable = jsonParams.get("deletable").asBoolean
       val keyPermissionsJson: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = type)
-      keyPermissions.addAll(type.keys.map { KeyPermission(typePermission = this, key = it, accessLevel = keyPermissionsJson.get(it.name).asInt) })
+      keyPermissions.addAll(type.keys.map { KeyPermission(typePermission = this, key = it, accessLevel = keyPermissionsJson.get(it.name).asInt, created = defaultTimestamp) })
     })
     return try {
       typePermissionJpaRepository.save(typePermission)
@@ -71,11 +72,11 @@ class TypePermissionService(
     }
   }
 
-  fun createDefaultTypePermission(type: Type, permissionName: String, accessLevel: Int): TypePermission {
+  fun createDefaultTypePermission(type: Type, permissionName: String, accessLevel: Int, defaultTimestamp: Timestamp): TypePermission {
     return typePermissionJpaRepository.save(TypePermission(type = type, name = permissionName,
       creatable = accessLevel == PermissionConstants.WRITE_ACCESS,
-      deletable = accessLevel == PermissionConstants.WRITE_ACCESS).apply {
-      keyPermissions.addAll(type.keys.map { key -> KeyPermission(typePermission = this, key = key, accessLevel = accessLevel) })
+      deletable = accessLevel == PermissionConstants.WRITE_ACCESS, created = defaultTimestamp).apply {
+      keyPermissions.addAll(type.keys.map { key -> KeyPermission(typePermission = this, key = key, accessLevel = accessLevel, created = defaultTimestamp) })
     })
   }
 
@@ -105,12 +106,12 @@ class TypePermissionService(
       ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 
-  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, type: Type): TypePermission {
+  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, type: Type, defaultTimestamp: Timestamp): TypePermission {
     return TypePermission(type = type, name = "SUPERIMPOSED_PERMISSION",
       creatable = typePermissions.fold(false) { acc, it -> acc || it.creatable },
-      deletable = typePermissions.fold(false) { acc, it -> acc || it.deletable }).apply {
+      deletable = typePermissions.fold(false) { acc, it -> acc || it.deletable }, created = defaultTimestamp).apply {
         keyPermissions.addAll(type.keys.map { key ->
-          KeyPermission(typePermission = this, key = key, accessLevel = typePermissions.map { tp -> tp.keyPermissions.single { it.key == key }.accessLevel }.maxOrNull()!!)
+          KeyPermission(typePermission = this, key = key, accessLevel = typePermissions.map { tp -> tp.keyPermissions.single { it.key == key }.accessLevel }.maxOrNull()!!, created = defaultTimestamp)
         })
     }
   }

@@ -24,11 +24,11 @@ data class FunctionInputPermission(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_permission_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_permission_id", referencedColumnName = "id"))
   val functionPermission: FunctionPermission,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_input_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_input_id", referencedColumnName = "id"))
   val functionInput: FunctionInput,
 
   @Version
@@ -39,7 +39,7 @@ data class FunctionInputPermission(
   var accessLevel: Boolean,
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -47,7 +47,7 @@ data class FunctionInputPermission(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

@@ -13,6 +13,7 @@ import com.pibity.erp.entities.Type
 import com.pibity.erp.entities.Variable
 import java.io.Serializable
 import java.math.BigDecimal
+import java.sql.Blob
 import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
@@ -40,7 +41,7 @@ data class CircuitInput(
   val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
   val type: Type?,
 
   @Column(name = "value_string")
@@ -66,17 +67,17 @@ data class CircuitInput(
 
   @Lob
   @Column(name = "value_blob")
-  var defaultBlobValue: ByteArray? = null,
+  var defaultBlobValue: Blob? = null,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id"))
   var referencedVariable: Variable? = null,
 
   @OneToMany(mappedBy = "connectedCircuitInput", cascade = [CascadeType.ALL])
   val referencingCircuitComputationConnections: Set<CircuitComputationConnection> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -84,7 +85,7 @@ data class CircuitInput(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

@@ -12,7 +12,6 @@ import com.pibity.erp.commons.constants.ApplicationConstants
 import com.pibity.erp.entities.function.FunctionOutput
 import java.io.Serializable
 import java.sql.Timestamp
-import java.util.*
 import javax.persistence.*
 
 @Entity
@@ -25,11 +24,11 @@ data class FunctionOutputPermission(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_permission_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_permission_id", referencedColumnName = "id"))
   val functionPermission: FunctionPermission,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "function_output_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "function_output_id", referencedColumnName = "id"))
   val functionOutput: FunctionOutput,
 
   @Version
@@ -40,7 +39,7 @@ data class FunctionOutputPermission(
   var accessLevel: Boolean,
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -48,7 +47,7 @@ data class FunctionOutputPermission(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

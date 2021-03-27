@@ -25,6 +25,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
+import java.sql.Timestamp
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -45,7 +46,7 @@ class CircuitController(val circuitService: CircuitService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createCircuit"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(circuitService.createCircuit(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(circuitService.createCircuit(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -61,7 +62,7 @@ class CircuitController(val circuitService: CircuitService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeCircuit"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      ResponseEntity(circuitService.executeCircuit(jsonParams = jsonParams, files = files).toString(), HttpStatus.OK)
+      ResponseEntity(circuitService.executeCircuit(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

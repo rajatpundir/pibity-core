@@ -30,7 +30,7 @@ data class TypeAssertion(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
   val type: Type,
 
   @Column(name = "name", nullable = false)
@@ -58,7 +58,7 @@ data class TypeAssertion(
   val keyDependencies: MutableSet<Key> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -66,7 +66,7 @@ data class TypeAssertion(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

@@ -44,13 +44,13 @@ class TypeService(
 ) {
 
   @Suppress("UNCHECKED_CAST")
-  fun createType(jsonParams: JsonObject, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis()), files: List<MultipartFile>): Type {
+  fun createType(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Type {
     val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: 'Organization could not be found'}")
     val validTypes: MutableSet<Type> = typeRepository.findTypes(orgId = organization.id) as MutableSet<Type>
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject, validTypes = validTypes, files = files)
     val type = typeJpaRepository.save(Type(organization = organization, name = validateTypeName(jsonParams.get(OrganizationConstants.TYPE_NAME).asString),
-        autoId = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false
+        autoId = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false, created = defaultTimestamp
     ))
     type.keys.addAll(
       keys.entrySet()
@@ -63,7 +63,8 @@ class TypeService(
               parentType = type,
               name = keyName,
               type = validTypes.single { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString },
-              keyOrder = keyJson.get(KeyConstants.ORDER).asInt
+              keyOrder = keyJson.get(KeyConstants.ORDER).asInt,
+              created = defaultTimestamp
             ).apply {
               when (this.type.name) {
                 TypeConstants.TEXT -> defaultStringValue =
@@ -104,7 +105,8 @@ class TypeService(
             parentType = type,
             name = keyName,
             type = validTypes.single { it.name == keyJson.get(KeyConstants.KEY_TYPE).asString },
-            keyOrder = keyJson.get(KeyConstants.ORDER).asInt
+            keyOrder = keyJson.get(KeyConstants.ORDER).asInt,
+            created = defaultTimestamp
           )
         ).apply {
           val keyDependencies: MutableSet<Key> = mutableSetOf()
@@ -118,22 +120,23 @@ class TypeService(
               expression = (validateOrEvaluateExpression(expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject, symbols = symbols,
                 mode = LispConstants.REFLECT, expectedReturnType = keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) as JsonObject).toString(),
               symbolPaths = gson.toJson(symbolPaths),
-              keyDependencies = keyDependencies
+              keyDependencies = keyDependencies,
+              created = defaultTimestamp
             )
           )
         }
       })
-    type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams))
-    type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams))
-    type.permissions.addAll(createDefaultPermissionsForType(type = type))
-    type.permissions.addAll(createPermissionsForType(jsonParams = jsonParams))
-    assignTypePermissionsToRoles(jsonParams = jsonParams)
+    type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    type.permissions.addAll(createDefaultPermissionsForType(type = type, defaultTimestamp = defaultTimestamp))
+    type.permissions.addAll(createPermissionsForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    assignTypePermissionsToRoles(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp)
     if (jsonParams.has("variables?"))
       createVariablesForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp, files = files)
     return type
   }
 
-  fun createTypeUniquenessConstraints(jsonParams: JsonObject): Set<TypeUniqueness> {
+  fun createTypeUniquenessConstraints(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypeUniqueness> {
     val uniqueConstraints: MutableSet<TypeUniqueness> = mutableSetOf()
     for ((constraintName, jsonKeys) in jsonParams.get("uniqueConstraints").asJsonObject.entrySet()) {
       uniqueConstraints.add(uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
@@ -141,12 +144,12 @@ class TypeService(
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         addProperty("constraintName", constraintName)
         add("keys", jsonKeys.asJsonArray)
-      }))
+      }, defaultTimestamp = defaultTimestamp))
     }
     return uniqueConstraints
   }
 
-  fun createTypeAssertions(jsonParams: JsonObject): Set<TypeAssertion> {
+  fun createTypeAssertions(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypeAssertion> {
     val assertions: MutableSet<TypeAssertion> = mutableSetOf()
     for ((assertionName, assertionExpression) in jsonParams.get("assertions").asJsonObject.entrySet()) {
       assertions.add(assertionService.createAssertion(jsonParams = JsonObject().apply {
@@ -154,12 +157,12 @@ class TypeService(
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         addProperty("assertionName", assertionName)
         add("expression", assertionExpression.asJsonObject)
-      }))
+      }, defaultTimestamp = defaultTimestamp))
     }
     return assertions
   }
 
-  fun createPermissionsForType(jsonParams: JsonObject): Set<TypePermission> {
+  fun createPermissionsForType(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypePermission> {
     val typePermissions: MutableSet<TypePermission> = mutableSetOf()
     for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
       if (jsonPermission.isJsonObject) {
@@ -186,14 +189,14 @@ class TypeService(
           } catch (exception: Exception) {
             throw CustomJsonException("{permissions: {permissions: ${MessageConstants.UNEXPECTED_VALUE}}}")
           }
-        })
+        }, defaultTimestamp = defaultTimestamp)
         typePermissions.add(typePermission)
       } else throw CustomJsonException("{permissions: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return typePermissions
   }
 
-  fun assignTypePermissionsToRoles(jsonParams: JsonObject) {
+  fun assignTypePermissionsToRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
@@ -207,7 +210,7 @@ class TypeService(
               throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}")
             }
             addProperty("operation", "add")
-          })
+          }, defaultTimestamp = defaultTimestamp)
         }
       } else throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}}")
     }
@@ -235,20 +238,22 @@ class TypeService(
     }
   }
 
-  fun createDefaultPermissionsForType(type: Type): Set<TypePermission> {
+  fun createDefaultPermissionsForType(type: Type, defaultTimestamp: Timestamp): Set<TypePermission> {
     val defaultPermissions = mutableSetOf<TypePermission>()
     defaultPermissions.add(
       typePermissionService.createDefaultTypePermission(
         type = type,
         permissionName = "READ_ALL",
-        accessLevel = 1
+        accessLevel = 1,
+        defaultTimestamp = defaultTimestamp
       )
     )
     defaultPermissions.add(
       typePermissionService.createDefaultTypePermission(
         type = type,
         permissionName = "WRITE_ALL",
-        accessLevel = 2
+        accessLevel = 2,
+        defaultTimestamp = defaultTimestamp
       )
     )
     return defaultPermissions

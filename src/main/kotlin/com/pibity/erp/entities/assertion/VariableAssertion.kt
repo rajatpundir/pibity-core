@@ -25,11 +25,11 @@ data class VariableAssertion(
   val id: Long = -1,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_assertion_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_assertion_id", referencedColumnName = "id"))
   val typeAssertion: TypeAssertion,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "variable_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "variable_id", referencedColumnName = "id"))
   val variable: Variable,
 
   @Version
@@ -41,7 +41,7 @@ data class VariableAssertion(
   var valueDependencies: MutableSet<Value> = HashSet(),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -49,7 +49,7 @@ data class VariableAssertion(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

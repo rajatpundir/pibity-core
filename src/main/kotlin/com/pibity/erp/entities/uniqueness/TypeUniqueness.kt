@@ -32,7 +32,7 @@ data class TypeUniqueness(
   val id: Long = -1L,
 
   @ManyToOne
-  @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+  @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
   val type: Type,
 
   @Column(name = "name", nullable = false)
@@ -49,7 +49,7 @@ data class TypeUniqueness(
   val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -57,7 +57,7 @@ data class TypeUniqueness(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

@@ -45,7 +45,7 @@ class VariableService(
   val variableUniquenessRepository: VariableUniquenessRepository
 ) {
 
-  fun executeQueue(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp = Timestamp(System.currentTimeMillis())): JsonObject {
+  fun executeQueue(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): JsonObject {
     return jsonParams.get(VariableConstants.QUEUE).asJsonObject.entrySet().fold(JsonObject()) { acc, (queueName, queue) ->
       acc.apply {
         try {
@@ -89,25 +89,25 @@ class VariableService(
       VariableConstants.DELETE -> deleteVariable(jsonParams = variableJson.apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, orgId)
         addProperty(OrganizationConstants.USERNAME, username)
-      })
+      }, defaultTimestamp = defaultTimestamp)
       else -> throw CustomJsonException("{${VariableConstants.OPERATION}: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return serialize(variable = variable, typePermission = typePermission)
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun createVariable(jsonParams: JsonObject, defaultTimestamp: Timestamp, files: List<MultipartFile>): Pair<Variable, TypePermission> {
+  fun createVariable(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Pair<Variable, TypePermission> {
     val typePermission: TypePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
         addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-      })
+      }, defaultTimestamp = defaultTimestamp)
     return if (!typePermission.creatable)
       throw CustomJsonException("{${OrganizationConstants.ERROR}: ${MessageConstants.UNAUTHORIZED_ACCESS}}")
     else {
       val valuesJson: JsonObject = validateVariableValues(values = jsonParams.get(VariableConstants.VALUES).asJsonObject, typePermission = typePermission, defaultTimestamp = defaultTimestamp, files = files)
       val variable: Variable = try {
-        variableJpaRepository.save(Variable(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString))
+        variableJpaRepository.save(Variable(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString, created = defaultTimestamp))
       } catch (exception: Exception) {
         throw CustomJsonException("${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_SAVED}")
       }
@@ -115,23 +115,23 @@ class VariableService(
         .sortedBy { it.keyOrder }
         .map { key ->
         valueJpaRepository.save(when(key.type.name) {
-          TypeConstants.TEXT -> Value(variable = variable, key = key, stringValue = valuesJson.get(key.name).asString!!)
-          TypeConstants.NUMBER -> Value(variable = variable, key = key, longValue = valuesJson.get(key.name).asLong)
-          TypeConstants.DECIMAL -> Value(variable = variable, key = key, decimalValue = valuesJson.get(key.name).asBigDecimal!!)
-          TypeConstants.BOOLEAN -> Value(variable = variable, key = key, booleanValue = valuesJson.get(key.name).asBoolean)
-          TypeConstants.DATE -> Value(variable = variable, key = key, dateValue = Date(valuesJson.get(key.name).asLong))
-          TypeConstants.TIMESTAMP -> Value(variable = variable, key = key, timestampValue = Timestamp(valuesJson.get(key.name).asLong))
-          TypeConstants.TIME -> Value(variable = variable, key = key, timeValue = Time(valuesJson.get(key.name).asLong))
+          TypeConstants.TEXT -> Value(variable = variable, key = key, stringValue = valuesJson.get(key.name).asString!!, created = defaultTimestamp)
+          TypeConstants.NUMBER -> Value(variable = variable, key = key, longValue = valuesJson.get(key.name).asLong, created = defaultTimestamp)
+          TypeConstants.DECIMAL -> Value(variable = variable, key = key, decimalValue = valuesJson.get(key.name).asBigDecimal!!, created = defaultTimestamp)
+          TypeConstants.BOOLEAN -> Value(variable = variable, key = key, booleanValue = valuesJson.get(key.name).asBoolean, created = defaultTimestamp)
+          TypeConstants.DATE -> Value(variable = variable, key = key, dateValue = Date(valuesJson.get(key.name).asLong), created = defaultTimestamp)
+          TypeConstants.TIMESTAMP -> Value(variable = variable, key = key, timestampValue = Timestamp(valuesJson.get(key.name).asLong), created = defaultTimestamp)
+          TypeConstants.TIME -> Value(variable = variable, key = key, timeValue = Time(valuesJson.get(key.name).asLong), created = defaultTimestamp)
           TypeConstants.BLOB -> if (valuesJson.has(key.name))
-            Value(variable = variable, key = key, blobValue = BlobProxy.generateProxy(files[valuesJson.get(key.name).asInt].bytes))
+            Value(variable = variable, key = key, blobValue = BlobProxy.generateProxy(files[valuesJson.get(key.name).asInt].bytes), created = defaultTimestamp)
           else
-            Value(variable = variable, key = key, blobValue = key.defaultBlobValue!!)
+            Value(variable = variable, key = key, blobValue = key.defaultBlobValue!!, created = defaultTimestamp)
           TypeConstants.FORMULA -> throw CustomJsonException("{}")
           else -> Value(variable = variable, key = key, referencedVariable = (variableRepository.findByTypeAndName(type = key.type, name = valuesJson.get(key.name).asString!!)
             ?: throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")).apply {
             if (!active)
               throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
-          })
+          }, created = defaultTimestamp)
         })
       })
       variable.values.addAll(typePermission.type.keys.filter { it.type.name == TypeConstants.FORMULA }
@@ -143,18 +143,18 @@ class VariableService(
           val evaluatedArg = validateOrEvaluateExpression(expression = gson.fromJson(key.formula!!.expression, JsonObject::class.java),
             symbols = symbols, mode = LispConstants.EVALUATE, expectedReturnType = key.formula!!.returnType.name)
           valueJpaRepository.save(when(key.formula!!.returnType.name) {
-            TypeConstants.TEXT -> Value(variable = variable, key = key, stringValue = evaluatedArg as String, valueDependencies = valueDependencies)
-            TypeConstants.NUMBER -> Value(variable = variable, key = key, longValue = evaluatedArg as Long, valueDependencies = valueDependencies)
-            TypeConstants.DECIMAL -> Value(variable = variable, key = key, decimalValue = evaluatedArg as BigDecimal, valueDependencies = valueDependencies)
-            TypeConstants.BOOLEAN -> Value(variable = variable, key = key, booleanValue = evaluatedArg as Boolean, valueDependencies = valueDependencies)
-            TypeConstants.DATE -> Value(variable = variable, key = key, dateValue = evaluatedArg as Date, valueDependencies = valueDependencies)
-            TypeConstants.TIMESTAMP -> Value(variable = variable, key = key, timestampValue = evaluatedArg as Timestamp, valueDependencies = valueDependencies)
-            TypeConstants.TIME -> Value(variable = variable, key = key, timeValue = evaluatedArg as Time, valueDependencies = valueDependencies)
-            TypeConstants.BLOB -> Value(variable = variable, key = key, blobValue = BlobProxy.generateProxy(evaluatedArg as ByteArray), valueDependencies = valueDependencies)
+            TypeConstants.TEXT -> Value(variable = variable, key = key, stringValue = evaluatedArg as String, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.NUMBER -> Value(variable = variable, key = key, longValue = evaluatedArg as Long, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.DECIMAL -> Value(variable = variable, key = key, decimalValue = evaluatedArg as BigDecimal, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.BOOLEAN -> Value(variable = variable, key = key, booleanValue = evaluatedArg as Boolean, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.DATE -> Value(variable = variable, key = key, dateValue = evaluatedArg as Date, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.TIMESTAMP -> Value(variable = variable, key = key, timestampValue = evaluatedArg as Timestamp, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.TIME -> Value(variable = variable, key = key, timeValue = evaluatedArg as Time, valueDependencies = valueDependencies, created = defaultTimestamp)
+            TypeConstants.BLOB -> Value(variable = variable, key = key, blobValue = BlobProxy.generateProxy(evaluatedArg as ByteArray), valueDependencies = valueDependencies, created = defaultTimestamp)
             else -> throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
           })
       })
-      variable.variableUniquenesses.addAll(variable.type.uniqueConstraints.map { typeUniqueness ->
+      variable.variableUniqueness.addAll(variable.type.uniqueConstraints.map { typeUniqueness ->
         val computedHash: String = computeHash(typeUniqueness.keys.sortedBy { it.id }.fold("") { acc, key ->
           val value: Value = variable.values.single { it.key == key }
           acc + when (value.key.type.name) {
@@ -181,9 +181,9 @@ class VariableService(
           }
         })
         try {
-          variableUniquenessJpaRepository.save(VariableUniqueness(typeUniqueness = typeUniqueness, variable = variable, hash = computedHash))
+          variableUniquenessJpaRepository.save(VariableUniqueness(typeUniqueness = typeUniqueness, variable = variable, hash = computedHash, created = defaultTimestamp))
         } catch (exception: Exception) {
-          resolveHashConflict(variableUniqueness = VariableUniqueness(typeUniqueness = typeUniqueness, variable = variable, hash = computedHash), variableUniquenessToUpdate = setOf())
+          resolveHashConflict(variableUniqueness = VariableUniqueness(typeUniqueness = typeUniqueness, variable = variable, hash = computedHash, created = defaultTimestamp), variableUniquenessToUpdate = setOf())
         }
       })
       variable.variableAssertions.addAll(variable.type.typeAssertions.map { typeAssertion ->
@@ -199,19 +199,19 @@ class VariableService(
         if (!result)
           throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: 'Failed to assert ${variable.type.name}:${typeAssertion.name}'}")
         else
-          variableAssertionJpaRepository.save(VariableAssertion(typeAssertion = typeAssertion, variable = variable, valueDependencies = valueDependencies))
+          variableAssertionJpaRepository.save(VariableAssertion(typeAssertion = typeAssertion, variable = variable, valueDependencies = valueDependencies, created = defaultTimestamp))
       })
       Pair(variable, typePermission)
     }
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun updateVariable(jsonParams: JsonObject, defaultTimestamp: Timestamp, files: List<MultipartFile>): Pair<Variable, TypePermission> {
+  fun updateVariable(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Pair<Variable, TypePermission> {
     val typePermission: TypePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
         addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-      })
+      }, defaultTimestamp = defaultTimestamp)
     val variable: Variable = (variableRepository.findByTypeAndName(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
       ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_FOUND}}")).apply {
       if (jsonParams.has("${VariableConstants.ACTIVE}?"))
@@ -246,7 +246,7 @@ class VariableService(
         if (value.key.isAssertionDependency)
           dependentAssertions.addAll(value.dependentVariableAssertions)
         if (value.key.isUniquenessDependency)
-          dependentUniqueness.addAll(value.key.dependentTypeUniquenesses.map { typeUniqueness -> variable.variableUniquenesses.single { it.typeUniqueness == typeUniqueness } })
+          dependentUniqueness.addAll(value.key.dependentTypeUniqueness.map { typeUniqueness -> variable.variableUniqueness.single { it.typeUniqueness == typeUniqueness } })
       }
     }
     variable.values.filter { it.key.type.name == TypeConstants.FORMULA }.forEach { value ->
@@ -279,7 +279,7 @@ class VariableService(
         if (value.key.isAssertionDependency)
           dependentAssertions.addAll(value.dependentVariableAssertions)
         if (value.key.isUniquenessDependency)
-          dependentUniqueness.addAll(value.key.dependentTypeUniquenesses.map { typeUniqueness -> variable.variableUniquenesses.single { it.typeUniqueness == typeUniqueness } })
+          dependentUniqueness.addAll(value.key.dependentTypeUniqueness.map { typeUniqueness -> variable.variableUniqueness.single { it.typeUniqueness == typeUniqueness } })
       }
     }
     try {
@@ -387,7 +387,7 @@ class VariableService(
       if (value.key.isAssertionDependency)
         dependentAssertions.addAll(value.dependentVariableAssertions)
       if (value.key.isUniquenessDependency)
-        dependentUniqueness.addAll(value.key.dependentTypeUniquenesses.map { typeUniqueness -> value.variable.variableUniquenesses.single { it.typeUniqueness == typeUniqueness } })
+        dependentUniqueness.addAll(value.key.dependentTypeUniqueness.map { typeUniqueness -> value.variable.variableUniqueness.single { it.typeUniqueness == typeUniqueness } })
     }
     if (dependentFormulaValues.isNotEmpty())
       recomputeDependentFormulaValues(affectedFormulaValues = dependentFormulaValues, dependentAssertions = dependentAssertions, dependentUniqueness = dependentUniqueness)
@@ -416,18 +416,18 @@ class VariableService(
     }
   }
 
-  fun deleteVariable(jsonParams: JsonObject): Pair<Variable, TypePermission> {
+  fun deleteVariable(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<Variable, TypePermission> {
     val typePermission: TypePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
       addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
       addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-    })
+    }, defaultTimestamp = defaultTimestamp)
     return if (!typePermission.deletable)
       throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_REMOVED}}")
     else {
       val variable: Variable = variableRepository.findByTypeAndName(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
         ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_FOUND}}")
-      variable.variableUniquenesses.forEach { variableUniqueness ->
+      variable.variableUniqueness.forEach { variableUniqueness ->
         val previousVariableUniqueness: VariableUniqueness? = if (variableUniqueness.level == 0) null
         else variableUniquenessRepository.findVariableUniqueness(typeUniqueness = variableUniqueness.typeUniqueness, level = variableUniqueness.level - 1, hash = variableUniqueness.hash)!!
         val variableUniquenessToUpdate: MutableSet<VariableUniqueness> = mutableSetOf()

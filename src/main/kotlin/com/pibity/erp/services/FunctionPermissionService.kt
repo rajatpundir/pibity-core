@@ -21,6 +21,7 @@ import com.pibity.erp.repositories.query.FunctionPermissionRepository
 import com.pibity.erp.repositories.function.FunctionRepository
 import com.pibity.erp.repositories.jpa.FunctionPermissionJpaRepository
 import org.springframework.stereotype.Service
+import java.sql.Timestamp
 
 @Service
 class FunctionPermissionService(
@@ -29,14 +30,14 @@ class FunctionPermissionService(
     val functionPermissionJpaRepository: FunctionPermissionJpaRepository
 ) {
 
-  fun createFunctionPermission(jsonParams: JsonObject): FunctionPermission {
+  fun createFunctionPermission(jsonParams: JsonObject, defaultTimestamp: Timestamp): FunctionPermission {
     val function: Function = functionRepository.findFunction(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString)
         ?: throw CustomJsonException("{${FunctionConstants.FUNCTION_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val functionPermissionsJson: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = function)
     return try {
-      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = jsonParams.get("permissionName").asString).apply {
-        functionInputPermissions = function.inputs.map { FunctionInputPermission(functionPermission = this, functionInput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.INPUTS).asJsonObject.get(it.name).asBoolean) }.toMutableSet()
-        functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.OUTPUTS).asJsonObject.get(it.name).asBoolean) }.toMutableSet()
+      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = jsonParams.get("permissionName").asString, created = defaultTimestamp).apply {
+        functionInputPermissions = function.inputs.map { FunctionInputPermission(functionPermission = this, functionInput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.INPUTS).asJsonObject.get(it.name).asBoolean, created = defaultTimestamp) }.toMutableSet()
+        functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.OUTPUTS).asJsonObject.get(it.name).asBoolean, created = defaultTimestamp) }.toMutableSet()
 
       })
     } catch (exception: Exception) {
@@ -58,11 +59,11 @@ class FunctionPermissionService(
     }
   }
 
-  fun createDefaultFunctionPermission(function: Function): FunctionPermission {
+  fun createDefaultFunctionPermission(function: Function, defaultTimestamp: Timestamp): FunctionPermission {
     return try {
-      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = "DEFAULT").apply {
-        functionInputPermissions = function.inputs.map { FunctionInputPermission(functionPermission = this, functionInput = it, accessLevel = true) }.toMutableSet()
-        functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = true) }.toMutableSet()
+      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = "DEFAULT", created = defaultTimestamp).apply {
+        functionInputPermissions = function.inputs.map { FunctionInputPermission(functionPermission = this, functionInput = it, accessLevel = true, created = defaultTimestamp) }.toMutableSet()
+        functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = true, created = defaultTimestamp) }.toMutableSet()
       })
     } catch (exception: Exception) {
       throw CustomJsonException("{permissionName: 'Permission could not be created'}")
@@ -109,14 +110,14 @@ class FunctionPermissionService(
       ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
   }
 
-  fun superimposeFunctionPermissions(functionPermissions: Set<FunctionPermission>, function: Function): FunctionPermission {
-    return FunctionPermission(function = function, name = "SUPERIMPOSED_PERMISSION").apply {
+  fun superimposeFunctionPermissions(functionPermissions: Set<FunctionPermission>, function: Function, defaultTimestamp: Timestamp): FunctionPermission {
+    return FunctionPermission(function = function, name = "SUPERIMPOSED_PERMISSION", created = defaultTimestamp).apply {
       functionInputPermissions = function.inputs.map { input ->
-        FunctionInputPermission(functionPermission = this, functionInput = input, accessLevel = functionPermissions.map { fp -> fp.functionInputPermissions.single { it.functionInput.name == input.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel })
+        FunctionInputPermission(functionPermission = this, functionInput = input, accessLevel = functionPermissions.map { fp -> fp.functionInputPermissions.single { it.functionInput.name == input.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }, created = defaultTimestamp)
       }.toMutableSet()
       functionOutputPermissions = function.outputs.map { output ->
         FunctionOutputPermission(functionPermission = this, functionOutput = output,
-          accessLevel = functionPermissions.map { fp -> fp.functionOutputPermissions.single { it.functionOutput.name == output.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel })
+          accessLevel = functionPermissions.map { fp -> fp.functionOutputPermissions.single { it.functionOutput.name == output.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }, created = defaultTimestamp)
       }.toMutableSet()
     }
   }

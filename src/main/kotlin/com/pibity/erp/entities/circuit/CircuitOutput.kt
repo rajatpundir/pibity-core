@@ -47,7 +47,7 @@ data class CircuitOutput(
   val connectedCircuitComputationCircuitOutput: CircuitOutput? = null,
 
   @Column(name = "created", nullable = false)
-  val created: Timestamp = Timestamp(System.currentTimeMillis()),
+  val created: Timestamp,
 
   @Column(name = "updated")
   var updated: Timestamp? = null
@@ -55,7 +55,7 @@ data class CircuitOutput(
 ) : Serializable {
 
   @PreUpdate
-  fun setUpdatedTimestamp() {
+  fun onUpdate() {
     updated = Timestamp(System.currentTimeMillis())
   }
 

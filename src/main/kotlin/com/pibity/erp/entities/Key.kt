@@ -38,7 +38,7 @@ data class Key(
     val id: Long = -1,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "parent_type_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "parent_type_id", referencedColumnName = "id"))
     val parentType: Type,
 
     @Column(name = "name", nullable = false)
@@ -49,7 +49,7 @@ data class Key(
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
     val type: Type,
 
     @OneToMany(mappedBy = "key", cascade = [CascadeType.ALL])
@@ -84,11 +84,11 @@ data class Key(
     var defaultBlobValue: Blob? = null,
 
     @ManyToOne(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
-    @JoinColumns(*[JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "value_referenced_variable_id", referencedColumnName = "id"))
     var referencedVariable: Variable? = null,
 
     @OneToOne(cascade = [CascadeType.PERSIST, CascadeType.REMOVE])
-    @JoinColumns(*[JoinColumn(name = "formula_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "formula_id", referencedColumnName = "id"))
     var formula: Formula? = null,
 
     @Column(name = "is_formula_dependency", nullable = false)
@@ -107,7 +107,7 @@ data class Key(
     var isUniquenessDependency: Boolean = false,
 
     @ManyToMany(mappedBy = "keys")
-    val dependentTypeUniquenesses: Set<TypeUniqueness> = HashSet(),
+    val dependentTypeUniqueness: Set<TypeUniqueness> = HashSet(),
 
     @ManyToMany(mappedBy = "variableNameKeyDependencies")
     val dependentFunctionInputVariableNames: Set<FunctionInput> = HashSet(),
@@ -122,7 +122,7 @@ data class Key(
     val dependentFunctionOutputKeys: Set<FunctionOutputKey> = HashSet(),
 
     @Column(name = "created", nullable = false)
-    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+    val created: Timestamp,
 
     @Column(name = "updated")
     var updated: Timestamp? = null
@@ -130,7 +130,7 @@ data class Key(
 ) : Serializable {
 
     @PreUpdate
-    fun setUpdatedTimestamp() {
+    fun onUpdate() {
         updated = Timestamp(System.currentTimeMillis())
     }
 

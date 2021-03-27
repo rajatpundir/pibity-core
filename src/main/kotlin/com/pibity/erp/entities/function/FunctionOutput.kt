@@ -27,7 +27,7 @@ data class FunctionOutput(
     val id: Long = -1,
 
     @ManyToOne
-    @JoinColumns(*[JoinColumn(name = "function_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "function_id", referencedColumnName = "id"))
     val function: Function,
 
     @Column(name = "name", nullable = false)
@@ -38,7 +38,7 @@ data class FunctionOutput(
     val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
     @OneToOne
-    @JoinColumns(*[JoinColumn(name = "type_id", referencedColumnName = "id")])
+    @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
     val type: Type,
 
     @Column(name = "operation", nullable = false)
@@ -54,11 +54,11 @@ data class FunctionOutput(
         inverseJoinColumns = [JoinColumn(name = "dependency_key_id", referencedColumnName = "id")])
     val variableNameKeyDependencies: MutableSet<Key> = HashSet(),
 
-    @OneToMany(mappedBy = "functionInput", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "functionOutput", cascade = [CascadeType.ALL], orphanRemoval = true)
     val values: MutableSet<FunctionOutputKey> = HashSet(),
 
     @Column(name = "created", nullable = false)
-    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+    val created: Timestamp,
 
     @Column(name = "updated")
     var updated: Timestamp? = null
@@ -66,7 +66,7 @@ data class FunctionOutput(
 ) : Serializable {
 
     @PreUpdate
-    fun setUpdatedTimestamp() {
+    fun onUpdate() {
         updated = Timestamp(System.currentTimeMillis())
     }
 
