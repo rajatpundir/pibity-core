@@ -13,9 +13,9 @@ services:
         - ./dbscripts/init.sql:/docker-entrypoint-initdb.d/init.sql
         - $HOME/Documents/postgres_home:/root
       environment:
-        POSTGRES_DB: erp
-        POSTGRES_USER: pibity
-        POSTGRES_PASSWORD: password
+        POSTGRES_DB: pibity
+        POSTGRES_USER: admin
+        POSTGRES_PASSWORD: admin
       ports:
         - 5432:5432
   pgadmin:
@@ -34,10 +34,10 @@ services:
       environment:
         DB_VENDOR: POSTGRES
         DB_ADDR: postgres
-        DB_DATABASE: erp
-        DB_USER: pibity
+        DB_DATABASE: pibity
+        DB_USER: admin
         DB_SCHEMA: keycloak
-        DB_PASSWORD: password
+        DB_PASSWORD: admin
         KEYCLOAK_USER: admin
         KEYCLOAK_PASSWORD: admin
         # Uncomment the line below if you want to specify JDBC parameters. The parameter below is just an example, and it shouldn't be used in production without knowledge. It is highly recommended that you read the PostgreSQL JDBC driver documentation in order to use it.
