@@ -30,15 +30,15 @@ spring:
   datasource:
     name: postgres
     driver-class-name: "org.postgresql.Driver"
-    url: "jdbc:postgresql://localhost:5432/erp"
-    username: pibity
-    password: password
+    url: "jdbc:postgresql://localhost:5432/pibity"
+    username: admin
+    password: admin
   liquibase:
     enabled: false
     change-log: "classpath:/db/changelog/inventory-master.json"
-    url: "jdbc:postgresql://localhost:5432/erp"
-    user: pibity
-    password: password
+    url: "jdbc:postgresql://localhost:5432/pibity"
+    user: admin
+    password: admin
     default-schema: liquibase
 logging:
   level:

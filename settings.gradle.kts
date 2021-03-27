@@ -1,1 +1,1 @@
-rootProject.name = "erp"
+rootProject.name = "core"
