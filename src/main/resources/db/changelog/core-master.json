@@ -1,0 +1,11 @@
+{
+  "databaseChangeLog": [
+    {
+      "changeSet": {
+        "sql": "CREATE SCHEMA IF NOT EXISTS erp",
+        "id": "core_master_1",
+        "author": "python"
+      }
+    }
+  ]
+}

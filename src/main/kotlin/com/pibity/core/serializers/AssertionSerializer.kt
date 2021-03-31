@@ -11,7 +11,7 @@ package com.pibity.core.serializers
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.OrganizationConstants
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.gson
 import com.pibity.core.entities.assertion.TypeAssertion
 
 fun serialize(typeAssertion: TypeAssertion): JsonObject = JsonObject().apply {

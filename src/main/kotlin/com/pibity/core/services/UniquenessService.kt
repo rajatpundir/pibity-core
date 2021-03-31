@@ -12,7 +12,7 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.typeIdentifierPattern
+import com.pibity.core.utils.typeIdentifierPattern
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.uniqueness.TypeUniqueness
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository

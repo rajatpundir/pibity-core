@@ -10,7 +10,7 @@ package com.pibity.core
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.gson
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import java.io.File
@@ -24,6 +24,7 @@ fun main(args: Array<String>) {
     GsonBuilder().setPrettyPrinting().create().toJson(
       gson.fromJson(FileReader("src/main/resources/postmaster.json"), JsonObject::class.java).apply {
         addProperty("runCount", get("runCount").asInt + 1)
-      }))
+      })
+  )
   runApplication<CoreApplication>(*args)
 }

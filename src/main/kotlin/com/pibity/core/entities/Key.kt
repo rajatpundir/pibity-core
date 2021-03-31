@@ -8,6 +8,7 @@
 
 package com.pibity.core.entities
 
+import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.assertion.TypeAssertion
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionInputKey
@@ -25,7 +26,7 @@ import java.util.*
 import javax.persistence.*
 
 @Entity
-@Table(name = "keys", schema = "inventory",
+@Table(name = "keys", schema = ApplicationConstants.SCHEMA,
     uniqueConstraints = [
         UniqueConstraint(columnNames = ["parent_type_id", "name"]),
         UniqueConstraint(columnNames = ["parent_type_id", "key_order"])

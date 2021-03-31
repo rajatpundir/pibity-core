@@ -15,9 +15,9 @@ import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.logger.Logger
 import com.pibity.core.serializers.serialize
 import com.pibity.core.services.GroupService
-import com.pibity.core.commons.utils.getExpectedParams
-import com.pibity.core.commons.utils.getJsonParams
-import com.pibity.core.commons.utils.validateOrganizationClaim
+import com.pibity.core.utils.getExpectedParams
+import com.pibity.core.utils.getJsonParams
+import com.pibity.core.utils.validateOrganizationClaim
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

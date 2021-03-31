@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.utils
+package com.pibity.core.utils
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -168,39 +168,40 @@ fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, ty
             CircuitConstants.MAPPER -> {
               val mapper: Mapper = mappers.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }
               addProperty(CircuitConstants.EXECUTE, mapper.name)
-              add(CircuitConstants.CONNECT, mapper.queryParams.fold(JsonObject()) { acc1, queryParam ->
-                acc1.apply {
-                  val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(queryParam.name).asJsonArray
-                  add(queryParam.name, when(connection.first().asString) {
-                    CircuitConstants.INPUT -> JsonArray().apply {
-                      add(CircuitConstants.INPUT)
-                      add(inputs.entrySet().single { (inputName, json) -> inputName == connection[1].asString && !json.asJsonObject.get(KeyConstants.KEY_TYPE).isJsonArray && types.single { it.name == json.asJsonObject.get(KeyConstants.KEY_TYPE).asString } == queryParam.type }.key)
-                    }
-                    CircuitConstants.COMPUTATION -> JsonArray().apply {
-                      add(CircuitConstants.COMPUTATION)
-                      val (referencedComputationName: String, referencedComputation: JsonElement) = computations.entrySet().single { (name, json) ->
-                        name == connection[1].asString && json.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt }
-                      computationLevels[computationName] = max(computationLevels[computationName]!!, 1 + computationLevels[referencedComputationName]!!)
-                      add(referencedComputationName)
-                      when(referencedComputation.asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
-                        CircuitConstants.FUNCTION -> add(functions.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.outputs
-                          .single { it.name == connection[2].asString && it.type == queryParam.type && it.operation != FunctionConstants.DELETE }.name)
-                        CircuitConstants.MAPPER -> throw CustomJsonException("{}")
-                        CircuitConstants.CIRCUIT -> add(circuits.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.outputs
-                          .single { it.name == connection[2].asString && getCircuitOutput(it).type == queryParam.type && getCircuitOutput(it).operation != FunctionConstants.DELETE }.name)
-                        else -> throw CustomJsonException("{}")
+              add(CircuitConstants.CONNECT, JsonObject().apply {
+                add(MapperConstants.QUERY_PARAMS, mapper.queryParams.fold(JsonObject()) { acc1, functionInput ->
+                  acc1.apply {
+                    val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(MapperConstants.QUERY_PARAMS).asJsonObject.get(functionInput.name).asJsonArray
+                    add(functionInput.name, when(connection.first().asString) {
+                      CircuitConstants.INPUT -> JsonArray().apply {
+                        add(CircuitConstants.INPUT)
+                        add(inputs.entrySet().single { (inputName, json) -> inputName == connection[1].asString && !json.asJsonObject.get(KeyConstants.KEY_TYPE).isJsonArray && types.single { it.name == json.asJsonObject.get(KeyConstants.KEY_TYPE).asString } == functionInput.type }.key)
                       }
-                    }
-                    else -> throw CustomJsonException("{}")
-                  })
-                }
-              })
-              add(CircuitConstants.ARGS, JsonArray().apply {
-                val connection: JsonArray = computationJson.get(CircuitConstants.ARGS).asJsonArray
-                computations.entrySet().filter { it.value.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt }.forEach { (referencingComputationName, referencingComputation) ->
-                  val referencingComputationJson: JsonObject = referencingComputation.asJsonObject
-                  when (referencingComputationJson.get(KeyConstants.KEY_TYPE).asString) {
-                    CircuitConstants.MAPPER -> {
+                      CircuitConstants.COMPUTATION -> JsonArray().apply {
+                        add(CircuitConstants.COMPUTATION)
+                        val (referencedComputationName: String, referencedComputation: JsonElement) = computations.entrySet().single { (name, json) ->
+                          name == connection[1].asString && json.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt }
+                        computationLevels[computationName] = max(computationLevels[computationName]!!, 1 + computationLevels[referencedComputationName]!!)
+                        add(referencedComputationName)
+                        when(referencedComputation.asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
+                          CircuitConstants.FUNCTION -> add(functions.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.outputs
+                            .single { it.name == connection[2].asString && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }.name)
+                          CircuitConstants.MAPPER -> throw CustomJsonException("{}")
+                          CircuitConstants.CIRCUIT -> add(circuits.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.outputs
+                            .single { it.name == connection[2].asString && getCircuitOutput(it).type == functionInput.type && getCircuitOutput(it).operation != FunctionConstants.DELETE }.name)
+                          else -> throw CustomJsonException("{}")
+                        }
+                      }
+                      else -> throw CustomJsonException("{}")
+                    })
+                  }
+                })
+                add(CircuitConstants.ARGS, JsonObject().apply {
+                  val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(CircuitConstants.ARGS).asJsonArray
+                  computations.entrySet()
+                    .filter { it.value.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt && it.value.asJsonObject.get(KeyConstants.KEY_TYPE).asString == CircuitConstants.MAPPER }
+                    .forEach { (referencingComputationName, referencingComputation) ->
+                      val referencingComputationJson: JsonObject = referencingComputation.asJsonObject
                       val referencingComputationConnection: JsonArray = referencingComputationJson.get(CircuitConstants.ARGS).asJsonArray
                       if (connection.first().asString == referencingComputationConnection.first().asString && connection[1].asString == referencingComputationConnection[1].asString) {
                         val referencingComputationMapper: Mapper = mappers.single { it.name == referencingComputationJson.get(CircuitConstants.EXECUTE).asString }
@@ -212,41 +213,45 @@ fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, ty
                             throw CustomJsonException("{${CircuitConstants.COMPUTATIONS}: {${computationName}: {${CircuitConstants.ARGS}: 'Value is mutated by computation ${referencingComputationName}:${referencingFunctionInput.name}'}}}")
                         }
                       }
+                  }
+                  when(connection.first().asString) {
+                    CircuitConstants.INPUT -> {
+                      add(CircuitConstants.CONNECT, JsonArray().apply {
+                        add(CircuitConstants.INPUT)
+                        add(inputs.entrySet().single { (inputName, json) -> inputName == connection[1].asString && json.asJsonObject.get(KeyConstants.KEY_TYPE).isJsonArray }.key)
+                      })
                     }
-                  }
-                }
-                when(connection.first().asString) {
-                  CircuitConstants.INPUT -> {
-                    add(CircuitConstants.INPUT)
-                    add(inputs.entrySet().single { (inputName, json) -> inputName == connection[1].asString && json.asJsonObject.get(KeyConstants.KEY_TYPE).isJsonArray }.key)
-                  }
-                  CircuitConstants.COMPUTATION -> {
-                    add(CircuitConstants.COMPUTATION)
-                    val (referencedComputationName: String, referencedComputation: JsonElement) = computations.entrySet().single { (name, json) ->
-                      name == connection[1].asString && json.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt }
-                    computationLevels[computationName] = max(computationLevels[computationName]!!, 1 + computationLevels[referencedComputationName]!!)
-                    add(referencedComputationName)
-                    when(referencedComputation.asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
-                      CircuitConstants.MAPPER -> {
-                        val referencedMapperOutput: FunctionOutput = mappers.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.functionInput.function.outputs
-                          .single { it.name == connection[2].asString && it.operation != FunctionConstants.DELETE && it.type.name !in primitiveTypes }
-                        // Throw Exception Referenced Function Output of Mapper cannot provide all args required by the Function associated with Mapper
-                        mapper.functionInput.function.inputs.forEach { functionInput ->
-                          if (mapper.query) {
-                            if (functionInput != mapper.functionInput) {
-                              referencedMapperOutput.type.keys.single { it.name == functionInput.name && it.type == functionInput.type }
+                    CircuitConstants.COMPUTATION -> {
+                      add(CircuitConstants.CONNECT, JsonArray().apply {
+                        add(CircuitConstants.COMPUTATION)
+                        val (referencedComputationName: String, referencedComputation: JsonElement) = computations.entrySet().single { (name, json) ->
+                          name == connection[1].asString && json.asJsonObject.get(CircuitConstants.ORDER).asInt < computationJson.get(CircuitConstants.ORDER).asInt
+                              && json.asJsonObject.get(KeyConstants.KEY_TYPE).asString == CircuitConstants.MAPPER }
+                        computationLevels[computationName] = max(computationLevels[computationName]!!, 1 + computationLevels[referencedComputationName]!!)
+                        add(referencedComputationName)
+                        val referencedComputationMapperFunction: Function = mappers.single { it.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.functionInput.function
+                        add(if (mapper.query) {
+                          mapper.functionInput.function.inputs.filter { it != mapper.functionInput }.fold(JsonObject()) { acc1, functionInput ->
+                            acc1.apply {
+                              addProperty(functionInput.name, referencedComputationMapperFunction.outputs.single {
+                                it.name == connection[2].asJsonObject.get(FunctionConstants.INPUTS).asJsonObject.get(functionInput.name).asString
+                                    && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }.name)
                             }
-                          } else {
-                            referencedMapperOutput.type.keys.single { it.name == functionInput.name && it.type == functionInput.type }
                           }
-                        }
-                        add(referencedMapperOutput.name)
-                      }
-                      else -> throw CustomJsonException("{}")
+                        } else {
+                          mapper.functionInput.function.inputs.fold(JsonObject()) { acc1, functionInput ->
+                            acc1.apply {
+                              addProperty(functionInput.name, referencedComputationMapperFunction.outputs.single {
+                                it.name == connection[2].asJsonObject.get(FunctionConstants.INPUTS).asJsonObject.get(functionInput.name).asString
+                                    && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }.name)
+                            }
+                          }
+                        })
+                      })
                     }
+                    else -> throw CustomJsonException("{}")
                   }
-                  else -> throw CustomJsonException("{}")
-                }
+                })
               })
             }
             CircuitConstants.CIRCUIT -> {

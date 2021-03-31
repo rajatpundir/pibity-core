@@ -13,9 +13,9 @@ import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.constants.RoleConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.logger.Logger
-import com.pibity.core.commons.utils.getExpectedParams
-import com.pibity.core.commons.utils.getJsonParams
-import com.pibity.core.commons.utils.validateOrganizationClaim
+import com.pibity.core.utils.getExpectedParams
+import com.pibity.core.utils.getJsonParams
+import com.pibity.core.utils.validateOrganizationClaim
 import com.pibity.core.serializers.serialize
 import com.pibity.core.services.MapperService
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount

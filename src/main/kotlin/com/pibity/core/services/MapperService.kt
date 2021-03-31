@@ -12,7 +12,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.*
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.Mapper
@@ -20,6 +19,9 @@ import com.pibity.core.repositories.function.FunctionRepository
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.function.MapperRepository
 import com.pibity.core.repositories.function.jpa.MapperJpaRepository
+import com.pibity.core.utils.validateMapperArgs
+import com.pibity.core.utils.validateMapperName
+import com.pibity.core.utils.validateQueryParamsForExecution
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
@@ -41,7 +43,7 @@ class MapperService(
       if (query)
         queryParams.apply {
           val queryParams: List<String> = jsonParams.get(MapperConstants.QUERY_PARAMS).asJsonArray.map { it.asString }
-          functionInput.type.keys.filter { key -> queryParams.contains(key.name) }.forEach { key -> add(key) }
+          addAll(functionInput.function.inputs.filter { queryParams.contains(it.name) })
         }
     })
   }

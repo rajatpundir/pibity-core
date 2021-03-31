@@ -13,7 +13,6 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.circuit.*
@@ -27,6 +26,10 @@ import com.pibity.core.repositories.function.MapperRepository
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.query.TypeRepository
 import com.pibity.core.repositories.query.VariableRepository
+import com.pibity.core.commons.Base64DecodedMultipartFile
+import com.pibity.core.utils.getCircuitOutput
+import com.pibity.core.utils.validateCircuit
+import com.pibity.core.utils.validateCircuitArgs
 import org.hibernate.engine.jdbc.BlobProxy
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -111,43 +114,43 @@ class CircuitService(
           val computationMapper: Mapper = mappers.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }
           circuitComputationJpaRepository.save(CircuitComputation(parentCircuit = circuit, name = computationName, order = computationJson.get(CircuitConstants.ORDER).asInt, level = computationJson.get(CircuitConstants.LEVEL).asInt,
             mapper = computationMapper, created = defaultTimestamp).apply {
-            val connection: JsonArray = computationJson.get(CircuitConstants.ARGS).asJsonArray
-            when(connection.first().asString) {
-              CircuitConstants.INPUT -> connectedMapperCircuitInput = circuit.inputs.single { it.name == connection[1].asString }
-              CircuitConstants.COMPUTATION -> {
-                connectedMapperCircuitComputation = circuit.computations.single { it.name == connection[1].asString }
-                connectedMapperCircuitComputationFunctionOutput = connectedMapperCircuitComputation!!.mapper!!.functionInput.function.outputs.single { it.name == connection[2].asString }
-              }
+            val argsConnection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(CircuitConstants.ARGS).asJsonArray
+            when(argsConnection.first().asString) {
+              CircuitConstants.INPUT -> connectedMapperCircuitInput = circuit.inputs.single { it.name == argsConnection[1].asString && it.type == null }
+              CircuitConstants.COMPUTATION -> connectedMapperCircuitComputation = circuit.computations.single { it.name == argsConnection[1].asString && it.mapper != null }
               else -> throw CustomJsonException("{}")
             }
           }).apply {
-            connections.addAll(circuitComputationConnectionJpaRepository.saveAll(if (computationMapper.query)
-              computationMapper.functionInput.function.inputs.filter { it != computationMapper.functionInput }.map { functionInput ->
-                val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(functionInput.name).asJsonArray
-                when(connection.first().asString) {
-                  CircuitConstants.INPUT -> CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitInput = circuit.inputs.single { it.name == connection[1].asString }, created = defaultTimestamp)
-                  CircuitConstants.COMPUTATION -> {
-                    val connectedCircuitComputation = circuit.computations.single { it.name == connection[1].asString }
-                    if (connectedCircuitComputation.function != null)
-                      CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
-                    else CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
-                  }
-                  else -> throw CustomJsonException("{}")
-                }
-              }
-            else computationMapper.functionInput.function.inputs.map { functionInput ->
-              val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(functionInput.name).asJsonArray
+            connections.addAll(computationMapper.queryParams.map { functionInput ->
+              val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(MapperConstants.QUERY_PARAMS).asJsonObject.get(functionInput.name).asJsonArray
               when(connection.first().asString) {
-                CircuitConstants.INPUT -> CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitInput = circuit.inputs.single { it.name == connection[1].asString }, created = defaultTimestamp)
+                CircuitConstants.INPUT -> CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitInput = circuit.inputs.single { it.name == connection[1].asString && it.type == null }, created = defaultTimestamp)
                 CircuitConstants.COMPUTATION -> {
-                  val connectedCircuitComputation = circuit.computations.single { it.name == connection[1].asString }
+                  val connectedCircuitComputation = circuit.computations.single { it.name == connection[1].asString && it.mapper != null }
                   if (connectedCircuitComputation.function != null)
                     CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
                   else CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
                 }
                 else -> throw CustomJsonException("{}")
               }
-            }))
+            })
+            val argsConnection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(CircuitConstants.ARGS).asJsonArray
+            if (argsConnection.first().asString == CircuitConstants.COMPUTATION) {
+              val referencedComputationMapperFunction = circuit.computations.single { it.name == argsConnection[1].asString }.mapper!!.functionInput.function
+              connectedMapperCircuitComputationConnections.addAll(if (computationMapper.query) {
+                computationMapper.functionInput.function.inputs.filter { it != computationMapper.functionInput }.map { functionInput ->
+                  CircuitComputationMapperConnection(parentComputation = this, functionInput = functionInput,
+                    referencedMapperFunctionOutput = referencedComputationMapperFunction.outputs.single { it.name == argsConnection[2].asJsonObject.get(functionInput.name).asString
+                        && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }, created = defaultTimestamp)
+                }
+              } else {
+                computationMapper.functionInput.function.inputs.map { functionInput ->
+                  CircuitComputationMapperConnection(parentComputation = this, functionInput = functionInput,
+                    referencedMapperFunctionOutput = referencedComputationMapperFunction.outputs.single { it.name == argsConnection[2].asJsonObject.get(functionInput.name).asString
+                        && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }, created = defaultTimestamp)
+                }
+              })
+            }
           }
         }
         CircuitConstants.CIRCUIT -> {
@@ -188,7 +191,7 @@ class CircuitService(
   fun executeCircuit(jsonParams: JsonObject, files: MutableList<MultipartFile>, defaultTimestamp: Timestamp): JsonObject {
     val circuit: Circuit = circuitRepository.findCircuit(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(CircuitConstants.CIRCUIT_NAME).asString)
         ?: throw CustomJsonException("{${CircuitConstants.CIRCUIT_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val args: JsonObject = validateCircuitArgs(args = jsonParams.get(CircuitConstants.ARGS).asJsonObject, inputs = circuit.inputs, defaultTimestamp = defaultTimestamp, files = files)
+    val args: JsonObject = validateCircuitArgs(args = jsonParams.get(CircuitConstants.ARGS).asJsonObject, inputs = circuit.inputs, files = files, defaultTimestamp = defaultTimestamp)
     val computationResults: MutableMap<String, JsonElement> = mutableMapOf()
     return circuit.computations.fold(sortedMapOf<Int, MutableSet<CircuitComputation>>()) { acc, computation ->
       acc.apply {
@@ -248,7 +251,7 @@ class CircuitService(
                   }
                 }
               })
-            }, defaultTimestamp = defaultTimestamp, files = files)
+            }, files = files, defaultTimestamp = defaultTimestamp)
           } else if (computation.circuit != null) {
             val computationCircuit: Circuit = computation.circuit
             computationResults[computation.name] = executeCircuit(jsonParams = JsonObject().apply {
@@ -297,7 +300,7 @@ class CircuitService(
                   }
                 }
               })
-            }, defaultTimestamp = defaultTimestamp, files = files)
+            }, files = files, defaultTimestamp = defaultTimestamp)
           } else {
             val computationMapper: Mapper = computation.mapper!!
             computationResults[computation.name] = mapperService.executeMapper(jsonParams = JsonObject().apply {
@@ -351,10 +354,24 @@ class CircuitService(
               else
                 computationResults[computation.connectedMapperCircuitComputation!!.name]!!.asJsonArray.fold(JsonArray()) { acc1, json ->
                   acc1.apply {
-                    add(json.asJsonObject.get(computation.connectedMapperCircuitComputationFunctionOutput!!.name).asJsonObject)
+                    computation.connectedMapperCircuitComputationConnections.fold(JsonObject()) { acc2, mapperCircuitComputationConnection ->
+                      acc2.apply {
+                        when(mapperCircuitComputationConnection.functionInput.type.name) {
+                          TypeConstants.TEXT -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asString)
+                          TypeConstants.NUMBER -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asLong)
+                          TypeConstants.DECIMAL -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asBigDecimal)
+                          TypeConstants.BOOLEAN -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asBoolean)
+                          TypeConstants.DATE -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asLong)
+                          TypeConstants.TIMESTAMP -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asLong)
+                          TypeConstants.TIME -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asLong)
+                          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                          else -> addProperty(mapperCircuitComputationConnection.functionInput.name, json.asJsonObject.get(mapperCircuitComputationConnection.referencedMapperFunctionOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
+                        }
+                      }
+                    }
                   }
                 })
-            }, defaultTimestamp = defaultTimestamp, files = files)
+            }, files = files, defaultTimestamp = defaultTimestamp)
           }
           circuit.outputs.filter { it.connectedCircuitComputation == computation }.forEach { output ->
             if (computation.function != null)

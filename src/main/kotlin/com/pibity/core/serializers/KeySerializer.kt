@@ -12,7 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeyConstants
 import com.pibity.core.commons.constants.TypeConstants
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.gson
 import com.pibity.core.entities.Key
 
 fun serialize(key: Key): JsonObject = JsonObject().apply {

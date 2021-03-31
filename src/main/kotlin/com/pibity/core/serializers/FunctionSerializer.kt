@@ -11,7 +11,7 @@ package com.pibity.core.serializers
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.gson
 import com.pibity.core.entities.function.Function
 import com.pibity.core.entities.function.FunctionInputKey
 import com.pibity.core.entities.function.FunctionOutputKey

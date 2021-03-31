@@ -15,9 +15,9 @@ import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.logger.Logger
 import com.pibity.core.services.QueryService
 import com.pibity.core.services.VariableService
-import com.pibity.core.commons.utils.getExpectedParams
-import com.pibity.core.commons.utils.getJsonParams
-import com.pibity.core.commons.utils.validateOrganizationClaim
+import com.pibity.core.utils.getExpectedParams
+import com.pibity.core.utils.getJsonParams
+import com.pibity.core.utils.validateOrganizationClaim
 import com.pibity.core.entities.Variable
 import com.pibity.core.entities.permission.TypePermission
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount

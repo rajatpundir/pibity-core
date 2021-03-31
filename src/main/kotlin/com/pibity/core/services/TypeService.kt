@@ -12,7 +12,6 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.lisp.validateSymbols
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.*
 import com.pibity.core.entities.assertion.TypeAssertion
 import com.pibity.core.entities.permission.TypePermission
@@ -23,6 +22,7 @@ import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.jpa.TypeJpaRepository
 import com.pibity.core.repositories.query.TypeRepository
 import com.pibity.core.repositories.query.VariableRepository
+import com.pibity.core.utils.*
 import org.hibernate.engine.jdbc.BlobProxy
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
