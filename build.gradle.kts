@@ -47,7 +47,6 @@ tasks.withType<Test> {
 
 spotless {
 	kotlin {
-//    ktlint()
 		licenseHeaderFile("pibity.kotlin.license")
 	}
 }

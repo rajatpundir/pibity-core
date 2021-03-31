@@ -16,7 +16,7 @@ import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OperatorConstants
 import com.pibity.core.commons.constants.TypeConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.validateOrEvaluateExpression
+import com.pibity.core.utils.validateOrEvaluateExpression
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
@@ -71,7 +71,7 @@ fun concat(types: MutableList<String>, args: List<JsonElement>, symbols: JsonObj
     else -> {
       if (args.size > types.size)
         repeat(args.size - types.size) { types.add(types.last()) }
-      val evaluatedExpression: String = args.zip(types).fold("") { acc, (arg, type) ->
+      val evaluatedExpression: String = args.zip(types).fold("") { acc, (arg, _) ->
         if(arg.isJsonObject)
           acc + validateOrEvaluateExpression(expression = arg.asJsonObject, symbols = symbols, mode = mode, expectedReturnType = TypeConstants.TEXT) as String
         else

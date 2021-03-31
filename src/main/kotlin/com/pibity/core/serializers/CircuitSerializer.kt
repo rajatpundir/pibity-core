@@ -88,32 +88,36 @@ fun serialize(circuit: Circuit): JsonObject = JsonObject().apply {
         } else {
           addProperty(KeyConstants.KEY_TYPE, CircuitConstants.MAPPER)
           addProperty(CircuitConstants.EXECUTE, computation.mapper!!.name)
-          add(CircuitConstants.CONNECT, computation.connections.fold(JsonObject()) { acc1, connection ->
-            acc1.apply {
-              add(connection.functionInput!!.name, JsonArray().apply {
-                if (connection.connectedCircuitInput != null) {
-                  add(CircuitConstants.INPUT)
-                  add(connection.connectedCircuitInput.name)
-                } else {
-                  add(CircuitConstants.COMPUTATION)
-                  add(connection.connectedCircuitComputation!!.name)
-                  if (connection.connectedCircuitComputationFunctionOutput != null)
-                    add(connection.connectedCircuitComputationFunctionOutput.name)
-                  else
-                    add(connection.connectedCircuitComputationCircuitOutput!!.name)
-                }
-              })
-            }
-          })
-          add(CircuitConstants.ARGS, JsonArray().apply {
-            if (computation.connectedMapperCircuitInput != null) {
-              add(CircuitConstants.INPUT)
-              add(computation.connectedMapperCircuitInput!!.name)
-            } else {
-              add(CircuitConstants.COMPUTATION)
-              add(computation.connectedMapperCircuitComputation!!.name)
-              add(computation.connectedMapperCircuitComputationFunctionOutput!!.name)
-            }
+          add(CircuitConstants.CONNECT, JsonObject().apply {
+            add(MapperConstants.QUERY_PARAMS, computation.connections.fold(JsonObject()) { acc1, connection ->
+              acc1.apply {
+                add(connection.functionInput!!.name, JsonArray().apply {
+                  if (connection.connectedCircuitInput != null) {
+                    add(CircuitConstants.INPUT)
+                    add(connection.connectedCircuitInput.name)
+                  } else {
+                    add(CircuitConstants.COMPUTATION)
+                    add(connection.connectedCircuitComputation!!.name)
+                    if (connection.connectedCircuitComputationFunctionOutput != null)
+                      add(connection.connectedCircuitComputationFunctionOutput.name)
+                    else
+                      add(connection.connectedCircuitComputationCircuitOutput!!.name)
+                  }
+                })
+              }
+            })
+            add(CircuitConstants.ARGS, JsonArray().apply {
+              if (computation.connectedMapperCircuitInput != null) {
+                add(CircuitConstants.INPUT)
+                add(computation.connectedMapperCircuitInput!!.name)
+              } else {
+                add(CircuitConstants.COMPUTATION)
+                add(computation.connectedMapperCircuitComputation!!.name)
+                add(computation.connectedMapperCircuitComputationConnections.fold(JsonObject()) { acc1, connection ->
+                  acc1.apply { addProperty(connection.functionInput.name, connection.referencedMapperFunctionOutput.name) }
+                })
+              }
+            })
           })
         }
       })

@@ -13,7 +13,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.validateOrEvaluateExpression
+import com.pibity.core.utils.validateOrEvaluateExpression
 import java.sql.Timestamp
 import java.util.*
 import java.util.regex.Pattern

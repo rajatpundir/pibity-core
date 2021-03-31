@@ -12,9 +12,9 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.logger.Logger
-import com.pibity.core.commons.utils.getExpectedParams
-import com.pibity.core.commons.utils.getJsonParams
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.getExpectedParams
+import com.pibity.core.utils.getJsonParams
+import com.pibity.core.utils.gson
 import com.pibity.core.services.OrganizationService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus

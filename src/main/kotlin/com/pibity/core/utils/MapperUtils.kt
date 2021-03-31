@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.utils
+package com.pibity.core.utils
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -14,7 +14,7 @@ import com.pibity.core.commons.constants.MapperConstants
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.TypeConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.entities.Key
+import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.Mapper
 import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
@@ -25,29 +25,29 @@ fun validateMapperName(mapperName: String): String {
   else mapperName
 }
 
-fun validateQueryParamsForExecution(jsonParams: JsonObject, queryParams: MutableSet<Key>, files: List<MultipartFile>): JsonObject = queryParams.fold(JsonObject()) { acc, key ->
+fun validateQueryParamsForExecution(jsonParams: JsonObject, queryParams: MutableSet<FunctionInput>, files: List<MultipartFile>): JsonObject = queryParams.fold(JsonObject()) { acc, functionInput ->
   acc.apply {
     try {
-      when(key.type.name) {
-        TypeConstants.TEXT -> addProperty(key.name, jsonParams.get(key.name).asString)
-        TypeConstants.NUMBER -> addProperty(key.name, jsonParams.get(key.name).asLong)
-        TypeConstants.DECIMAL -> addProperty(key.name, jsonParams.get(key.name).asBigDecimal)
-        TypeConstants.BOOLEAN -> addProperty(key.name, jsonParams.get(key.name).asBoolean)
-        TypeConstants.DATE -> addProperty(key.name, jsonParams.get(key.name).asString)
-        TypeConstants.TIMESTAMP -> addProperty(key.name, jsonParams.get(key.name).asString)
-        TypeConstants.TIME -> addProperty(key.name, jsonParams.get(key.name).asString)
+      when(functionInput.type.name) {
+        TypeConstants.TEXT -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asString)
+        TypeConstants.NUMBER -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asLong)
+        TypeConstants.DECIMAL -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asBigDecimal)
+        TypeConstants.BOOLEAN -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asBoolean)
+        TypeConstants.DATE -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asString)
+        TypeConstants.TIMESTAMP -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asString)
+        TypeConstants.TIME -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asString)
         TypeConstants.BLOB -> {
-          val fileIndex: Int = jsonParams.get(key.name).asInt
+          val fileIndex: Int = jsonParams.get(functionInput.name).asInt
           if (fileIndex < 0 && fileIndex > (files.size - 1))
             throw CustomJsonException("{}")
           else
-            addProperty(key.name, fileIndex)
+            addProperty(functionInput.name, fileIndex)
         }
         TypeConstants.FORMULA -> throw CustomJsonException("{}")
-        else -> addProperty(key.name, jsonParams.get(key.name).asString)
+        else -> addProperty(functionInput.name, jsonParams.get(functionInput.name).asString)
       }
     } catch (exception: Exception) {
-      throw CustomJsonException("{${MapperConstants.QUERY_PARAMS}: {${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
+      throw CustomJsonException("{${MapperConstants.QUERY_PARAMS}: {${functionInput.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
     }
   }
 }

@@ -9,5 +9,5 @@
 package com.pibity.core.commons.constants
 
 object ApplicationConstants {
-  const val SCHEMA = "inventory"
+  const val SCHEMA = "erp"
 }

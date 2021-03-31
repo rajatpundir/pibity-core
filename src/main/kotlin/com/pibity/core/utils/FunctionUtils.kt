@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.utils
+package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
@@ -126,13 +126,15 @@ fun getSymbolPathsForFunctionInputs(inputs: JsonObject, validTypes: Set<Type>): 
       val inputType: Type = validTypes.single { it.name == inputJson.get(KeyConstants.KEY_TYPE).asString && it.name != TypeConstants.FORMULA }
       if (inputType.name !in primitiveTypes) {
         if(inputJson.has(VariableConstants.VARIABLE_NAME))
-          addAll(validateOrEvaluateExpression(expression = inputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject,
+          addAll(
+            validateOrEvaluateExpression(expression = inputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject,
             symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = TypeConstants.TEXT) as Set<String>)
         if(inputJson.has(VariableConstants.VALUES)) {
           val valuesJson: JsonObject = inputJson.get(VariableConstants.VALUES).asJsonObject
           inputType.keys.filter { key -> valuesJson.has(key.name) && key.type.name != TypeConstants.FORMULA }
             .forEach { key ->
-              addAll(validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject,
+              addAll(
+                validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject,
                 symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT) as Set<String>)
             }
         }
@@ -150,18 +152,21 @@ fun getSymbolPathsForFunctionOutputs(outputs: JsonObject, validTypes: Set<Type>)
       val outputJson: JsonObject = output.asJsonObject
       val outputType: Type = validTypes.single { it.name == outputJson.get(KeyConstants.KEY_TYPE).asString && it.name != TypeConstants.FORMULA }
       when(outputType.name) {
-        in primitiveTypes -> addAll(validateOrEvaluateExpression(expression = outputJson.get(FunctionConstants.VALUE).asJsonObject,
+        in primitiveTypes -> addAll(
+          validateOrEvaluateExpression(expression = outputJson.get(FunctionConstants.VALUE).asJsonObject,
           symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = outputType.name) as Set<String>)
         TypeConstants.FORMULA -> throw CustomJsonException("{}")
         else -> {
           val operation: String = outputJson.get(VariableConstants.OPERATION).asString
-          addAll(validateOrEvaluateExpression(expression = outputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject,
+          addAll(
+            validateOrEvaluateExpression(expression = outputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject,
             symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = TypeConstants.TEXT) as Set<String>)
           when(operation) {
             VariableConstants.CREATE -> {
               val valuesJson: JsonObject = outputJson.get(VariableConstants.VALUES).asJsonObject
               outputType.keys.filter { key -> key.name != TypeConstants.FORMULA }.forEach { key ->
-                addAll(validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject, symbols = JsonObject(), mode = LispConstants.VALIDATE,
+                addAll(
+                  validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject, symbols = JsonObject(), mode = LispConstants.VALIDATE,
                   expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT) as Set<String>)
               }
             }
@@ -169,7 +174,8 @@ fun getSymbolPathsForFunctionOutputs(outputs: JsonObject, validTypes: Set<Type>)
               val valuesJson: JsonObject = outputJson.get(VariableConstants.VALUES).asJsonObject
               outputType.keys.filter { key -> valuesJson.has(key.name) && key.type.name != TypeConstants.FORMULA }
                 .forEach { key ->
-                  addAll(validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject, symbols = JsonObject(), mode = LispConstants.VALIDATE,
+                  addAll(
+                    validateOrEvaluateExpression(expression = valuesJson.get(key.name).asJsonObject, symbols = JsonObject(), mode = LispConstants.VALIDATE,
                     expectedReturnType = if (key.type.name in primitiveTypes) key.type.name else TypeConstants.TEXT) as Set<String>)
                 }
             }
@@ -312,7 +318,8 @@ fun validateFunction(jsonParams: JsonObject, validTypes: Set<Type>): Quadruple<S
     inputs = inputs.entrySet().fold(mutableMapOf()) { acc, (inputName, input) ->
       acc.apply { set(inputName, validTypes.single { it.name == input.asJsonObject.get(KeyConstants.KEY_TYPE).asString}) }
     })
-  return Quadruple(validateFunctionName(functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString),
+  return Quadruple(
+    validateFunctionName(functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString),
     validateFunctionInputs(inputs = inputs, validTypes = validTypes, symbols = symbols),
     validateFunctionOutputs(outputs = outputs, validTypes = validTypes, symbols = symbols),
     symbols)

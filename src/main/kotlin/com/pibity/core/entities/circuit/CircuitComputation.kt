@@ -10,7 +10,6 @@ package com.pibity.core.entities.circuit
 
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.function.Function
-import com.pibity.core.entities.function.FunctionOutput
 import com.pibity.core.entities.function.Mapper
 import java.io.Serializable
 import java.sql.Timestamp
@@ -66,9 +65,8 @@ data class CircuitComputation(
   @JoinColumn(name = "connected_mapper_circuit_computation_id")
   var connectedMapperCircuitComputation: CircuitComputation? = null,
 
-  @ManyToOne
-  @JoinColumn(name = "connected_mapper_circuit_computation_mapper_function_output_id")
-  var connectedMapperCircuitComputationFunctionOutput: FunctionOutput? = null,
+  @OneToMany(mappedBy = "parentComputation", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+  var connectedMapperCircuitComputationConnections: MutableSet<CircuitComputationMapperConnection> = HashSet(),
 
   @OneToMany(mappedBy = "parentComputation", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
   val connections: MutableSet<CircuitComputationConnection> = HashSet(),

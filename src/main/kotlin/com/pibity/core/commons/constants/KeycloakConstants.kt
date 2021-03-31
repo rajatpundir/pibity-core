@@ -9,7 +9,7 @@
 package com.pibity.core.commons.constants
 
 import com.google.gson.JsonObject
-import com.pibity.core.commons.utils.gson
+import com.pibity.core.utils.gson
 import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.resource.RealmResource
 import java.io.FileReader

@@ -10,10 +10,10 @@ package com.pibity.core.services
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.pibity.core.commons.Base64DecodedMultipartFile
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.lisp.getSymbolPaths
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Type
@@ -26,6 +26,7 @@ import com.pibity.core.repositories.function.jpa.*
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.query.TypeRepository
 import com.pibity.core.repositories.query.VariableRepository
+import com.pibity.core.utils.*
 import org.hibernate.engine.jdbc.BlobProxy
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile

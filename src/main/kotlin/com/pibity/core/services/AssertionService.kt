@@ -15,12 +15,15 @@ import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.constants.TypeConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.lisp.validateSymbols
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.assertion.TypeAssertion
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
 import com.pibity.core.repositories.jpa.AssertionJpaRepository
 import com.pibity.core.repositories.query.TypeRepository
+import com.pibity.core.utils.getSymbols
+import com.pibity.core.utils.gson
+import com.pibity.core.utils.typeIdentifierPattern
+import com.pibity.core.utils.validateOrEvaluateExpression
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
 

@@ -12,9 +12,9 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.LispConstants
 import com.pibity.core.commons.exceptions.CustomJsonException
 import com.pibity.core.commons.logger.Logger
-import com.pibity.core.commons.utils.getExpectedParams
-import com.pibity.core.commons.utils.getJsonParams
-import com.pibity.core.commons.utils.validateOrEvaluateExpression
+import com.pibity.core.utils.getExpectedParams
+import com.pibity.core.utils.getJsonParams
+import com.pibity.core.utils.validateOrEvaluateExpression
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -35,7 +35,8 @@ class LispController {
   fun evaluateLispExpression(@RequestBody request: String): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["evaluateExpression"] ?: JsonObject())
-      ResponseEntity(validateOrEvaluateExpression(expression = jsonParams, symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = jsonParams.get(LispConstants.EXPECTED_RETURN_TYPE).asString).toString()
+      ResponseEntity(
+        validateOrEvaluateExpression(expression = jsonParams, symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = jsonParams.get(LispConstants.EXPECTED_RETURN_TYPE).asString).toString()
           + " " + validateOrEvaluateExpression(expression = jsonParams, symbols = JsonObject(), mode = LispConstants.EVALUATE, expectedReturnType = jsonParams.get(LispConstants.EXPECTED_RETURN_TYPE).asString).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

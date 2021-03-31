@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.utils
+package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
@@ -96,7 +96,8 @@ fun getSymbols(type: Type, symbolPaths: MutableSet<String>, keyDependencies: Mut
             addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
             if (key.referencedVariable != null && symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") })
               add(SymbolConstants.SYMBOL_VALUES,  getSymbols(prefix = prefix + key.name + ".", level = level + 1, symbolPaths = symbolPaths,
-                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, symbolsForFormula = symbolsForFormula))
+                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, symbolsForFormula = symbolsForFormula)
+              )
           })
         }
         keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })

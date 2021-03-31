@@ -43,8 +43,8 @@ data class Mapper(
   @ManyToMany
   @JoinTable(name = "mapping_mapper_query_params", schema = ApplicationConstants.SCHEMA,
     joinColumns = [JoinColumn(name = "mapper_id", referencedColumnName = "id")],
-    inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
-  val queryParams: MutableSet<Key> = HashSet(),
+    inverseJoinColumns = [JoinColumn(name = "function_input_id", referencedColumnName = "id")])
+  val queryParams: MutableSet<FunctionInput> = HashSet(),
 
   @ManyToOne
   @JoinColumn(name = "function_input_id", nullable = false)

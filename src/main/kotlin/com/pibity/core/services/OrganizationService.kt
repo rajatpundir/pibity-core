@@ -12,7 +12,6 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.utils.*
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Role
 import com.pibity.core.entities.Type
@@ -21,6 +20,7 @@ import com.pibity.core.entities.mappings.UserRole
 import com.pibity.core.entities.mappings.embeddables.UserRoleId
 import com.pibity.core.repositories.jpa.*
 import com.pibity.core.repositories.query.RoleRepository
+import com.pibity.core.utils.*
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.FileReader
