@@ -12,13 +12,11 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.utils.keyIdentifierPattern
 import com.pibity.core.utils.validateOrEvaluateExpression
 import java.sql.Timestamp
 import java.util.*
-import java.util.regex.Pattern
-
-val symbolIdentifierPattern: Pattern = Pattern.compile("^([a-z][a-zA-Z0-9]*)+(::([a-z][a-zA-Z0-9]*)+)?$")
 
 fun validateSymbols(symbols: JsonObject): JsonObject {
   val expectedSymbols = JsonObject()
@@ -29,7 +27,7 @@ fun validateSymbols(symbols: JsonObject): JsonObject {
     } catch (exception: Exception) {
       throw CustomJsonException("{$symbolName: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
-    if (!symbolIdentifierPattern.matcher(symbolName).matches())
+    if (!keyIdentifierPattern.matcher(symbolName).matches())
       throw CustomJsonException("{$symbolName: ${MessageConstants.UNEXPECTED_VALUE}}")
     if (symbol.has(SymbolConstants.SYMBOL_TYPE)) {
       try {

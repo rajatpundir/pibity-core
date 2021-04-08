@@ -12,6 +12,8 @@ import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.Variable
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -41,6 +43,10 @@ data class VariableUniqueness(
   @Column(name = "hash", nullable = false)
   var hash: String,
 
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
+
   @ManyToOne
   @JoinColumns(JoinColumn(name = "variable_id", referencedColumnName = "id"))
   val variable: Variable,
@@ -48,10 +54,6 @@ data class VariableUniqueness(
   @ManyToOne
   @JoinColumns(JoinColumn(name = "next_variable_uniqueness_id", referencedColumnName = "id"))
   var nextVariableUniqueness: VariableUniqueness? = null,
-
-  @Version
-  @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,
@@ -63,7 +65,7 @@ data class VariableUniqueness(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

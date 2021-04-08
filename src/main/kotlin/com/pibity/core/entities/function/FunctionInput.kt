@@ -17,6 +17,8 @@ import java.math.BigDecimal
 import java.sql.Blob
 import java.sql.Time
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -38,7 +40,7 @@ data class FunctionInput(
 
     @Version
     @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+    val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
     @OneToOne
     @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
@@ -87,7 +89,7 @@ data class FunctionInput(
     var referencedVariable: Variable? = null,
 
     @Column(name = "created", nullable = false)
-    val created: Timestamp = Timestamp(System.currentTimeMillis()),
+    val created: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
     @Column(name = "updated")
     var updated: Timestamp? = null
@@ -96,7 +98,7 @@ data class FunctionInput(
 
     @PreUpdate
     fun onUpdate() {
-        updated = Timestamp(System.currentTimeMillis())
+        updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
     }
 
     override fun equals(other: Any?): Boolean {

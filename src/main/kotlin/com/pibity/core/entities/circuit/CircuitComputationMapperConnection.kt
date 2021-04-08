@@ -13,6 +13,8 @@ import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionOutput
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -38,7 +40,7 @@ data class CircuitComputationMapperConnection(
 
     @Version
     @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+    val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
     @Column(name = "created", nullable = false)
     val created: Timestamp,
@@ -50,7 +52,7 @@ data class CircuitComputationMapperConnection(
 
     @PreUpdate
     fun onUpdate() {
-        updated = Timestamp(System.currentTimeMillis())
+        updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
     }
 
     override fun equals(other: Any?): Boolean {

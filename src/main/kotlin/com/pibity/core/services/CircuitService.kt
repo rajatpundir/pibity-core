@@ -12,7 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.circuit.*
@@ -27,6 +27,11 @@ import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.query.TypeRepository
 import com.pibity.core.repositories.query.VariableRepository
 import com.pibity.core.commons.Base64DecodedMultipartFile
+import com.pibity.core.entities.accumulator.VariableAccumulator
+import com.pibity.core.entities.uniqueness.TypeUniqueness
+import com.pibity.core.repositories.query.TypeUniquenessRepository
+import com.pibity.core.repositories.query.VariableAccumulatorRepository
+import com.pibity.core.utils.computeHash
 import com.pibity.core.utils.getCircuitOutput
 import com.pibity.core.utils.validateCircuit
 import com.pibity.core.utils.validateCircuitArgs
@@ -52,17 +57,21 @@ class CircuitService(
     val circuitComputationConnectionJpaRepository: CircuitComputationConnectionJpaRepository,
     val circuitOutputJpaRepository: CircuitOutputJpaRepository,
     val functionService: FunctionService,
-    val mapperService: MapperService
+    val mapperService: MapperService,
+    val typeUniquenessRepository: TypeUniquenessRepository,
+    val circuitComputationConnectionAccumulatorKeyJpaRepository: CircuitComputationConnectionAccumulatorKeyJpaRepository,
+    val variableAccumulatorRepository: VariableAccumulatorRepository
 ) {
 
   fun createCircuit(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Circuit {
     val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
         ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val types: MutableSet<Type> = typeRepository.findTypes(orgId = organization.id) as MutableSet<Type>
-    val functions: Set<Function> = functionRepository.findFunctions(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-    val mappers: Set<Mapper> = mapperRepository.findMappers(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-    val circuits: Set<Circuit> = circuitRepository.findCircuits(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-    val (circuitName: String, inputs: JsonObject, computations: JsonObject, outputs: JsonObject) = validateCircuit(jsonParams = jsonParams, types = types, functions = functions, mappers = mappers, circuits = circuits, files = files)
+    val types: Set<Type> = typeRepository.findTypes(orgId = organization.id)
+    val functions: Set<Function> = functionRepository.findFunctions(orgId = organization.id)
+    val mappers: Set<Mapper> = mapperRepository.findMappers(orgId = organization.id)
+    val circuits: Set<Circuit> = circuitRepository.findCircuits(orgId = organization.id)
+    val allTypeUniqueness: Set<TypeUniqueness> = typeUniquenessRepository.findAllTypeUniqueness(orgId = organization.id)
+    val (circuitName: String, inputs: JsonObject, computations: JsonObject, outputs: JsonObject) = validateCircuit(jsonParams = jsonParams, types = types, functions = functions, mappers = mappers, circuits = circuits, allTypeUniqueness = allTypeUniqueness, files = files)
     val circuit: Circuit = circuitJpaRepository.save(Circuit(organization = organization, name = circuitName, created = defaultTimestamp))
     circuit.inputs.addAll(inputs.entrySet().map { (inputName, input) ->
       val inputJson: JsonObject = input.asJsonObject
@@ -82,7 +91,7 @@ class CircuitService(
             TypeConstants.BLOB -> defaultBlobValue = if (inputJson.has(KeyConstants.DEFAULT)) BlobProxy.generateProxy(files[inputJson.get(KeyConstants.DEFAULT).asInt].bytes) else BlobProxy.generateProxy(Base64.getEncoder().encode("".toByteArray()))
             TypeConstants.FORMULA -> throw CustomJsonException("{}")
             else -> if (inputJson.has(KeyConstants.DEFAULT)) {
-              referencedVariable = variableRepository.findByTypeAndName(type = inputType, name = inputJson.get(KeyConstants.DEFAULT).asString)
+              referencedVariable = variableRepository.findVariable(type = inputType, name = inputJson.get(KeyConstants.DEFAULT).asString)
                 ?: throw CustomJsonException("{${CircuitConstants.INPUTS}: {$inputName: ${MessageConstants.UNEXPECTED_VALUE}}}")
             }
           }
@@ -95,19 +104,28 @@ class CircuitService(
         CircuitConstants.FUNCTION -> {
           val computationFunction: Function = functions.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }
           circuitComputationJpaRepository.save(CircuitComputation(parentCircuit = circuit, name = computationName, order = computationJson.get(CircuitConstants.ORDER).asInt, level = computationJson.get(CircuitConstants.LEVEL).asInt, function = computationFunction, created = defaultTimestamp)).apply {
-            connections.addAll(circuitComputationConnectionJpaRepository.saveAll(computationFunction.inputs.map { functionInput ->
+            connections.addAll(computationFunction.inputs.map { functionInput ->
               val connection: JsonArray = computationJson.get(CircuitConstants.CONNECT).asJsonObject.get(functionInput.name).asJsonArray
               when(connection.first().asString) {
                 CircuitConstants.INPUT -> CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitInput = circuit.inputs.single { it.name == connection[1].asString }, created = defaultTimestamp)
                 CircuitConstants.COMPUTATION -> {
                   val connectedCircuitComputation = circuit.computations.single { it.name == connection[1].asString }
                   if (connectedCircuitComputation.function != null)
-                    CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
-                  else CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
+                    circuitComputationConnectionJpaRepository.save(CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString && it.type == functionInput.type }, created = defaultTimestamp))
+                  else if (connectedCircuitComputation.circuit != null)
+                    circuitComputationConnectionJpaRepository.save(CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit.outputs.single { it.name == connection[2].asString && getCircuitOutput(it).type == functionInput.type }, created = defaultTimestamp))
+                  else circuitComputationConnectionJpaRepository.save(CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation,
+                    connectedCircuitComputationTypeAccumulator = allTypeUniqueness.single { it.type == connectedCircuitComputation.mapper!!.functionInput.function.outputs.single { output -> output.name == connection[2].asString }.type && it.name == connection[3].asString }
+                      .accumulators.single { it.name == connection[4].asString && it.type == functionInput.type } , created = defaultTimestamp)).apply {
+                    connectedCircuitComputationAccumulatorKeys.addAll(circuitComputationConnectionAccumulatorKeyJpaRepository.saveAll(this.connectedCircuitComputationTypeAccumulator!!.keys.map { key ->
+                      CircuitComputationConnectionAccumulatorKey(parentComputationConnection = this, key = key,
+                        circuitInput = circuit.inputs.single { it.name == connection[5].asJsonObject.get(key.name).asString && it.type == key.type}, created = defaultTimestamp)
+                    }))
+                  }
                 }
                 else -> throw CustomJsonException("{}")
               }
-            }))
+            })
           }
         }
         CircuitConstants.MAPPER -> {
@@ -129,7 +147,7 @@ class CircuitService(
                   val connectedCircuitComputation = circuit.computations.single { it.name == connection[1].asString && it.mapper != null }
                   if (connectedCircuitComputation.function != null)
                     CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
-                  else CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
+                  else CircuitComputationConnection(parentComputation = this, functionInput = functionInput, connectedCircuitComputation = connectedCircuitComputation,connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
                 }
                 else -> throw CustomJsonException("{}")
               }
@@ -163,9 +181,17 @@ class CircuitService(
                 CircuitConstants.COMPUTATION -> {
                   val connectedCircuitComputation: CircuitComputation = computationCircuit.computations.single { it.name == connection[1].asString }
                   if (connectedCircuitComputation.function != null)
-                    CircuitComputationConnection(parentComputation = this, circuitInput = circuitInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
-                  else
-                    CircuitComputationConnection(parentComputation = this, circuitInput = circuitInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit!!.outputs.single { it.name == connection[2].asString }, created = defaultTimestamp)
+                    CircuitComputationConnection(parentComputation = this, circuitInput = circuitInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationFunctionOutput = connectedCircuitComputation.function.outputs.single { it.name == connection[2].asString && it.type == circuitInput.type }, created = defaultTimestamp)
+                  else if (connectedCircuitComputation.circuit != null)
+                    CircuitComputationConnection(parentComputation = this, circuitInput = circuitInput, connectedCircuitComputation = connectedCircuitComputation, connectedCircuitComputationCircuitOutput = connectedCircuitComputation.circuit.outputs.single { it.name == connection[2].asString && getCircuitOutput(it).type == circuitInput.type }, created = defaultTimestamp)
+                  else circuitComputationConnectionJpaRepository.save(CircuitComputationConnection(parentComputation = this, circuitInput = circuitInput, connectedCircuitComputation = connectedCircuitComputation,
+                    connectedCircuitComputationTypeAccumulator = allTypeUniqueness.single { it.type == connectedCircuitComputation.mapper!!.functionInput.function.outputs.single { output -> output.name == connection[2].asString }.type && it.name == connection[3].asString }
+                      .accumulators.single { it.name == connection[4].asString && it.type == circuitInput.type } , created = defaultTimestamp)).apply {
+                    connectedCircuitComputationAccumulatorKeys.addAll(circuitComputationConnectionAccumulatorKeyJpaRepository.saveAll(this.connectedCircuitComputationTypeAccumulator!!.keys.map { key ->
+                      CircuitComputationConnectionAccumulatorKey(parentComputationConnection = this, key = key,
+                        circuitInput = circuit.inputs.single { it.name == connection[5].asJsonObject.get(key.name).asString && it.type == key.type}, created = defaultTimestamp)
+                    }))
+                  }
                 }
                 else -> throw CustomJsonException("{}")
               }
@@ -186,6 +212,27 @@ class CircuitService(
         CircuitOutput(parentCircuit = circuit, name = outputName, connectedCircuitComputation = outputComputation, created = defaultTimestamp))
     })
     return circuit
+  }
+
+  fun getMatchingVariableAccumulator(args: JsonObject, connection: CircuitComputationConnection, variableAccumulator: VariableAccumulator, files: List<MultipartFile>): VariableAccumulator? {
+    return if (variableAccumulator.values.all { valueAccumulator ->
+        val accumulatorValueCircuitInput: CircuitInput = connection.connectedCircuitComputationAccumulatorKeys.single { it.key == valueAccumulator.key }.circuitInput
+        when(valueAccumulator.key.type.name) {
+          TypeConstants.TEXT -> valueAccumulator.stringValue!! == args.get(accumulatorValueCircuitInput.name).asString
+          TypeConstants.NUMBER -> valueAccumulator.longValue!! == args.get(accumulatorValueCircuitInput.name).asLong
+          TypeConstants.DECIMAL -> valueAccumulator.decimalValue!! == args.get(accumulatorValueCircuitInput.name).asBigDecimal
+          TypeConstants.BOOLEAN -> valueAccumulator.booleanValue!! == args.get(accumulatorValueCircuitInput.name).asBoolean
+          TypeConstants.DATE -> valueAccumulator.dateValue!! == Date(args.get(accumulatorValueCircuitInput.name).asLong)
+          TypeConstants.TIMESTAMP -> valueAccumulator.timestampValue!! == Timestamp(args.get(accumulatorValueCircuitInput.name).asLong)
+          TypeConstants.TIME -> valueAccumulator.timeValue!! == Time(args.get(accumulatorValueCircuitInput.name).asLong)
+          TypeConstants.BLOB -> valueAccumulator.blobValue!!.getBytes(1, valueAccumulator.blobValue!!.length().toInt()).contentEquals(files[args.get(accumulatorValueCircuitInput.name).asInt].bytes)
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> valueAccumulator.referencedVariable!! == variableRepository.findVariable(type = valueAccumulator.key.type, name = args.get(accumulatorValueCircuitInput.name).asString)!!
+        }
+      }) variableAccumulator
+    else if (variableAccumulator.nextVariableAccumulator != null) {
+      getMatchingVariableAccumulator(args = args, connection = connection, variableAccumulator = variableAccumulator.nextVariableAccumulator!!, files = files)
+    } else null
   }
 
   fun executeCircuit(jsonParams: JsonObject, files: MutableList<MultipartFile>, defaultTimestamp: Timestamp): JsonObject {
@@ -237,17 +284,58 @@ class CircuitService(
                       TypeConstants.FORMULA -> throw CustomJsonException("{}")
                       else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationFunctionOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
                     }
-                  else when(getCircuitOutput(connection.connectedCircuitComputationCircuitOutput!!).type.name) {
-                    TypeConstants.TEXT -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString)
-                    TypeConstants.NUMBER -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.DECIMAL -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBigDecimal)
-                    TypeConstants.BOOLEAN -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBoolean)
-                    TypeConstants.DATE -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.TIMESTAMP -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.TIME -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(Base64.getDecoder().decode(computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString))) }.size - 1)
-                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
-                    else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
+                  else if (connection.connectedCircuitComputation.circuit != null)
+                    when(getCircuitOutput(connection.connectedCircuitComputationCircuitOutput!!).type.name) {
+                      TypeConstants.TEXT -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString)
+                      TypeConstants.NUMBER -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.DECIMAL -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBigDecimal)
+                      TypeConstants.BOOLEAN -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBoolean)
+                      TypeConstants.DATE -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.TIMESTAMP -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.TIME -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(Base64.getDecoder().decode(computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString))) }.size - 1)
+                      TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                      else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
+                    }
+                  else {
+                    val computedHash: String = computeHash(connection.connectedCircuitComputationTypeAccumulator!!.keys.sortedBy { it.id }.fold("") { acc2, key ->
+                      val accumulatorValueCircuitInput: CircuitInput = connection.connectedCircuitComputationAccumulatorKeys.single { it.key == key }.circuitInput
+                      acc2 + when (key.type.name) {
+                        TypeConstants.TEXT -> args.get(accumulatorValueCircuitInput.name).asString
+                        TypeConstants.NUMBER -> args.get(accumulatorValueCircuitInput.name).asLong
+                        TypeConstants.DECIMAL -> args.get(accumulatorValueCircuitInput.name).asBigDecimal.toString()
+                        TypeConstants.BOOLEAN -> args.get(accumulatorValueCircuitInput.name).asBoolean.toString()
+                        TypeConstants.DATE -> Date(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.TIMESTAMP -> Timestamp(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.TIME -> Time(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.BLOB -> Base64.getEncoder().encodeToString(files[args.get(accumulatorValueCircuitInput.name).asInt].bytes)
+                        TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                        else -> (variableRepository.findVariable(type = key.type, name = args.get(accumulatorValueCircuitInput.name).asString)
+                          ?: throw CustomJsonException("{${CircuitConstants.ARGS}: {${accumulatorValueCircuitInput.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")).id
+                      }
+                    })
+                    val rootVariableAccumulator: VariableAccumulator? = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = connection.connectedCircuitComputationTypeAccumulator, level = 0, hash = computedHash)
+                    if (rootVariableAccumulator == null)
+                      throw CustomJsonException("{}")
+                    else {
+                      val matchingVariableAccumulator: VariableAccumulator? = getMatchingVariableAccumulator(args = args, connection = connection, variableAccumulator = rootVariableAccumulator, files = files)
+                      if(matchingVariableAccumulator == null)
+                        throw CustomJsonException("{}")
+                      else {
+                        when(connection.connectedCircuitComputationTypeAccumulator.type.name) {
+                          TypeConstants.TEXT -> addProperty(input.name, matchingVariableAccumulator.stringValue!!)
+                          TypeConstants.NUMBER -> addProperty(input.name, matchingVariableAccumulator.longValue!!)
+                          TypeConstants.DECIMAL -> addProperty(input.name, matchingVariableAccumulator.decimalValue!!)
+                          TypeConstants.BOOLEAN -> addProperty(input.name, matchingVariableAccumulator.booleanValue!!)
+                          TypeConstants.DATE -> addProperty(input.name, matchingVariableAccumulator.dateValue!!.time)
+                          TypeConstants.TIMESTAMP -> addProperty(input.name, matchingVariableAccumulator.timestampValue!!.time)
+                          TypeConstants.TIME -> addProperty(input.name, matchingVariableAccumulator.timeValue!!.time)
+                          TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(matchingVariableAccumulator.blobValue!!.getBytes(1, matchingVariableAccumulator.blobValue!!.length().toInt()))) }.size - 1)
+                          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                          else -> addProperty(input.name, matchingVariableAccumulator.referencedVariable!!.name)
+                        }
+                      }
+                    }
                   }
                 }
               })
@@ -286,17 +374,58 @@ class CircuitService(
                       TypeConstants.FORMULA -> throw CustomJsonException("{}")
                       else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationFunctionOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
                     }
-                  else when(getCircuitOutput(connection.connectedCircuitComputationCircuitOutput!!).type.name) {
-                    TypeConstants.TEXT -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString)
-                    TypeConstants.NUMBER -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.DECIMAL -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBigDecimal)
-                    TypeConstants.BOOLEAN -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBoolean)
-                    TypeConstants.DATE -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.TIMESTAMP -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.TIME -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
-                    TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(Base64.getDecoder().decode(computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString))) }.size - 1)
-                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
-                    else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
+                  else if(connection.connectedCircuitComputation.circuit != null)
+                    when(getCircuitOutput(connection.connectedCircuitComputationCircuitOutput!!).type.name) {
+                      TypeConstants.TEXT -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString)
+                      TypeConstants.NUMBER -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.DECIMAL -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBigDecimal)
+                      TypeConstants.BOOLEAN -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asBoolean)
+                      TypeConstants.DATE -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.TIMESTAMP -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.TIME -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asLong)
+                      TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(Base64.getDecoder().decode(computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asString))) }.size - 1)
+                      TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                      else -> addProperty(input.name, computationResults[connection.connectedCircuitComputation.name]!!.asJsonObject.get(connection.connectedCircuitComputationCircuitOutput.name).asJsonObject.get(VariableConstants.VARIABLE_NAME).asString)
+                    }
+                  else {
+                    val computedHash: String = computeHash(connection.connectedCircuitComputationTypeAccumulator!!.keys.sortedBy { it.id }.fold("") { acc2, key ->
+                      val accumulatorValueCircuitInput: CircuitInput = connection.connectedCircuitComputationAccumulatorKeys.single { it.key == key }.circuitInput
+                      acc2 + when (key.type.name) {
+                        TypeConstants.TEXT -> args.get(accumulatorValueCircuitInput.name).asString
+                        TypeConstants.NUMBER -> args.get(accumulatorValueCircuitInput.name).asLong
+                        TypeConstants.DECIMAL -> args.get(accumulatorValueCircuitInput.name).asBigDecimal.toString()
+                        TypeConstants.BOOLEAN -> args.get(accumulatorValueCircuitInput.name).asBoolean.toString()
+                        TypeConstants.DATE -> Date(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.TIMESTAMP -> Timestamp(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.TIME -> Time(args.get(accumulatorValueCircuitInput.name).asLong).toString()
+                        TypeConstants.BLOB -> Base64.getEncoder().encodeToString(files[args.get(accumulatorValueCircuitInput.name).asInt].bytes)
+                        TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                        else -> (variableRepository.findVariable(type = key.type, name = args.get(accumulatorValueCircuitInput.name).asString)
+                          ?: throw CustomJsonException("{${CircuitConstants.ARGS}: {${accumulatorValueCircuitInput.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")).id
+                      }
+                    })
+                    val rootVariableAccumulator: VariableAccumulator? = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = connection.connectedCircuitComputationTypeAccumulator, level = 0, hash = computedHash)
+                    if (rootVariableAccumulator == null)
+                      throw CustomJsonException("{}")
+                    else {
+                      val matchingVariableAccumulator: VariableAccumulator? = getMatchingVariableAccumulator(args = args, connection = connection, variableAccumulator = rootVariableAccumulator, files = files)
+                      if(matchingVariableAccumulator == null)
+                        throw CustomJsonException("{}")
+                      else {
+                        when(connection.connectedCircuitComputationTypeAccumulator.type.name) {
+                          TypeConstants.TEXT -> addProperty(input.name, matchingVariableAccumulator.stringValue!!)
+                          TypeConstants.NUMBER -> addProperty(input.name, matchingVariableAccumulator.longValue!!)
+                          TypeConstants.DECIMAL -> addProperty(input.name, matchingVariableAccumulator.decimalValue!!)
+                          TypeConstants.BOOLEAN -> addProperty(input.name, matchingVariableAccumulator.booleanValue!!)
+                          TypeConstants.DATE -> addProperty(input.name, matchingVariableAccumulator.dateValue!!.time)
+                          TypeConstants.TIMESTAMP -> addProperty(input.name, matchingVariableAccumulator.timestampValue!!.time)
+                          TypeConstants.TIME -> addProperty(input.name, matchingVariableAccumulator.timeValue!!.time)
+                          TypeConstants.BLOB -> addProperty(input.name, files.apply { add(Base64DecodedMultipartFile(matchingVariableAccumulator.blobValue!!.getBytes(1, matchingVariableAccumulator.blobValue!!.length().toInt()))) }.size - 1)
+                          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                          else -> addProperty(input.name, matchingVariableAccumulator.referencedVariable!!.name)
+                        }
+                      }
+                    }
                   }
                 }
               })

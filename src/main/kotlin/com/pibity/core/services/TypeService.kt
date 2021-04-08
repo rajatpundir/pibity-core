@@ -10,7 +10,7 @@ package com.pibity.core.services
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.lisp.validateSymbols
 import com.pibity.core.entities.*
 import com.pibity.core.entities.assertion.TypeAssertion
@@ -85,7 +85,7 @@ class TypeService(
                   if (keyJson.has(KeyConstants.DEFAULT)) BlobProxy.generateProxy(files[keyJson.get(KeyConstants.DEFAULT).asInt].bytes) else BlobProxy.generateProxy("".toByteArray())
                 else -> {
                   if (keyJson.has(KeyConstants.DEFAULT)) {
-                    referencedVariable = variableRepository.findByTypeAndName(
+                    referencedVariable = variableRepository.findVariable(
                       type = this.type,
                       name = keyJson.get(KeyConstants.DEFAULT).asString
                     )
@@ -112,7 +112,7 @@ class TypeService(
           val keyDependencies: MutableSet<Key> = mutableSetOf()
           val symbolPaths: Set<String> = validateOrEvaluateExpression(expression = keyJson.get(KeyConstants.FORMULA_EXPRESSION).asJsonObject,
             symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = keyJson.get(KeyConstants.FORMULA_RETURN_TYPE).asString) as Set<String>
-          val symbols: JsonObject = validateSymbols(getSymbols(type = type, symbolPaths = symbolPaths.toMutableSet(), keyDependencies = keyDependencies, symbolsForFormula = true))
+          val symbols: JsonObject = validateSymbols(getSymbolsForFormula(type = type, symbolPaths = symbolPaths.toMutableSet(), keyDependencies = keyDependencies, excludeTopLevelFormulas = true))
           formula = formulaJpaRepository.save(
             Formula(
               key = this,
@@ -126,7 +126,7 @@ class TypeService(
           )
         }
       })
-    type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams, files = files, defaultTimestamp = defaultTimestamp))
     type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
     type.permissions.addAll(createDefaultPermissionsForType(type = type, defaultTimestamp = defaultTimestamp))
     type.permissions.addAll(createPermissionsForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
@@ -136,7 +136,7 @@ class TypeService(
     return type
   }
 
-  fun createTypeUniquenessConstraints(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypeUniqueness> {
+  fun createTypeUniquenessConstraints(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Set<TypeUniqueness> {
     val uniqueConstraints: MutableSet<TypeUniqueness> = mutableSetOf()
     for ((constraintName, jsonKeys) in jsonParams.get("uniqueConstraints").asJsonObject.entrySet()) {
       uniqueConstraints.add(uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
@@ -144,7 +144,7 @@ class TypeService(
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         addProperty("constraintName", constraintName)
         add("keys", jsonKeys.asJsonArray)
-      }, defaultTimestamp = defaultTimestamp))
+      }, files = files, defaultTimestamp = defaultTimestamp))
     }
     return uniqueConstraints
   }

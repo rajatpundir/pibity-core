@@ -12,6 +12,8 @@ import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.function.FunctionInput
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -33,7 +35,7 @@ data class FunctionInputPermission(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @Column(name = "access_level", nullable = false)
   var accessLevel: Boolean,
@@ -48,7 +50,7 @@ data class FunctionInputPermission(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

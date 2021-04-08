@@ -12,7 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.Base64DecodedMultipartFile
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.lisp.getSymbolPaths
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Organization
@@ -79,7 +79,7 @@ class FunctionService(
             TypeConstants.FORMULA -> {}
             else -> {
               if (inputJson.has(KeyConstants.DEFAULT)) {
-                referencedVariable = variableRepository.findByTypeAndName(type = type, name = inputJson.get(KeyConstants.DEFAULT).asString)
+                referencedVariable = variableRepository.findVariable(type = type, name = inputJson.get(KeyConstants.DEFAULT).asString)
                   ?: throw CustomJsonException("{${FunctionConstants.INPUTS}: {$inputName: ${MessageConstants.UNEXPECTED_VALUE}}}")
               }
               variableName = if (inputJson.has(VariableConstants.VARIABLE_NAME)) inputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject.toString() else null
@@ -136,7 +136,8 @@ class FunctionService(
               VariableConstants.CREATE -> FunctionConstants.CREATE
               VariableConstants.UPDATE -> FunctionConstants.UPDATE
               VariableConstants.DELETE -> FunctionConstants.DELETE
-              else -> throw CustomJsonException("{}")},
+              else -> throw CustomJsonException("{}")
+            },
             variableName = outputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject.toString(),
             variableNameKeyDependencies = getKeyDependencies(symbolPaths = (validateOrEvaluateExpression(expression = outputJson.get(VariableConstants.VARIABLE_NAME).asJsonObject,
               symbols = symbols, mode = LispConstants.VALIDATE, expectedReturnType = TypeConstants.TEXT) as Set<String>).toMutableSet(),
@@ -267,11 +268,11 @@ class FunctionService(
             })
             TypeConstants.FORMULA -> throw CustomJsonException("{}")
             else -> {
-              val variable: Variable = variableRepository.findVariable(orgId = functionPermission.function.organization.id, typeName = input.type.name, name = args.get(input.name).asString)!!
+              val variable: Variable = variableRepository.findVariable(type = input.type, name = args.get(input.name).asString)!!
               add(input.name, JsonObject().apply {
                 addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
                 addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
-                add(VariableConstants.VALUES, getSymbolValues(symbolPaths = symbolPaths.toMutableSet(), variable = variable, prefix = input.name + ".", symbolsForFormula = false))
+                add(VariableConstants.VALUES, getSymbolValues(symbolPaths = symbolPaths.toMutableSet(), variable = variable, prefix = input.name + ".", excludeTopLevelFormulas = false))
               })
             }
           }

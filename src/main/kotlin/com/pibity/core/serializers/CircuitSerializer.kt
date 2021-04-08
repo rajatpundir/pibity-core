@@ -11,7 +11,7 @@ package com.pibity.core.serializers
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.circuit.Circuit
 import java.util.*
 

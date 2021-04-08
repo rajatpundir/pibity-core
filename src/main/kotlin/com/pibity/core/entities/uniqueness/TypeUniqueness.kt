@@ -11,9 +11,12 @@ package com.pibity.core.entities.uniqueness
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
+import com.pibity.core.entities.accumulator.TypeAccumulator
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -38,15 +41,18 @@ data class TypeUniqueness(
   @Column(name = "name", nullable = false)
   val name: String,
 
+  @Version
+  @Column(name = "version", nullable = false)
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
+
   @ManyToMany
   @JoinTable(name = "mapping_type_uniqueness_keys", schema = ApplicationConstants.SCHEMA,
     joinColumns = [JoinColumn(name = "type_uniqueness_id", referencedColumnName = "id")],
     inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
   val keys: MutableSet<Key> = HashSet(),
 
-  @Version
-  @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  @OneToMany(mappedBy = "typeUniqueness", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+  val accumulators: MutableSet<TypeAccumulator> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,
@@ -58,7 +64,7 @@ data class TypeUniqueness(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

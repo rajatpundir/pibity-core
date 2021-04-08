@@ -10,8 +10,8 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.Logger
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.services.FunctionService
@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -45,7 +47,8 @@ class FunctionController(val functionService: FunctionService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
+        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -60,7 +63,7 @@ class FunctionController(val functionService: FunctionService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis())).toString(), HttpStatus.OK)
+      ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

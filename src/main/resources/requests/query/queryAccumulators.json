@@ -1,0 +1,23 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "typeName": {
+    "type": "String"
+  },
+  "constraintName": {
+    "type": "String"
+  },
+  "accumulatorName": {
+    "type": "String"
+  },
+  "limit": {
+    "type": "Int"
+  },
+  "offset": {
+    "type": "Int"
+  },
+  "query": {
+    "type": "Object"
+  }
+}

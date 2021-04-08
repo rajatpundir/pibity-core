@@ -14,6 +14,8 @@ import com.pibity.core.entities.Type
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -38,7 +40,7 @@ data class TypeAssertion(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @Lob
   @Column(name = "symbol_paths", nullable = false)
@@ -67,7 +69,7 @@ data class TypeAssertion(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {
@@ -78,6 +80,4 @@ data class TypeAssertion(
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
-
-  override fun toString(): String = serialize(this).toString()
 }

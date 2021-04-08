@@ -11,7 +11,7 @@ package com.pibity.core.services
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.*
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.Mapper
@@ -33,7 +33,7 @@ class MapperService(
   val functionService: FunctionService,
   val mapperRepository: MapperRepository,
   val mapperJpaRepository: MapperJpaRepository,
-  val queryService: QueryService
+  val variableQueryService: VariableQueryService
 ) {
 
   fun createMapper(jsonParams: JsonObject, defaultTimestamp: Timestamp): Mapper {
@@ -61,7 +61,7 @@ class MapperService(
       throw CustomJsonException("{${MapperConstants.ARGS}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return if (mapper.query) {
       val queryParams: JsonObject = validateQueryParamsForExecution(jsonParams = jsonParams.get("${MapperConstants.QUERY_PARAMS}?").asJsonObject, queryParams = mapper.queryParams, files = files)
-      val (variables: List<Variable>, _) = queryService.queryVariables(jsonParams = JsonObject().apply {
+      val (variables: List<Variable>, _) = variableQueryService.queryVariables(jsonParams = JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, mapper.organization.id)
         addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
         addProperty(OrganizationConstants.TYPE_NAME, mapper.functionInput.type.name)

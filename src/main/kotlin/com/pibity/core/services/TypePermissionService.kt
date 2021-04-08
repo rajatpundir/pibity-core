@@ -13,7 +13,7 @@ import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.constants.PermissionConstants
 import com.pibity.core.commons.constants.TypeConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.permission.KeyPermission
 import com.pibity.core.entities.permission.TypePermission

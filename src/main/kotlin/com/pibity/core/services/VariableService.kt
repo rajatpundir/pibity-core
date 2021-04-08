@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -11,16 +11,17 @@ package com.pibity.core.services
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.*
+import com.pibity.core.entities.accumulator.TypeAccumulator
+import com.pibity.core.entities.accumulator.ValueAccumulator
+import com.pibity.core.entities.accumulator.VariableAccumulator
 import com.pibity.core.entities.assertion.VariableAssertion
 import com.pibity.core.entities.permission.TypePermission
 import com.pibity.core.entities.uniqueness.TypeUniqueness
 import com.pibity.core.entities.uniqueness.VariableUniqueness
-import com.pibity.core.repositories.jpa.ValueJpaRepository
-import com.pibity.core.repositories.jpa.VariableAssertionJpaRepository
-import com.pibity.core.repositories.jpa.VariableJpaRepository
-import com.pibity.core.repositories.jpa.VariableUniquenessJpaRepository
+import com.pibity.core.repositories.jpa.*
+import com.pibity.core.repositories.query.VariableAccumulatorRepository
 import com.pibity.core.repositories.query.VariableRepository
 import com.pibity.core.repositories.query.VariableUniquenessRepository
 import com.pibity.core.utils.*
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.math.BigDecimal
+import java.sql.Blob
 import java.sql.Date
 import java.sql.Time
 import java.sql.Timestamp
@@ -42,7 +44,10 @@ class VariableService(
   val valueJpaRepository: ValueJpaRepository,
   val variableAssertionJpaRepository: VariableAssertionJpaRepository,
   val variableUniquenessJpaRepository: VariableUniquenessJpaRepository,
-  val variableUniquenessRepository: VariableUniquenessRepository
+  val variableUniquenessRepository: VariableUniquenessRepository,
+  val variableAccumulatorJpaRepository: VariableAccumulatorJpaRepository,
+  val variableAccumulatorRepository: VariableAccumulatorRepository,
+  val valueAccumulatorJpaRepository: ValueAccumulatorJpaRepository
 ) {
 
   fun executeQueue(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): JsonObject {
@@ -127,7 +132,7 @@ class VariableService(
           else
             Value(variable = variable, key = key, blobValue = key.defaultBlobValue!!, created = defaultTimestamp)
           TypeConstants.FORMULA -> throw CustomJsonException("{}")
-          else -> Value(variable = variable, key = key, referencedVariable = (variableRepository.findByTypeAndName(type = key.type, name = valuesJson.get(key.name).asString!!)
+          else -> Value(variable = variable, key = key, referencedVariable = (variableRepository.findVariable(type = key.type, name = valuesJson.get(key.name).asString!!)
             ?: throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")).apply {
             if (!active)
               throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
@@ -139,7 +144,7 @@ class VariableService(
         .map { key ->
           val valueDependencies: MutableSet<Value> = mutableSetOf()
           val symbols: JsonObject = getSymbolValues(variable = variable, symbolPaths = gson.fromJson(key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(),
-            valueDependencies = valueDependencies, symbolsForFormula = true)
+            valueDependencies = valueDependencies, excludeTopLevelFormulas = true)
           val evaluatedArg = validateOrEvaluateExpression(expression = gson.fromJson(key.formula!!.expression, JsonObject::class.java),
             symbols = symbols, mode = LispConstants.EVALUATE, expectedReturnType = key.formula!!.returnType.name)
           valueJpaRepository.save(when(key.formula!!.returnType.name) {
@@ -192,7 +197,7 @@ class VariableService(
           variable = variable,
           symbolPaths = gson.fromJson(typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(),
           valueDependencies = valueDependencies,
-          symbolsForFormula = false
+          excludeTopLevelFormulas = false
         )
         val result: Boolean = validateOrEvaluateExpression(expression = gson.fromJson(typeAssertion.expression, JsonObject::class.java),
           symbols = symbols, mode = LispConstants.EVALUATE, expectedReturnType = TypeConstants.BOOLEAN) as Boolean
@@ -201,6 +206,204 @@ class VariableService(
         else
           variableAssertionJpaRepository.save(VariableAssertion(typeAssertion = typeAssertion, variable = variable, valueDependencies = valueDependencies, created = defaultTimestamp))
       })
+      variable.type.uniqueConstraints.forEach { typeUniqueness ->
+        typeUniqueness.accumulators.forEach { typeAccumulator ->
+          val computedHash: String = computeHash(typeAccumulator.keys.sortedBy { it.id }.fold("") { acc, key ->
+            val value: Value = variable.values.single { it.key == key }
+            acc + when (value.key.type.name) {
+              TypeConstants.TEXT -> value.stringValue!!
+              TypeConstants.NUMBER -> value.longValue.toString()
+              TypeConstants.DECIMAL -> value.decimalValue.toString()
+              TypeConstants.BOOLEAN -> value.booleanValue.toString()
+              TypeConstants.DATE -> value.dateValue.toString()
+              TypeConstants.TIMESTAMP -> value.timestampValue.toString()
+              TypeConstants.TIME -> value.timeValue.toString()
+              TypeConstants.BLOB -> Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(1, value.blobValue!!.length().toInt()))
+              TypeConstants.FORMULA -> throw CustomJsonException("{}")
+              else -> value.referencedVariable!!.id
+            }
+          })
+          var rootVariableAccumulator: VariableAccumulator? = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = computedHash)
+          if (rootVariableAccumulator != null) {
+            val matchingVariableAccumulator: VariableAccumulator? = getMatchingVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, variableAccumulator = rootVariableAccumulator)
+            if (matchingVariableAccumulator != null) {
+              val symbols: JsonObject = JsonObject().apply {
+                add("acc", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+                  when(typeAccumulator.type.name) {
+                    TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.stringValue!!)
+                    TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.longValue!!)
+                    TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.decimalValue!!)
+                    TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.booleanValue!!)
+                    TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.dateValue!!.time)
+                    TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.timestampValue!!.time)
+                    TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.timeValue!!.time)
+                    TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(matchingVariableAccumulator.blobValue!!.getBytes(1 ,matchingVariableAccumulator.blobValue!!.length().toInt())))
+                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                    else -> {
+                      addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.referencedVariable!!.name)
+                      add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = matchingVariableAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+                    }
+                  }
+                })
+                add("it", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+                  addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+                  add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+                })
+              }
+              val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = symbols,
+                mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+              when(typeAccumulator.type.name) {
+                TypeConstants.TEXT -> matchingVariableAccumulator.stringValue = evaluatedValue as String
+                TypeConstants.NUMBER -> matchingVariableAccumulator.longValue = evaluatedValue as Long
+                TypeConstants.DECIMAL -> matchingVariableAccumulator.decimalValue = evaluatedValue as BigDecimal
+                TypeConstants.BOOLEAN -> matchingVariableAccumulator.booleanValue = evaluatedValue as Boolean
+                TypeConstants.DATE -> matchingVariableAccumulator.dateValue = evaluatedValue as Date
+                TypeConstants.TIMESTAMP -> matchingVariableAccumulator.timestampValue = evaluatedValue as Timestamp
+                TypeConstants.TIME -> matchingVariableAccumulator.timeValue = evaluatedValue as Time
+                TypeConstants.BLOB -> matchingVariableAccumulator.blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> {
+                  matchingVariableAccumulator.referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+                    ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+                }
+              }
+              variableAccumulatorJpaRepository.save(matchingVariableAccumulator)
+            } else {
+              val symbols: JsonObject = JsonObject().apply {
+                add("acc", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+                  when(typeAccumulator.type.name) {
+                    TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialStringValue!!)
+                    TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialLongValue!!)
+                    TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDecimalValue!!)
+                    TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialBooleanValue!!)
+                    TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDateValue!!.time)
+                    TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimestampValue!!.time)
+                    TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimeValue!!.time)
+                    TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(typeAccumulator.initialBlobValue!!.getBytes(1 ,typeAccumulator.initialBlobValue!!.length().toInt())))
+                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                    else -> {
+                      addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.referencedVariable!!.name)
+                      add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = typeAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+                    }
+                  }
+                })
+                add("it", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+                  addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+                  add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+                })
+              }
+              var maxLevel = rootVariableAccumulator.level
+              while (rootVariableAccumulator!!.nextVariableAccumulator != null) {
+                if (rootVariableAccumulator.level > maxLevel)
+                  maxLevel = rootVariableAccumulator.level
+                rootVariableAccumulator = rootVariableAccumulator.nextVariableAccumulator
+              }
+              val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = symbols,
+                mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+              variableAccumulatorJpaRepository.save(VariableAccumulator(typeAccumulator = typeAccumulator,level = 1 + maxLevel, hash = computedHash, created = defaultTimestamp).apply {
+                when(typeAccumulator.type.name) {
+                  TypeConstants.TEXT -> stringValue = evaluatedValue as String
+                  TypeConstants.NUMBER -> longValue = evaluatedValue as Long
+                  TypeConstants.DECIMAL -> decimalValue = evaluatedValue as BigDecimal
+                  TypeConstants.BOOLEAN -> booleanValue = evaluatedValue as Boolean
+                  TypeConstants.DATE -> dateValue = evaluatedValue as Date
+                  TypeConstants.TIMESTAMP -> timestampValue = evaluatedValue as Timestamp
+                  TypeConstants.TIME -> timeValue = evaluatedValue as Time
+                  TypeConstants.BLOB -> blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+                  TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                  else -> {
+                    referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+                      ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+                  }
+                }
+              }).apply {
+                values.addAll(valueAccumulatorJpaRepository.saveAll(typeAccumulator.keys.map { key ->
+                  ValueAccumulator(variableAccumulator = this, key = key, created = defaultTimestamp).apply {
+                    when(this.key.type.name) {
+                      TypeConstants.TEXT -> stringValue = variable.values.single { it.key == this.key }.stringValue!!
+                      TypeConstants.NUMBER -> longValue = variable.values.single { it.key == this.key }.longValue!!
+                      TypeConstants.DECIMAL -> decimalValue = variable.values.single { it.key == this.key }.decimalValue!!
+                      TypeConstants.BOOLEAN -> booleanValue = variable.values.single { it.key == this.key }.booleanValue!!
+                      TypeConstants.DATE -> dateValue = variable.values.single { it.key == this.key }.dateValue!!
+                      TypeConstants.TIMESTAMP -> timestampValue = variable.values.single { it.key == this.key }.timestampValue!!
+                      TypeConstants.TIME -> timeValue = variable.values.single { it.key == this.key }.timeValue!!
+                      TypeConstants.BLOB -> blobValue = variable.values.single { it.key == this.key }.blobValue!!
+                      TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                      else -> referencedVariable = variable.values.single { it.key == this.key }.referencedVariable!!
+                    }
+                  }
+                }))
+              }
+            }
+          } else {
+            val symbols: JsonObject = JsonObject().apply {
+              add("acc", JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+                when(typeAccumulator.type.name) {
+                  TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialStringValue!!)
+                  TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialLongValue!!)
+                  TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDecimalValue!!)
+                  TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialBooleanValue!!)
+                  TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDateValue!!.time)
+                  TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimestampValue!!.time)
+                  TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimeValue!!.time)
+                  TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(typeAccumulator.initialBlobValue!!.getBytes(1 ,typeAccumulator.initialBlobValue!!.length().toInt())))
+                  TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                  else -> {
+                    addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.referencedVariable!!.name)
+                    add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = typeAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+                  }
+                }
+              })
+              add("it", JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+                addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+                add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+              })
+            }
+            val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = symbols,
+              mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+            variableAccumulatorJpaRepository.save(VariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = computedHash, created = defaultTimestamp).apply {
+              when(typeAccumulator.type.name) {
+                TypeConstants.TEXT -> stringValue = evaluatedValue as String
+                TypeConstants.NUMBER -> longValue = evaluatedValue as Long
+                TypeConstants.DECIMAL -> decimalValue = evaluatedValue as BigDecimal
+                TypeConstants.BOOLEAN -> booleanValue = evaluatedValue as Boolean
+                TypeConstants.DATE -> dateValue = evaluatedValue as Date
+                TypeConstants.TIMESTAMP -> timestampValue = evaluatedValue as Timestamp
+                TypeConstants.TIME -> timeValue = evaluatedValue as Time
+                TypeConstants.BLOB -> blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> {
+                  referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+                    ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+                }
+              }
+            }).apply {
+              values.addAll(valueAccumulatorJpaRepository.saveAll(typeAccumulator.keys.map { key ->
+                ValueAccumulator(variableAccumulator = this, key = key, created = defaultTimestamp).apply {
+                  when(this.key.type.name) {
+                    TypeConstants.TEXT -> stringValue = variable.values.single { it.key == this.key }.stringValue!!
+                    TypeConstants.NUMBER -> longValue = variable.values.single { it.key == this.key }.longValue!!
+                    TypeConstants.DECIMAL -> decimalValue = variable.values.single { it.key == this.key }.decimalValue!!
+                    TypeConstants.BOOLEAN -> booleanValue = variable.values.single { it.key == this.key }.booleanValue!!
+                    TypeConstants.DATE -> dateValue = variable.values.single { it.key == this.key }.dateValue!!
+                    TypeConstants.TIMESTAMP -> timestampValue = variable.values.single { it.key == this.key }.timestampValue!!
+                    TypeConstants.TIME -> timeValue = variable.values.single { it.key == this.key }.timeValue!!
+                    TypeConstants.BLOB -> blobValue = variable.values.single { it.key == this.key }.blobValue!!
+                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                    else -> referencedVariable = variable.values.single { it.key == this.key }.referencedVariable!!
+                  }
+                }
+              }))
+            }
+          }
+        }
+      }
       Pair(variable, typePermission)
     }
   }
@@ -212,7 +415,7 @@ class VariableService(
         addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
       }, defaultTimestamp = defaultTimestamp)
-    val variable: Variable = (variableRepository.findByTypeAndName(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
+    val variable: Variable = (variableRepository.findVariable(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
       ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_FOUND}}")).apply {
       if (jsonParams.has("${VariableConstants.ACTIVE}?"))
         active = jsonParams.get("${VariableConstants.ACTIVE}?").asBoolean
@@ -221,8 +424,39 @@ class VariableService(
     val dependentUniqueness: MutableSet<VariableUniqueness> = mutableSetOf()
     val dependentFormulaValues: MutableSet<Value> = mutableSetOf()
     val dependentAssertions: MutableSet<VariableAssertion> = mutableSetOf()
+    val dependentTypeAccumulators: MutableMap<TypeAccumulator, MutableSet<Pair<Key, Any>>> = mutableMapOf()
     variable.values.filter { it.key.type.name != TypeConstants.FORMULA }.forEach { value ->
       if (valuesJson.has(value.key.name)) {
+        if (value.key.isAccumulatorDependency) {
+          value.key.dependentTypeAccumulators.forEach { typeAccumulator ->
+            if (typeAccumulator in dependentTypeAccumulators)
+              dependentTypeAccumulators[typeAccumulator]!!.add(Pair(value.key, when(value.key.type.name) {
+                TypeConstants.TEXT -> value.stringValue!!
+                TypeConstants.NUMBER -> value.longValue!!
+                TypeConstants.DECIMAL -> value.decimalValue!!
+                TypeConstants.BOOLEAN -> value.booleanValue!!
+                TypeConstants.DATE -> value.dateValue!!
+                TypeConstants.TIMESTAMP -> value.timestampValue!!
+                TypeConstants.TIME -> value.timeValue!!
+                TypeConstants.BLOB -> value.blobValue!!
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> value.referencedVariable!!
+              }))
+            else
+              dependentTypeAccumulators[typeAccumulator] = mutableSetOf(Pair(value.key, when(value.key.type.name) {
+                TypeConstants.TEXT -> value.stringValue!!
+                TypeConstants.NUMBER -> value.longValue!!
+                TypeConstants.DECIMAL -> value.decimalValue!!
+                TypeConstants.BOOLEAN -> value.booleanValue!!
+                TypeConstants.DATE -> value.dateValue!!
+                TypeConstants.TIMESTAMP -> value.timestampValue!!
+                TypeConstants.TIME -> value.timeValue!!
+                TypeConstants.BLOB -> value.blobValue!!
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> value.referencedVariable!!
+              }))
+          }
+        }
         when(value.key.type.name) {
           TypeConstants.TEXT -> value.stringValue = valuesJson.get(value.key.name).asString!!
           TypeConstants.NUMBER -> value.longValue = valuesJson.get(value.key.name).asLong
@@ -234,7 +468,7 @@ class VariableService(
           TypeConstants.BLOB -> value.blobValue = BlobProxy.generateProxy(files[valuesJson.get(value.key.name).asInt].bytes)
           TypeConstants.FORMULA -> throw CustomJsonException("{}")
           else -> {
-            value.referencedVariable = (variableRepository.findByTypeAndName(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
+            value.referencedVariable = (variableRepository.findVariable(type = typePermission.type, name = valuesJson.get(value.key.name).asString!!)
               ?: throw CustomJsonException("{${VariableConstants.VALUES}: {${value.key.name}: ${MessageConstants.VARIABLE_NOT_FOUND}}}")).apply {
               if (!active)
                 throw CustomJsonException("{${VariableConstants.VALUES}: {${value.key.name}: ${MessageConstants.VARIABLE_NOT_FOUND}}}")
@@ -256,7 +490,7 @@ class VariableService(
           symbols = getSymbolValues(variable = variable,
             symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(),
             valueDependencies = updatedValueDependencies,
-            symbolsForFormula = true
+            excludeTopLevelFormulas = true
           ),
           mode = LispConstants.EVALUATE,
           expectedReturnType = value.key.formula!!.returnType.name
@@ -302,9 +536,12 @@ class VariableService(
     recomputeDependentFormulaValues(affectedFormulaValues = dependentFormulaValues, dependentAssertions = dependentAssertions, dependentUniqueness = dependentUniqueness)
     // Note: Assertions should be run at last when all affected values have been updated.
     // Otherwise it may lead to incorrect results if assertion depends on a value that is not yet updated.
-    // Same applies to VariableUniqueness.
+    // Same applies to VariableUniqueness and VariableAccumulators.
     evaluateAssertions(dependentAssertions = dependentAssertions)
     recomputeHashesForVariableUniqueness(dependentUniqueness = dependentUniqueness)
+    // Update Accumulators
+    for((typeAccumulator, accumulatorValues) in dependentTypeAccumulators)
+      updateVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, prevName = jsonParams.get(VariableConstants.VARIABLE_NAME).asString, accumulatorValues = accumulatorValues, defaultTimestamp = defaultTimestamp)
     return Pair(variable, typePermission)
   }
 
@@ -368,7 +605,7 @@ class VariableService(
         symbols = getSymbolValues(variable = value.variable,
           symbolPaths = gson.fromJson(value.key.formula!!.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(),
           valueDependencies = updatedValueDependencies,
-          symbolsForFormula = true),
+          excludeTopLevelFormulas = true),
         mode = LispConstants.EVALUATE, expectedReturnType = value.key.formula!!.returnType.name)
       value.valueDependencies = updatedValueDependencies
       when(value.key.formula!!.returnType.name) {
@@ -402,7 +639,7 @@ class VariableService(
         symbols = getSymbolValues(variable = variableAssertion.variable,
           symbolPaths = gson.fromJson(variableAssertion.typeAssertion.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(),
           valueDependencies = updatedValueDependencies,
-          symbolsForFormula = false),
+          excludeTopLevelFormulas = false),
         mode = LispConstants.EVALUATE,
         expectedReturnType = TypeConstants.BOOLEAN
       ) as Boolean
@@ -416,6 +653,334 @@ class VariableService(
     }
   }
 
+  fun getMatchingVariableAccumulator(variable: Variable, typeAccumulator: TypeAccumulator, variableAccumulator: VariableAccumulator): VariableAccumulator? {
+    return if (variableAccumulator.values.all { valueAccumulator ->
+        when(valueAccumulator.key.type.name) {
+          TypeConstants.TEXT -> variable.values.any { value -> value.key == valueAccumulator.key && value.stringValue!! == valueAccumulator.stringValue!! }
+          TypeConstants.NUMBER -> variable.values.any { value -> value.key == valueAccumulator.key && value.longValue!! == valueAccumulator.longValue!! }
+          TypeConstants.DECIMAL -> variable.values.any { value -> value.key == valueAccumulator.key && value.decimalValue!! == valueAccumulator.decimalValue!! }
+          TypeConstants.BOOLEAN -> variable.values.any { value -> value.key == valueAccumulator.key && value.booleanValue!! == valueAccumulator.booleanValue!! }
+          TypeConstants.DATE -> variable.values.any { value -> value.key == valueAccumulator.key && value.dateValue!! == valueAccumulator.dateValue!! }
+          TypeConstants.TIMESTAMP -> variable.values.any { value -> value.key == valueAccumulator.key && value.timestampValue!! == valueAccumulator.timestampValue!! }
+          TypeConstants.TIME -> variable.values.any { value -> value.key == valueAccumulator.key && value.timeValue!! == valueAccumulator.timeValue!! }
+          TypeConstants.BLOB -> variable.values.any { value -> value.key == valueAccumulator.key && value.blobValue!! == valueAccumulator.blobValue!! }
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> variable.values.any { value -> value.key == valueAccumulator.key && value.referencedVariable!! == valueAccumulator.referencedVariable!! }
+        }
+      }) variableAccumulator
+    else if (variableAccumulator.nextVariableAccumulator != null) {
+      getMatchingVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, variableAccumulator = variableAccumulator.nextVariableAccumulator!!)
+    } else null
+  }
+
+  fun getMatchingBackwardVariableAccumulator(variable: Variable, typeAccumulator: TypeAccumulator, variableAccumulator: VariableAccumulator, accumulatorValues: Set<Pair<Key, Any>>): VariableAccumulator {
+    return if (variableAccumulator.values.all { valueAccumulator ->
+        if (accumulatorValues.any { (k, _) -> k == valueAccumulator.key }) {
+          when(valueAccumulator.key.type.name) {
+            TypeConstants.TEXT -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as String) == valueAccumulator.stringValue!! }
+            TypeConstants.NUMBER -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Long) == valueAccumulator.longValue!! }
+            TypeConstants.DECIMAL -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as BigDecimal) == valueAccumulator.decimalValue!! }
+            TypeConstants.BOOLEAN -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Boolean) == valueAccumulator.booleanValue!! }
+            TypeConstants.DATE -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Date) == valueAccumulator.dateValue!! }
+            TypeConstants.TIMESTAMP -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Timestamp) == valueAccumulator.timestampValue!! }
+            TypeConstants.TIME -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Time) == valueAccumulator.timeValue!! }
+            TypeConstants.BLOB -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Blob) == valueAccumulator.blobValue!! }
+            TypeConstants.FORMULA -> throw CustomJsonException("{}")
+            else -> accumulatorValues.any { (k, v) -> k == valueAccumulator.key && (v as Variable) == valueAccumulator.referencedVariable!! }
+          }
+        } else {
+          when(valueAccumulator.key.type.name) {
+            TypeConstants.TEXT -> variable.values.any { value -> value.key == valueAccumulator.key && value.stringValue!! == valueAccumulator.stringValue!! }
+            TypeConstants.NUMBER -> variable.values.any { value -> value.key == valueAccumulator.key && value.longValue!! == valueAccumulator.longValue!! }
+            TypeConstants.DECIMAL -> variable.values.any { value -> value.key == valueAccumulator.key && value.decimalValue!! == valueAccumulator.decimalValue!! }
+            TypeConstants.BOOLEAN -> variable.values.any { value -> value.key == valueAccumulator.key && value.booleanValue!! == valueAccumulator.booleanValue!! }
+            TypeConstants.DATE -> variable.values.any { value -> value.key == valueAccumulator.key && value.dateValue!! == valueAccumulator.dateValue!! }
+            TypeConstants.TIMESTAMP -> variable.values.any { value -> value.key == valueAccumulator.key && value.timestampValue!! == valueAccumulator.timestampValue!! }
+            TypeConstants.TIME -> variable.values.any { value -> value.key == valueAccumulator.key && value.timeValue!! == valueAccumulator.timeValue!! }
+            TypeConstants.BLOB -> variable.values.any { value -> value.key == valueAccumulator.key && value.blobValue!! == valueAccumulator.blobValue!! }
+            TypeConstants.FORMULA -> throw CustomJsonException("{}")
+            else -> variable.values.any { value -> value.key == valueAccumulator.key && value.referencedVariable!! == valueAccumulator.referencedVariable!! }
+          }
+        }
+      }) variableAccumulator
+    else getMatchingBackwardVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, variableAccumulator = variableAccumulator.nextVariableAccumulator!!, accumulatorValues = accumulatorValues)
+  }
+
+  fun updateVariableAccumulator(variable: Variable, typeAccumulator: TypeAccumulator, prevName: String, accumulatorValues: Set<Pair<Key, Any>>, defaultTimestamp: Timestamp) {
+    // Run backward expression with previous values
+    val backwardComputedHash: String = computeHash(typeAccumulator.keys.sortedBy { it.id }.fold("") { acc, key ->
+      acc + if(accumulatorValues.any { (k, _) -> k == key  }) {
+        val value = accumulatorValues.single { (k, _) -> k == key }.second
+        when (key.type.name) {
+          TypeConstants.TEXT -> value as String
+          TypeConstants.NUMBER -> (value as Long).toString()
+          TypeConstants.DECIMAL -> (value as BigDecimal).toString()
+          TypeConstants.BOOLEAN -> (value as Boolean).toString()
+          TypeConstants.DATE -> (value as Date).toString()
+          TypeConstants.TIMESTAMP -> (value as Timestamp).toString()
+          TypeConstants.TIME -> (value as Time).toString()
+          TypeConstants.BLOB -> Base64.getEncoder().encodeToString((value as Blob).getBytes(1, value.length().toInt()))
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> (value as Variable).id
+        }
+      } else {
+        val value: Value = variable.values.single { it.key == key }
+        when (value.key.type.name) {
+          TypeConstants.TEXT -> value.stringValue!!
+          TypeConstants.NUMBER -> value.longValue.toString()
+          TypeConstants.DECIMAL -> value.decimalValue.toString()
+          TypeConstants.BOOLEAN -> value.booleanValue.toString()
+          TypeConstants.DATE -> value.dateValue.toString()
+          TypeConstants.TIMESTAMP -> value.timestampValue.toString()
+          TypeConstants.TIME -> value.timeValue.toString()
+          TypeConstants.BLOB -> Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(1, value.blobValue!!.length().toInt()))
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> value.referencedVariable!!.id
+        }
+      }
+    })
+    val backwardVariableAccumulator: VariableAccumulator = getMatchingBackwardVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, accumulatorValues = accumulatorValues,
+      variableAccumulator = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = backwardComputedHash)!!)
+    val backwardSymbols: JsonObject = JsonObject().apply {
+      add("acc", JsonObject().apply {
+        addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+        when(typeAccumulator.type.name) {
+          TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.stringValue!!)
+          TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.longValue!!)
+          TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.decimalValue!!)
+          TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.booleanValue!!)
+          TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.dateValue!!.time)
+          TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.timestampValue!!.time)
+          TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.timeValue!!.time)
+          TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(backwardVariableAccumulator.blobValue!!.getBytes(1 ,backwardVariableAccumulator.blobValue!!.length().toInt())))
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> {
+            addProperty(SymbolConstants.SYMBOL_VALUE, backwardVariableAccumulator.referencedVariable!!.name)
+            add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = backwardVariableAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+          }
+        }
+      })
+      add("it", JsonObject().apply {
+        addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+        addProperty(SymbolConstants.SYMBOL_VALUE, prevName)
+        add(SymbolConstants.SYMBOL_VALUES, getBackwardSymbolValuesForAccumulator(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false, accumulatorValues = accumulatorValues))
+      })
+    }
+    val backwardEvaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.backwardExpression, JsonObject::class.java), symbols = backwardSymbols,
+      mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+    when(typeAccumulator.type.name) {
+      TypeConstants.TEXT -> backwardVariableAccumulator.stringValue = backwardEvaluatedValue as String
+      TypeConstants.NUMBER -> backwardVariableAccumulator.longValue = backwardEvaluatedValue as Long
+      TypeConstants.DECIMAL -> backwardVariableAccumulator.decimalValue = backwardEvaluatedValue as BigDecimal
+      TypeConstants.BOOLEAN -> backwardVariableAccumulator.booleanValue = backwardEvaluatedValue as Boolean
+      TypeConstants.DATE -> backwardVariableAccumulator.dateValue = backwardEvaluatedValue as Date
+      TypeConstants.TIMESTAMP -> backwardVariableAccumulator.timestampValue = backwardEvaluatedValue as Timestamp
+      TypeConstants.TIME -> backwardVariableAccumulator.timeValue = backwardEvaluatedValue as Time
+      TypeConstants.BLOB -> backwardVariableAccumulator.blobValue = BlobProxy.generateProxy(backwardEvaluatedValue as ByteArray)
+      TypeConstants.FORMULA -> throw CustomJsonException("{}")
+      else -> {
+        backwardVariableAccumulator.referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = backwardEvaluatedValue as String)
+          ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+      }
+    }
+    variableAccumulatorJpaRepository.save(backwardVariableAccumulator)
+    // Run forward expression with updated values
+    val forwardComputedHash: String = computeHash(typeAccumulator.keys.sortedBy { it.id }.fold("") { acc, key ->
+      val value: Value = variable.values.single { it.key == key }
+      acc + when (value.key.type.name) {
+        TypeConstants.TEXT -> value.stringValue!!
+        TypeConstants.NUMBER -> value.longValue.toString()
+        TypeConstants.DECIMAL -> value.decimalValue.toString()
+        TypeConstants.BOOLEAN -> value.booleanValue.toString()
+        TypeConstants.DATE -> value.dateValue.toString()
+        TypeConstants.TIMESTAMP -> value.timestampValue.toString()
+        TypeConstants.TIME -> value.timeValue.toString()
+        TypeConstants.BLOB -> Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(1, value.blobValue!!.length().toInt()))
+        TypeConstants.FORMULA -> throw CustomJsonException("{}")
+        else -> value.referencedVariable!!.id
+      }
+    })
+    var rootForwardVariableAccumulator: VariableAccumulator? = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = forwardComputedHash)
+    if (rootForwardVariableAccumulator != null) {
+      val forwardVariableAccumulator: VariableAccumulator? = getMatchingVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, variableAccumulator = rootForwardVariableAccumulator)
+      if (forwardVariableAccumulator != null) {
+        val forwardSymbols: JsonObject = JsonObject().apply {
+          add("acc", JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+            when(typeAccumulator.type.name) {
+              TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.stringValue!!)
+              TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.longValue!!)
+              TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.decimalValue!!)
+              TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.booleanValue!!)
+              TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.dateValue!!.time)
+              TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.timestampValue!!.time)
+              TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.timeValue!!.time)
+              TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(forwardVariableAccumulator.blobValue!!.getBytes(1 ,forwardVariableAccumulator.blobValue!!.length().toInt())))
+              TypeConstants.FORMULA -> throw CustomJsonException("{}")
+              else -> {
+                addProperty(SymbolConstants.SYMBOL_VALUE, forwardVariableAccumulator.referencedVariable!!.name)
+                add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = forwardVariableAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+              }
+            }
+          })
+          add("it", JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+            addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+            add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+          })
+        }
+        val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = forwardSymbols,
+          mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+        when(typeAccumulator.type.name) {
+          TypeConstants.TEXT -> forwardVariableAccumulator.stringValue = evaluatedValue as String
+          TypeConstants.NUMBER -> forwardVariableAccumulator.longValue = evaluatedValue as Long
+          TypeConstants.DECIMAL -> forwardVariableAccumulator.decimalValue = evaluatedValue as BigDecimal
+          TypeConstants.BOOLEAN -> forwardVariableAccumulator.booleanValue = evaluatedValue as Boolean
+          TypeConstants.DATE -> forwardVariableAccumulator.dateValue = evaluatedValue as Date
+          TypeConstants.TIMESTAMP -> forwardVariableAccumulator.timestampValue = evaluatedValue as Timestamp
+          TypeConstants.TIME -> forwardVariableAccumulator.timeValue = evaluatedValue as Time
+          TypeConstants.BLOB -> forwardVariableAccumulator.blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> {
+            forwardVariableAccumulator.referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+              ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+          }
+        }
+        variableAccumulatorJpaRepository.save(forwardVariableAccumulator)
+      } else {
+        val forwardSymbols: JsonObject = JsonObject().apply {
+          add("acc", JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+            when(typeAccumulator.type.name) {
+              TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialStringValue!!)
+              TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialLongValue!!)
+              TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDecimalValue!!)
+              TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialBooleanValue!!)
+              TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDateValue!!.time)
+              TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimestampValue!!.time)
+              TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimeValue!!.time)
+              TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(typeAccumulator.initialBlobValue!!.getBytes(1 ,typeAccumulator.initialBlobValue!!.length().toInt())))
+              TypeConstants.FORMULA -> throw CustomJsonException("{}")
+              else -> {
+                addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.referencedVariable!!.name)
+                add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = typeAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+              }
+            }
+          })
+          add("it", JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+            addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+            add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+          })
+        }
+        var maxLevel = rootForwardVariableAccumulator.level
+        while (rootForwardVariableAccumulator!!.nextVariableAccumulator != null) {
+          if (rootForwardVariableAccumulator.level > maxLevel)
+            maxLevel = rootForwardVariableAccumulator.level
+          rootForwardVariableAccumulator = rootForwardVariableAccumulator.nextVariableAccumulator
+        }
+        val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = forwardSymbols,
+          mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+        variableAccumulatorJpaRepository.save(VariableAccumulator(typeAccumulator = typeAccumulator,level = 1 + maxLevel, hash = forwardComputedHash, created = defaultTimestamp).apply {
+          when(typeAccumulator.type.name) {
+            TypeConstants.TEXT -> stringValue = evaluatedValue as String
+            TypeConstants.NUMBER -> longValue = evaluatedValue as Long
+            TypeConstants.DECIMAL -> decimalValue = evaluatedValue as BigDecimal
+            TypeConstants.BOOLEAN -> booleanValue = evaluatedValue as Boolean
+            TypeConstants.DATE -> dateValue = evaluatedValue as Date
+            TypeConstants.TIMESTAMP -> timestampValue = evaluatedValue as Timestamp
+            TypeConstants.TIME -> timeValue = evaluatedValue as Time
+            TypeConstants.BLOB -> blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+            TypeConstants.FORMULA -> throw CustomJsonException("{}")
+            else -> {
+              referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+                ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+            }
+          }
+        }).apply {
+          values.addAll(valueAccumulatorJpaRepository.saveAll(typeAccumulator.keys.map { key ->
+            ValueAccumulator(variableAccumulator = this, key = key, created = defaultTimestamp).apply {
+              when(this.key.type.name) {
+                TypeConstants.TEXT -> stringValue = variable.values.single { it.key == this.key }.stringValue!!
+                TypeConstants.NUMBER -> longValue = variable.values.single { it.key == this.key }.longValue!!
+                TypeConstants.DECIMAL -> decimalValue = variable.values.single { it.key == this.key }.decimalValue!!
+                TypeConstants.BOOLEAN -> booleanValue = variable.values.single { it.key == this.key }.booleanValue!!
+                TypeConstants.DATE -> dateValue = variable.values.single { it.key == this.key }.dateValue!!
+                TypeConstants.TIMESTAMP -> timestampValue = variable.values.single { it.key == this.key }.timestampValue!!
+                TypeConstants.TIME -> timeValue = variable.values.single { it.key == this.key }.timeValue!!
+                TypeConstants.BLOB -> blobValue = variable.values.single { it.key == this.key }.blobValue!!
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> referencedVariable = variable.values.single { it.key == this.key }.referencedVariable!!
+              }
+            }
+          }))
+        }
+      }
+    } else {
+      val forwardSymbols: JsonObject = JsonObject().apply {
+        add("acc", JsonObject().apply {
+          addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+          when(typeAccumulator.type.name) {
+            TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialStringValue!!)
+            TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialLongValue!!)
+            TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDecimalValue!!)
+            TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialBooleanValue!!)
+            TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialDateValue!!.time)
+            TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimestampValue!!.time)
+            TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.initialTimeValue!!.time)
+            TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(typeAccumulator.initialBlobValue!!.getBytes(1 ,typeAccumulator.initialBlobValue!!.length().toInt())))
+            TypeConstants.FORMULA -> throw CustomJsonException("{}")
+            else -> {
+              addProperty(SymbolConstants.SYMBOL_VALUE, typeAccumulator.referencedVariable!!.name)
+              add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = typeAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+            }
+          }
+        })
+        add("it", JsonObject().apply {
+          addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+          addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+          add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+        })
+      }
+      val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.forwardExpression, JsonObject::class.java), symbols = forwardSymbols,
+        mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+      variableAccumulatorJpaRepository.save(VariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = forwardComputedHash, created = defaultTimestamp).apply {
+        when(typeAccumulator.type.name) {
+          TypeConstants.TEXT -> stringValue = evaluatedValue as String
+          TypeConstants.NUMBER -> longValue = evaluatedValue as Long
+          TypeConstants.DECIMAL -> decimalValue = evaluatedValue as BigDecimal
+          TypeConstants.BOOLEAN -> booleanValue = evaluatedValue as Boolean
+          TypeConstants.DATE -> dateValue = evaluatedValue as Date
+          TypeConstants.TIMESTAMP -> timestampValue = evaluatedValue as Timestamp
+          TypeConstants.TIME -> timeValue = evaluatedValue as Time
+          TypeConstants.BLOB -> blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+          TypeConstants.FORMULA -> throw CustomJsonException("{}")
+          else -> {
+            referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+              ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+          }
+        }
+      }).apply {
+        values.addAll(valueAccumulatorJpaRepository.saveAll(typeAccumulator.keys.map { key ->
+          ValueAccumulator(variableAccumulator = this, key = key, created = defaultTimestamp).apply {
+            when(this.key.type.name) {
+              TypeConstants.TEXT -> stringValue = variable.values.single { it.key == this.key }.stringValue!!
+              TypeConstants.NUMBER -> longValue = variable.values.single { it.key == this.key }.longValue!!
+              TypeConstants.DECIMAL -> decimalValue = variable.values.single { it.key == this.key }.decimalValue!!
+              TypeConstants.BOOLEAN -> booleanValue = variable.values.single { it.key == this.key }.booleanValue!!
+              TypeConstants.DATE -> dateValue = variable.values.single { it.key == this.key }.dateValue!!
+              TypeConstants.TIMESTAMP -> timestampValue = variable.values.single { it.key == this.key }.timestampValue!!
+              TypeConstants.TIME -> timeValue = variable.values.single { it.key == this.key }.timeValue!!
+              TypeConstants.BLOB -> blobValue = variable.values.single { it.key == this.key }.blobValue!!
+              TypeConstants.FORMULA -> throw CustomJsonException("{}")
+              else -> referencedVariable = variable.values.single { it.key == this.key }.referencedVariable!!
+            }
+          }
+        }))
+      }
+    }
+  }
+
   fun deleteVariable(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<Variable, TypePermission> {
     val typePermission: TypePermission = userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
@@ -425,7 +990,7 @@ class VariableService(
     return if (!typePermission.deletable)
       throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_REMOVED}}")
     else {
-      val variable: Variable = variableRepository.findByTypeAndName(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
+      val variable: Variable = variableRepository.findVariable(type = typePermission.type, name = jsonParams.get(VariableConstants.VARIABLE_NAME).asString)
         ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_FOUND}}")
       variable.variableUniqueness.forEach { variableUniqueness ->
         val previousVariableUniqueness: VariableUniqueness? = if (variableUniqueness.level == 0) null
@@ -447,6 +1012,74 @@ class VariableService(
           }).single { it.id == variableUniqueness.id })
         } catch (exception: Exception) {
           throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.VARIABLE_NOT_REMOVED}}")
+        }
+      }
+      variable.type.uniqueConstraints.forEach { typeUniqueness ->
+        typeUniqueness.accumulators.forEach { typeAccumulator ->
+          val computedHash: String = computeHash(typeAccumulator.keys.sortedBy { it.id }.fold("") { acc, key ->
+            val value: Value = variable.values.single { it.key == key }
+            acc + when (value.key.type.name) {
+              TypeConstants.TEXT -> value.stringValue!!
+              TypeConstants.NUMBER -> value.longValue.toString()
+              TypeConstants.DECIMAL -> value.decimalValue.toString()
+              TypeConstants.BOOLEAN -> value.booleanValue.toString()
+              TypeConstants.DATE -> value.dateValue.toString()
+              TypeConstants.TIMESTAMP -> value.timestampValue.toString()
+              TypeConstants.TIME -> value.timeValue.toString()
+              TypeConstants.BLOB -> Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(1, value.blobValue!!.length().toInt()))
+              TypeConstants.FORMULA -> throw CustomJsonException("{}")
+              else -> value.referencedVariable!!.id
+            }
+          })
+          val rootVariableAccumulator: VariableAccumulator? = variableAccumulatorRepository.findVariableAccumulator(typeAccumulator = typeAccumulator, level = 0, hash = computedHash)
+          if (rootVariableAccumulator != null) {
+            val matchingVariableAccumulator: VariableAccumulator? = getMatchingVariableAccumulator(variable = variable, typeAccumulator = typeAccumulator, variableAccumulator = rootVariableAccumulator)
+            if (matchingVariableAccumulator != null) {
+              val symbols: JsonObject = JsonObject().apply {
+                add("acc", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, if(typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+                  when(typeAccumulator.type.name) {
+                    TypeConstants.TEXT -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.stringValue!!)
+                    TypeConstants.NUMBER -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.longValue!!)
+                    TypeConstants.DECIMAL -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.decimalValue!!)
+                    TypeConstants.BOOLEAN -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.booleanValue!!)
+                    TypeConstants.DATE -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.dateValue!!.time)
+                    TypeConstants.TIMESTAMP -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.timestampValue!!.time)
+                    TypeConstants.TIME -> addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.timeValue!!.time)
+                    TypeConstants.BLOB -> addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(matchingVariableAccumulator.blobValue!!.getBytes(1 ,matchingVariableAccumulator.blobValue!!.length().toInt())))
+                    TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                    else -> {
+                      addProperty(SymbolConstants.SYMBOL_VALUE, matchingVariableAccumulator.referencedVariable!!.name)
+                      add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = matchingVariableAccumulator.referencedVariable!!, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "acc.", excludeTopLevelFormulas = false))
+                    }
+                  }
+                })
+                add("it", JsonObject().apply {
+                  addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+                  addProperty(SymbolConstants.SYMBOL_VALUE, variable.name)
+                  add(SymbolConstants.SYMBOL_VALUES, getSymbolValues(variable = variable, symbolPaths = gson.fromJson(typeAccumulator.symbolPaths, JsonArray::class.java).map { it.asString }.toMutableSet(), prefix = "it.", excludeTopLevelFormulas = false))
+                })
+              }
+              val evaluatedValue = validateOrEvaluateExpression(expression = gson.fromJson(typeAccumulator.backwardExpression, JsonObject::class.java), symbols = symbols,
+                mode = LispConstants.EVALUATE, expectedReturnType = if (typeAccumulator.type.name in primitiveTypes) typeAccumulator.type.name else TypeConstants.TEXT)
+              when(typeAccumulator.type.name) {
+                TypeConstants.TEXT -> matchingVariableAccumulator.stringValue = evaluatedValue as String
+                TypeConstants.NUMBER -> matchingVariableAccumulator.longValue = evaluatedValue as Long
+                TypeConstants.DECIMAL -> matchingVariableAccumulator.decimalValue = evaluatedValue as BigDecimal
+                TypeConstants.BOOLEAN -> matchingVariableAccumulator.booleanValue = evaluatedValue as Boolean
+                TypeConstants.DATE -> matchingVariableAccumulator.dateValue = evaluatedValue as Date
+                TypeConstants.TIMESTAMP -> matchingVariableAccumulator.timestampValue = evaluatedValue as Timestamp
+                TypeConstants.TIME -> matchingVariableAccumulator.timeValue = evaluatedValue as Time
+                TypeConstants.BLOB -> matchingVariableAccumulator.blobValue = BlobProxy.generateProxy(evaluatedValue as ByteArray)
+                TypeConstants.FORMULA -> throw CustomJsonException("{}")
+                else -> {
+                  matchingVariableAccumulator.referencedVariable = variableRepository.findVariable(type = typeAccumulator.type, name = evaluatedValue as String)
+                    ?: throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+                }
+              }
+              variableAccumulatorJpaRepository.save(matchingVariableAccumulator)
+            }
+          }
         }
       }
       Pair(variable, typePermission)
@@ -507,7 +1140,7 @@ class VariableService(
 
   fun serialize(variable: Variable, typePermission: TypePermission): JsonObject {
     return JsonObject().apply {
-      addProperty("organization", variable.type.organization.id)
+      addProperty(OrganizationConstants.ORGANIZATION_ID, variable.type.organization.id)
       addProperty(OrganizationConstants.TYPE_NAME, variable.type.name)
       addProperty(VariableConstants.VARIABLE_NAME, variable.name)
       addProperty(VariableConstants.ACTIVE, variable.active)

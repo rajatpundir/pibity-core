@@ -11,8 +11,8 @@ package com.pibity.core.api
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.constants.RoleConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.Logger
 import com.pibity.core.serializers.serialize
 import com.pibity.core.services.GroupService
 import com.pibity.core.utils.getExpectedParams
@@ -24,6 +24,8 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -45,7 +47,8 @@ class GroupController(val groupService: GroupService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
+        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -59,7 +62,7 @@ class GroupController(val groupService: GroupService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

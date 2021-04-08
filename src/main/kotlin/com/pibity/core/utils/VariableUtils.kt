@@ -10,12 +10,16 @@ package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Value
 import com.pibity.core.entities.Variable
 import com.pibity.core.entities.permission.TypePermission
 import org.springframework.web.multipart.MultipartFile
+import java.math.BigDecimal
+import java.sql.Blob
+import java.sql.Date
+import java.sql.Time
 import java.sql.Timestamp
 import java.util.*
 
@@ -29,9 +33,9 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission, d
           TypeConstants.NUMBER -> addProperty(key.name, key.defaultLongValue ?: 0)
           TypeConstants.DECIMAL -> addProperty(key.name, key.defaultDecimalValue ?: (0.0).toBigDecimal())
           TypeConstants.BOOLEAN -> addProperty(key.name, key.defaultBooleanValue ?: false)
-          TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: java.sql.Date(defaultTimestamp.time).time)
+          TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: Date(defaultTimestamp.time).time)
           TypeConstants.TIMESTAMP -> addProperty(key.name, key.defaultTimestampValue?.time ?: defaultTimestamp.time)
-          TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: java.sql.Time(defaultTimestamp.time).time)
+          TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: Time(defaultTimestamp.time).time)
           TypeConstants.BLOB, TypeConstants.FORMULA -> {
           }
           else -> {
@@ -48,9 +52,9 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission, d
             TypeConstants.NUMBER -> addProperty(key.name, key.defaultLongValue ?: 0)
             TypeConstants.DECIMAL -> addProperty(key.name, key.defaultDecimalValue ?: (0.0).toBigDecimal())
             TypeConstants.BOOLEAN -> addProperty(key.name, key.defaultBooleanValue ?: false)
-            TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: java.sql.Date(defaultTimestamp.time).time)
+            TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: Date(defaultTimestamp.time).time)
             TypeConstants.TIMESTAMP -> addProperty(key.name, key.defaultTimestampValue?.time ?: defaultTimestamp.time)
-            TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: java.sql.Time(defaultTimestamp.time).time)
+            TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: Time(defaultTimestamp.time).time)
             TypeConstants.BLOB, TypeConstants.FORMULA -> {
             }
             else -> {
@@ -67,9 +71,9 @@ fun validateVariableValues(values: JsonObject, typePermission: TypePermission, d
               TypeConstants.NUMBER -> addProperty(key.name, values.get(key.name).asLong)
               TypeConstants.DECIMAL -> addProperty(key.name, values.get(key.name).asBigDecimal)
               TypeConstants.BOOLEAN -> addProperty(key.name, values.get(key.name).asBoolean)
-              TypeConstants.DATE -> addProperty(key.name, java.sql.Date(values.get(key.name).asLong).time)
+              TypeConstants.DATE -> addProperty(key.name, Date(values.get(key.name).asLong).time)
               TypeConstants.TIMESTAMP -> addProperty(key.name, Timestamp(values.get(key.name).asLong).time)
-              TypeConstants.TIME -> addProperty(key.name, java.sql.Time(values.get(key.name).asLong).time)
+              TypeConstants.TIME -> addProperty(key.name, Time(values.get(key.name).asLong).time)
               TypeConstants.BLOB -> {
                 val fileIndex: Int = values.get(key.name).asInt
                 if (fileIndex < 0 && fileIndex > (files.size - 1))
@@ -101,9 +105,9 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
             TypeConstants.NUMBER -> addProperty(key.name, key.defaultLongValue ?: 0)
             TypeConstants.DECIMAL -> addProperty(key.name, key.defaultDecimalValue ?: (0.0).toBigDecimal())
             TypeConstants.BOOLEAN -> addProperty(key.name, key.defaultBooleanValue ?: false)
-            TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: java.sql.Date(defaultTimestamp.time).time)
+            TypeConstants.DATE -> addProperty(key.name, key.defaultDateValue?.time ?: Date(defaultTimestamp.time).time)
             TypeConstants.TIMESTAMP -> addProperty(key.name, key.defaultTimestampValue?.time ?: defaultTimestamp.time)
-            TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: java.sql.Time(defaultTimestamp.time).time)
+            TypeConstants.TIME -> addProperty(key.name, key.defaultTimeValue?.time ?: Time(defaultTimestamp.time).time)
             TypeConstants.BLOB, TypeConstants.FORMULA -> {
             }
             else -> {
@@ -120,9 +124,9 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
               TypeConstants.NUMBER -> addProperty(key.name, values.get(key.name).asLong)
               TypeConstants.DECIMAL -> addProperty(key.name, values.get(key.name).asBigDecimal)
               TypeConstants.BOOLEAN -> addProperty(key.name, values.get(key.name).asBoolean)
-              TypeConstants.DATE -> addProperty(key.name, java.sql.Date(values.get(key.name).asLong).time)
+              TypeConstants.DATE -> addProperty(key.name, Date(values.get(key.name).asLong).time)
               TypeConstants.TIMESTAMP -> addProperty(key.name, Timestamp(values.get(key.name).asLong).time)
-              TypeConstants.TIME -> addProperty(key.name, java.sql.Time(values.get(key.name).asLong).time)
+              TypeConstants.TIME -> addProperty(key.name, Time(values.get(key.name).asLong).time)
               TypeConstants.BLOB -> {
                 val fileIndex: Int = values.get(key.name).asInt
                 if (fileIndex < 0 && fileIndex > (files.size - 1))
@@ -143,7 +147,7 @@ fun validateUpdatedVariableValues(values: JsonObject, typePermission: TypePermis
   }
 }
 
-fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, valueDependencies: MutableSet<Value> = mutableSetOf(), prefix: String = "", level: Int = 0, symbolsForFormula: Boolean): JsonObject {
+fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, valueDependencies: MutableSet<Value> = mutableSetOf(), prefix: String = "", level: Int = 0, excludeTopLevelFormulas: Boolean): JsonObject {
   return variable.values.fold(JsonObject()) { acc, value ->
     acc.apply {
       if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name) }) {
@@ -180,7 +184,7 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, valueDe
             addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
             addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(0, value.blobValue!!.length().toInt())))
           })
-          TypeConstants.FORMULA -> if (!symbolsForFormula || level != 0) {
+          TypeConstants.FORMULA -> if (!excludeTopLevelFormulas || level != 0) {
             when (value.key.formula!!.returnType.name) {
               TypeConstants.TEXT -> add(value.key.name, JsonObject().apply {
                 addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
@@ -222,7 +226,129 @@ fun getSymbolValues(variable: Variable, symbolPaths: MutableSet<String>, valueDe
             addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
             if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") })
               add(SymbolConstants.SYMBOL_VALUES,  getSymbolValues(prefix = prefix + value.key.name + ".", level = level + 1,variable = value.referencedVariable!!,
-                symbolPaths = symbolPaths, valueDependencies = valueDependencies, symbolsForFormula = symbolsForFormula)
+                symbolPaths = symbolPaths, valueDependencies = valueDependencies, excludeTopLevelFormulas = excludeTopLevelFormulas)
+              )
+          })
+        }
+        valueDependencies.add(value)
+        symbolPaths.remove(prefix + value.key.name)
+      }
+    }
+  }
+}
+
+fun getBackwardSymbolValuesForAccumulator(variable: Variable, symbolPaths: MutableSet<String>, valueDependencies: MutableSet<Value> = mutableSetOf(), prefix: String = "", level: Int = 0, excludeTopLevelFormulas: Boolean, accumulatorValues: Set<Pair<Key, Any>>): JsonObject {
+  return variable.values.fold(JsonObject()) { acc, value ->
+    acc.apply {
+      if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name) }) {
+        when (value.key.type.name) {
+          TypeConstants.TEXT -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as String))
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.stringValue!!)
+          })
+          TypeConstants.NUMBER -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Long))
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.longValue!!)
+          })
+          TypeConstants.DECIMAL -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as BigDecimal))
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.decimalValue!!)
+          })
+          TypeConstants.BOOLEAN -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Boolean))
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.booleanValue!!)
+          })
+          TypeConstants.DATE -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Date).time)
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.dateValue!!.time)
+          })
+          TypeConstants.TIMESTAMP -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Timestamp).time)
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.timestampValue!!.time)
+          })
+          TypeConstants.TIME -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Time).time)
+            else addProperty(SymbolConstants.SYMBOL_VALUE, value.timeValue!!.time)
+          })
+          TypeConstants.BLOB -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, value.key.type.name)
+            if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+              addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString((accumulatorValues.single { (k, _) -> k == value.key }.second as Blob).getBytes(0, (accumulatorValues.single { (k, _) -> k == value.key }.second as Blob).length().toInt())))
+            else addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(0, value.blobValue!!.length().toInt())))
+          })
+          TypeConstants.FORMULA -> if (!excludeTopLevelFormulas || level != 0) {
+            when (value.key.formula!!.returnType.name) {
+              TypeConstants.TEXT -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as String))
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.stringValue!!)
+              })
+              TypeConstants.NUMBER -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Long))
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.longValue!!)
+              })
+              TypeConstants.DECIMAL -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as BigDecimal))
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.decimalValue!!)
+              })
+              TypeConstants.BOOLEAN -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Boolean))
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.booleanValue!!)
+              })
+              TypeConstants.DATE -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Date).time)
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.dateValue!!.time)
+              })
+              TypeConstants.TIMESTAMP -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Timestamp).time)
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.timestampValue!!.time)
+              })
+              TypeConstants.TIME -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, (accumulatorValues.single { (k, _) -> k == value.key }.second as Time).time)
+                else addProperty(SymbolConstants.SYMBOL_VALUE, value.timeValue!!.time)
+              })
+              TypeConstants.BLOB -> add(value.key.name, JsonObject().apply {
+                addProperty(SymbolConstants.SYMBOL_TYPE, value.key.formula!!.returnType.name)
+                if (level == 0 && accumulatorValues.any { (k, _) -> k == value.key })
+                  addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString((accumulatorValues.single { (k, _) -> k == value.key }.second as Blob).getBytes(0, (accumulatorValues.single { (k, _) -> k == value.key }.second as Blob).length().toInt())))
+                else addProperty(SymbolConstants.SYMBOL_VALUE, Base64.getEncoder().encodeToString(value.blobValue!!.getBytes(0, value.blobValue!!.length().toInt())))
+              })
+              else -> throw CustomJsonException("{}")
+            }
+          }
+          else -> add(value.key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+            addProperty(KeyConstants.VALUE, value.referencedVariable!!.name)
+            if (symbolPaths.any { it.startsWith(prefix = prefix + value.key.name + ".") })
+              add(SymbolConstants.SYMBOL_VALUES,  getBackwardSymbolValuesForAccumulator(prefix = prefix + value.key.name + ".", level = level + 1,variable = value.referencedVariable!!,
+                symbolPaths = symbolPaths, valueDependencies = valueDependencies, excludeTopLevelFormulas = excludeTopLevelFormulas, accumulatorValues = accumulatorValues)
               )
           })
         }

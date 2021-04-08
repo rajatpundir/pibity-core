@@ -18,26 +18,11 @@ import javax.persistence.EntityManager
 class VariableRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
-  fun findByTypeAndName(type: Type, name: String): Variable? {
+  fun findVariable(type: Type, name: String): Variable? {
     val hql = "SELECT v FROM Variable v WHERE v.type = :type AND v.name = :name"
     return try {
       entityManager.createQuery(hql, Variable::class.java).apply {
         setParameter("type", type)
-        setParameter("name", name)
-      }.singleResult
-    } catch (exception: Exception) {
-      null
-    }
-  }
-
-  @Transactional(readOnly = true)
-  fun findVariable(orgId: Long, typeName: String, name: String = ""): Variable? {
-    val hql =
-      "SELECT v FROM Variable v WHERE v.type.organization.id = :orgId AND v.type.name = :typeName AND v.name = :name"
-    return try {
-      entityManager.createQuery(hql, Variable::class.java).apply {
-        setParameter("orgId", orgId)
-        setParameter("typeName", typeName)
         setParameter("name", name)
       }.singleResult
     } catch (exception: Exception) {

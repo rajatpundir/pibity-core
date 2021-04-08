@@ -9,6 +9,7 @@
 package com.pibity.core.entities
 
 import com.pibity.core.commons.constants.ApplicationConstants
+import com.pibity.core.entities.accumulator.TypeAccumulator
 import com.pibity.core.entities.assertion.TypeAssertion
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionInputKey
@@ -22,6 +23,8 @@ import java.math.BigDecimal
 import java.sql.Blob
 import java.sql.Time
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -47,7 +50,7 @@ data class Key(
 
     @Version
     @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+    val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
     @ManyToOne
     @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
@@ -110,6 +113,15 @@ data class Key(
     @ManyToMany(mappedBy = "keys")
     val dependentTypeUniqueness: Set<TypeUniqueness> = HashSet(),
 
+    @Column(name = "is_accumulator_dependency", nullable = false)
+    var isAccumulatorDependency: Boolean = false,
+
+    @ManyToMany(mappedBy = "keys")
+    val dependentTypeAccumulators: Set<TypeAccumulator> = HashSet(),
+
+    @ManyToMany(mappedBy = "keyDependencies")
+    val dependentTypeAccumulatorViaKeyDependencies: Set<TypeAccumulator> = HashSet(),
+
     @ManyToMany(mappedBy = "variableNameKeyDependencies")
     val dependentFunctionInputVariableNames: Set<FunctionInput> = HashSet(),
 
@@ -132,7 +144,7 @@ data class Key(
 
     @PreUpdate
     fun onUpdate() {
-        updated = Timestamp(System.currentTimeMillis())
+        updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
     }
 
     override fun equals(other: Any?): Boolean {

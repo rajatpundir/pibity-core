@@ -9,10 +9,13 @@
 package com.pibity.core.entities.circuit
 
 import com.pibity.core.commons.constants.ApplicationConstants
+import com.pibity.core.entities.accumulator.TypeAccumulator
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionOutput
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -38,7 +41,7 @@ data class CircuitComputationConnection(
 
     @Version
     @Column(name = "version", nullable = false)
-    val version: Timestamp = Timestamp(System.currentTimeMillis()),
+    val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
     @ManyToOne
     @JoinColumn(name = "connected_circuit_input_id")
@@ -56,6 +59,13 @@ data class CircuitComputationConnection(
     @JoinColumn(name = "connected_circuit_computation_circuit_output_id")
     val connectedCircuitComputationCircuitOutput: CircuitOutput? = null,
 
+    @ManyToOne
+    @JoinColumn(name = "connected_circuit_computation_type_accumulator_id")
+    val connectedCircuitComputationTypeAccumulator: TypeAccumulator? = null,
+
+    @OneToMany(mappedBy = "parentComputationConnection", cascade = [CascadeType.PERSIST, CascadeType.MERGE], orphanRemoval = true)
+    val connectedCircuitComputationAccumulatorKeys: MutableSet<CircuitComputationConnectionAccumulatorKey> = HashSet(),
+
     @Column(name = "created", nullable = false)
     val created: Timestamp,
 
@@ -66,7 +76,7 @@ data class CircuitComputationConnection(
 
     @PreUpdate
     fun onUpdate() {
-        updated = Timestamp(System.currentTimeMillis())
+        updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
     }
 
     override fun equals(other: Any?): Boolean {
