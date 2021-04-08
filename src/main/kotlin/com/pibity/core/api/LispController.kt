@@ -10,8 +10,8 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.LispConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.Logger
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.utils.validateOrEvaluateExpression

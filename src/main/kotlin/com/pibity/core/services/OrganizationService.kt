@@ -11,7 +11,7 @@ package com.pibity.core.services
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Role
 import com.pibity.core.entities.Type

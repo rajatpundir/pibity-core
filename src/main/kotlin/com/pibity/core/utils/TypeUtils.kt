@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -10,7 +10,7 @@ package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
 import org.springframework.web.multipart.MultipartFile
@@ -84,23 +84,46 @@ fun validateTypeKeys(keysJson: JsonObject, validTypes: Set<Type>, files: List<Mu
   }
 }
 
-fun getSymbols(type: Type, symbolPaths: MutableSet<String>, keyDependencies: MutableSet<Key> = mutableSetOf(), symbolsForFormula: Boolean, prefix: String = "", level: Int = 0): JsonObject {
+fun getSymbolsForFormula(type: Type, symbolPaths: MutableSet<String>, keyDependencies: MutableSet<Key> = mutableSetOf(), excludeTopLevelFormulas: Boolean, prefix: String = "", level: Int = 0): JsonObject {
   return type.keys.fold(JsonObject()) { acc, key ->
     acc.apply {
       if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
         when (key.type.name) {
           in primitiveTypes -> add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.type.name) })
-          TypeConstants.FORMULA -> if (!symbolsForFormula || level != 0)
+          TypeConstants.FORMULA -> if (!excludeTopLevelFormulas || level != 0)
             add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.formula!!.returnType.name) })
           else -> add(key.name, JsonObject().apply {
             addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
             if (key.referencedVariable != null && symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") })
-              add(SymbolConstants.SYMBOL_VALUES,  getSymbols(prefix = prefix + key.name + ".", level = level + 1, symbolPaths = symbolPaths,
-                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, symbolsForFormula = symbolsForFormula)
+              add(SymbolConstants.SYMBOL_VALUES,  getSymbolsForFormula(prefix = prefix + key.name + ".", level = level + 1, symbolPaths = symbolPaths,
+                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, excludeTopLevelFormulas = excludeTopLevelFormulas)
               )
           })
         }
-        keyDependencies.add(key.apply { if (symbolsForFormula) isFormulaDependency = true else isAssertionDependency = true })
+        keyDependencies.add(key.apply { isFormulaDependency = true })
+        symbolPaths.remove(prefix + key.name)
+      }
+    }
+  }
+}
+
+fun getSymbolsForAssertion(type: Type, symbolPaths: MutableSet<String>, keyDependencies: MutableSet<Key> = mutableSetOf(), excludeTopLevelFormulas: Boolean, prefix: String = "", level: Int = 0): JsonObject {
+  return type.keys.fold(JsonObject()) { acc, key ->
+    acc.apply {
+      if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
+        when (key.type.name) {
+          in primitiveTypes -> add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.type.name) })
+          TypeConstants.FORMULA -> if (!excludeTopLevelFormulas || level != 0)
+            add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.formula!!.returnType.name) })
+          else -> add(key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+            if (key.referencedVariable != null && symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") })
+              add(SymbolConstants.SYMBOL_VALUES,  getSymbolsForAssertion(prefix = prefix + key.name + ".", level = level + 1, symbolPaths = symbolPaths,
+                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, excludeTopLevelFormulas = excludeTopLevelFormulas)
+              )
+          })
+        }
+        keyDependencies.add(key.apply { isAssertionDependency = true })
         symbolPaths.remove(prefix + key.name)
       }
     }

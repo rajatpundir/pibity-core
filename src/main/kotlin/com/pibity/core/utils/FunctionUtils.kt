@@ -10,7 +10,7 @@ package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.function.FunctionInput
@@ -201,11 +201,11 @@ fun getSymbolsForFunction(inputs: Map<String, Type>, symbolPaths: MutableSet<Str
       add(inputName, JsonObject().apply {
         addProperty(SymbolConstants.SYMBOL_TYPE, if (inputType.name in primitiveTypes) inputType.name else TypeConstants.TEXT)
         if (symbolPaths.any { it.startsWith("$inputName.")})
-          add(SymbolConstants.SYMBOL_VALUES, getSymbols(type = inputType, symbolPaths = symbolPaths, symbolsForFormula = false, prefix = "$inputName."))
+          add(SymbolConstants.SYMBOL_VALUES, getSymbolsForFunction(type = inputType, symbolPaths = symbolPaths, excludeTopLevelFormulas = false, prefix = "$inputName."))
       })
     else if (symbolPaths.any { it.startsWith("$inputName.")})
       add(inputName, JsonObject().apply {
-        add(SymbolConstants.SYMBOL_VALUES, getSymbols(type = inputType, symbolPaths = symbolPaths, symbolsForFormula = false, prefix = "$inputName."))
+        add(SymbolConstants.SYMBOL_VALUES, getSymbolsForFunction(type = inputType, symbolPaths = symbolPaths, excludeTopLevelFormulas = false, prefix = "$inputName."))
       })
   }
 }
@@ -328,7 +328,7 @@ fun validateFunction(jsonParams: JsonObject, validTypes: Set<Type>): Quadruple<S
 fun getKeyDependencies(inputs: Map<String, Type>, symbolPaths: MutableSet<String>): MutableSet<Key> = inputs.entries.fold(mutableSetOf()) { acc, (inputName, inputType) ->
   acc.apply {
     val keyDependencies: MutableSet<Key> = mutableSetOf()
-    getSymbols(type = inputType, symbolPaths = symbolPaths, keyDependencies = keyDependencies, symbolsForFormula = false, prefix = "$inputName.")
+    getSymbolsForFunction(type = inputType, symbolPaths = symbolPaths, keyDependencies = keyDependencies, excludeTopLevelFormulas = false, prefix = "$inputName.")
     addAll(keyDependencies)
   }
 }
@@ -360,6 +360,29 @@ fun validateFunctionArgs(args: JsonObject, inputs: Set<FunctionInputPermission>,
       }
     } catch (exception: Exception) {
       throw CustomJsonException("{${FunctionConstants.ARGS}: {${input.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
+    }
+  }
+}
+
+fun getSymbolsForFunction(type: Type, symbolPaths: MutableSet<String>, keyDependencies: MutableSet<Key> = mutableSetOf(), excludeTopLevelFormulas: Boolean, prefix: String = "", level: Int = 0): JsonObject {
+  return type.keys.fold(JsonObject()) { acc, key ->
+    acc.apply {
+      if (symbolPaths.any { it.startsWith(prefix = prefix + key.name) }) {
+        when (key.type.name) {
+          in primitiveTypes -> add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.type.name) })
+          TypeConstants.FORMULA -> if (!excludeTopLevelFormulas || level != 0)
+            add(key.name, JsonObject().apply { addProperty(SymbolConstants.SYMBOL_TYPE, key.formula!!.returnType.name) })
+          else -> add(key.name, JsonObject().apply {
+            addProperty(SymbolConstants.SYMBOL_TYPE, TypeConstants.TEXT)
+            if (key.referencedVariable != null && symbolPaths.any { it.startsWith(prefix = prefix + key.name + ".") })
+              add(SymbolConstants.SYMBOL_VALUES,  getSymbolsForFunction(prefix = prefix + key.name + ".", level = level + 1, symbolPaths = symbolPaths,
+                type = key.referencedVariable!!.type, keyDependencies = keyDependencies, excludeTopLevelFormulas = excludeTopLevelFormulas)
+              )
+          })
+        }
+        keyDependencies.add(key)
+        symbolPaths.remove(prefix + key.name)
+      }
     }
   }
 }

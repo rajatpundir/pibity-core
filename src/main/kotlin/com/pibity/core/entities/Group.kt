@@ -14,6 +14,8 @@ import com.pibity.core.entities.mappings.UserGroup
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -34,7 +36,7 @@ data class Group(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL], orphanRemoval = true)
   val groupRoles: MutableSet<GroupRole> = HashSet(),
@@ -52,7 +54,7 @@ data class Group(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

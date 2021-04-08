@@ -6,10 +6,10 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.exceptions
+package com.pibity.core.commons
 
 import com.google.gson.JsonParser
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.Logger
 
 data class CustomJsonException(val json: String) : RuntimeException() {
 

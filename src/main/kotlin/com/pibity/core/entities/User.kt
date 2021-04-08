@@ -14,6 +14,8 @@ import com.pibity.core.entities.mappings.UserRole
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -37,7 +39,7 @@ data class User(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @Column(name = "active", nullable = false)
   var active: Boolean,
@@ -70,7 +72,7 @@ data class User(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

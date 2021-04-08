@@ -12,6 +12,8 @@ import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.mappings.embeddables.RoleTypePermissionId
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -32,7 +34,7 @@ data class RoleTypePermission(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

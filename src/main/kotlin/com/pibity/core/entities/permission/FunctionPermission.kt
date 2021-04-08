@@ -14,6 +14,8 @@ import com.pibity.core.entities.mappings.RoleFunctionPermission
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.*
 import javax.persistence.*
 
@@ -35,7 +37,7 @@ data class FunctionPermission(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL], orphanRemoval = true)
   var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
@@ -56,7 +58,7 @@ data class FunctionPermission(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

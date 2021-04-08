@@ -10,7 +10,7 @@ package com.pibity.core.utils
 
 import com.google.gson.*
 import com.pibity.core.commons.constants.MessageConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.keycloak.representations.AccessToken

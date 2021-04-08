@@ -12,8 +12,9 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Type
+import com.pibity.core.entities.accumulator.TypeAccumulator
 import com.pibity.core.entities.circuit.Circuit
 import com.pibity.core.entities.circuit.CircuitInput
 import com.pibity.core.entities.circuit.CircuitOutput
@@ -21,6 +22,7 @@ import com.pibity.core.entities.function.Function
 import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionOutput
 import com.pibity.core.entities.function.Mapper
+import com.pibity.core.entities.uniqueness.TypeUniqueness
 import org.springframework.web.multipart.MultipartFile
 import java.lang.Integer.max
 import java.sql.Timestamp
@@ -77,7 +79,7 @@ fun validateCircuitInputs(inputs: JsonObject, types: Set<Type>, files: List<Mult
   }
 }
 
-fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, types: Set<Type>, functions: Set<Function>, mappers: Set<Mapper>, circuits: Set<Circuit>): JsonObject {
+fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, types: Set<Type>, functions: Set<Function>, mappers: Set<Mapper>, circuits: Set<Circuit>, allTypeUniqueness: Set<TypeUniqueness>): JsonObject {
   val computationLevels: MutableMap<String, Int> = mutableMapOf()
   return computations.entrySet()
     .sortedBy {
@@ -154,7 +156,15 @@ fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, ty
                       when(referencedComputation.asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
                         CircuitConstants.FUNCTION -> add(functions.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }.outputs
                           .single { it.name == connection[2].asString && it.type == functionInput.type && it.operation != FunctionConstants.DELETE }.name)
-                        CircuitConstants.MAPPER -> throw CustomJsonException("{}")
+                        CircuitConstants.MAPPER -> {
+                          val typeUniqueness: TypeUniqueness = allTypeUniqueness.single { it.type == mappers.single { mapper ->  mapper.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.functionInput.function.outputs.single { output -> output.name == connection[3].asString }.type && it.name == connection[3].asString }
+                          val typeAccumulator: TypeAccumulator = typeUniqueness.accumulators.single { it.type == functionInput.type && it.name == connection[4].asString }
+                          add(typeAccumulator.keys.fold(JsonObject()) { acc2, key ->
+                            acc2.apply {
+                              add(key.name, inputs.entrySet().single { it.key == connection[5].asJsonObject.get(key.name).asString && key.type.name == it.value.asJsonObject.get(KeyConstants.KEY_TYPE).asString }.value)
+                            }
+                          })
+                        }
                         CircuitConstants.CIRCUIT -> add(circuits.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }.outputs
                           .single { it.name == connection[2].asString && getCircuitOutput(it).type == functionInput.type && getCircuitOutput(it).operation != FunctionConstants.DELETE }.name)
                         else -> throw CustomJsonException("{}")
@@ -308,7 +318,15 @@ fun validateCircuitComputations(computations: JsonObject, inputs: JsonObject, ty
                       when(referencedComputation.asJsonObject.get(KeyConstants.KEY_TYPE).asString) {
                         CircuitConstants.FUNCTION -> add(functions.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }.outputs
                           .single { it.name == connection[2].asString && it.type == circuitInput.type && it.operation != FunctionConstants.DELETE }.name)
-                        CircuitConstants.MAPPER -> throw CustomJsonException("{}")
+                        CircuitConstants.MAPPER -> {
+                          val typeUniqueness: TypeUniqueness = allTypeUniqueness.single { it.type == mappers.single { mapper -> mapper.name == referencedComputation.asJsonObject.get(CircuitConstants.EXECUTE).asString }.functionInput.function.outputs.single { output -> output.name == connection[3].asString }.type && it.name == connection[3].asString }
+                          val typeAccumulator: TypeAccumulator = typeUniqueness.accumulators.single { it.type == circuitInput.type && it.name == connection[4].asString }
+                          add(typeAccumulator.keys.fold(JsonObject()) { acc2, key ->
+                            acc2.apply {
+                              add(key.name, inputs.entrySet().single { it.key == connection[5].asJsonObject.get(key.name).asString && key.type.name == it.value.asJsonObject.get(KeyConstants.KEY_TYPE).asString }.value)
+                            }
+                          })
+                        }
                         CircuitConstants.CIRCUIT -> add(circuits.single { it.name == computationJson.get(CircuitConstants.EXECUTE).asString }.outputs
                           .single { it.name == connection[2].asString && getCircuitOutput(it).type == circuitInput.type && getCircuitOutput(it).operation != FunctionConstants.DELETE }.name)
                         else -> throw CustomJsonException("{}")
@@ -366,10 +384,10 @@ fun validateCircuitOutputs(outputs: JsonObject, computations: JsonObject): JsonO
   }
 }
 
-fun validateCircuit(jsonParams: JsonObject, types: Set<Type>, functions: Set<Function>, mappers: Set<Mapper>, circuits: Set<Circuit>, files: List<MultipartFile>): Quadruple<String, JsonObject, JsonObject, JsonObject> {
+fun validateCircuit(jsonParams: JsonObject, types: Set<Type>, functions: Set<Function>, mappers: Set<Mapper>, circuits: Set<Circuit>, allTypeUniqueness: Set<TypeUniqueness>, files: List<MultipartFile>): Quadruple<String, JsonObject, JsonObject, JsonObject> {
   val inputs: JsonObject = validateCircuitInputs(inputs = jsonParams.get(CircuitConstants.INPUTS).asJsonObject, types = types, files = files)
   val computations: JsonObject = validateCircuitComputations(computations = jsonParams.get(CircuitConstants.COMPUTATIONS).asJsonObject,
-    inputs = inputs, types = types, functions = functions, mappers = mappers, circuits = circuits)
+    inputs = inputs, types = types, functions = functions, mappers = mappers, circuits = circuits, allTypeUniqueness = allTypeUniqueness)
   val outputs: JsonObject = validateCircuitOutputs(outputs = jsonParams.get(CircuitConstants.OUTPUTS).asJsonObject, computations = computations)
   return Quadruple(validateCircuitName(circuitName = jsonParams.get(CircuitConstants.CIRCUIT_NAME).asString), inputs, computations, outputs)
 }

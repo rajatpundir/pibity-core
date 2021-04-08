@@ -10,17 +10,16 @@ package com.pibity.core.services
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Variable
 import com.pibity.core.entities.permission.TypePermission
 import com.pibity.core.repositories.query.TypePermissionRepository
 import com.pibity.core.repositories.query.ValueRepository
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
-import java.text.SimpleDateFormat
 
 @Service
-class QueryService(
+class VariableQueryService(
     val valueRepository: ValueRepository,
     val userService: UserService,
     val typePermissionRepository: TypePermissionRepository,
@@ -37,7 +36,7 @@ class QueryService(
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{${QueryConstants.QUERY} : ${exception.message}}")
     }
-    return Pair(valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
+    return Pair(valueRepository.queryVariables(hql = generatedQuery, injectedValues = injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
   }
 
   fun queryPublicVariables(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<List<Variable>, TypePermission> {
@@ -48,7 +47,7 @@ class QueryService(
     } catch (exception: CustomJsonException) {
       throw CustomJsonException("{${QueryConstants.QUERY} : ${exception.message}}")
     }
-    return Pair(valueRepository.queryVariables(generatedQuery, injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
+    return Pair(valueRepository.queryVariables(hql = generatedQuery, injectedValues = injectedValues, limit = jsonParams.get(QueryConstants.LIMIT).asInt, offset = jsonParams.get(QueryConstants.OFFSET).asInt), typePermission)
   }
 
   fun generateQuery(queryJson: JsonObject, username: String, typePermission: TypePermission, injectedVariableCount: Int = 0, injectedValues: MutableMap<String, Any> = mutableMapOf(), parentValueAlias: String? = null, defaultTimestamp: Timestamp): Triple<String, Int, MutableMap<String, Any>> {
@@ -357,11 +356,10 @@ class QueryService(
               }
             }
             TypeConstants.DATE -> {
-              val dateFormat = SimpleDateFormat("yyyy-MM-dd")
               if (!valuesJson.get(key.name).isJsonObject) {
                 keyQuery += " AND ${valueAlias}.dateValue = :v${variableCount}"
                 injectedValues["v${variableCount++}"] = try {
-                  java.sql.Date(dateFormat.parse(valuesJson.get(key.name).asString).time)
+                  java.sql.Date(valuesJson.get(key.name).asLong)
                 } catch (exception: Exception) {
                   throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
                 }
@@ -371,7 +369,7 @@ class QueryService(
                   keyQueryJson.has(QueryOperators.EQUALS) -> {
                     keyQuery += " AND ${valueAlias}.dateValue = :v${variableCount}"
                     injectedValues["v${variableCount++}"] = try {
-                      java.sql.Date(dateFormat.parse(keyQueryJson.get(QueryOperators.EQUALS).asString).time)
+                      java.sql.Date(keyQueryJson.get(QueryOperators.EQUALS).asLong)
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: {${QueryOperators.EQUALS}:${MessageConstants.UNEXPECTED_VALUE}}}")
                     }
@@ -379,7 +377,7 @@ class QueryService(
                   keyQueryJson.has(QueryOperators.GREATER_THAN_EQUALS) -> {
                     keyQuery += " AND ${valueAlias}.dateValue >= :v${variableCount}"
                     injectedValues["v${variableCount++}"] = try {
-                      java.sql.Date(dateFormat.parse(keyQueryJson.get(QueryOperators.GREATER_THAN_EQUALS).asString).time)
+                      java.sql.Date(keyQueryJson.get(QueryOperators.GREATER_THAN_EQUALS).asLong)
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     }
@@ -387,7 +385,7 @@ class QueryService(
                   keyQueryJson.has(QueryOperators.LESS_THAN_EQUALS) -> {
                     keyQuery += " AND ${valueAlias}.dateValue <= :v${variableCount}"
                     injectedValues["v${variableCount++}"] = try {
-                      java.sql.Date(dateFormat.parse(keyQueryJson.get(QueryOperators.LESS_THAN_EQUALS).asString).time)
+                      java.sql.Date(keyQueryJson.get(QueryOperators.LESS_THAN_EQUALS).asLong)
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     }
@@ -395,7 +393,7 @@ class QueryService(
                   keyQueryJson.has(QueryOperators.GREATER_THAN) -> {
                     keyQuery += " AND ${valueAlias}.dateValue > :v${variableCount}"
                     injectedValues["v${variableCount++}"] = try {
-                      java.sql.Date(dateFormat.parse(keyQueryJson.get(QueryOperators.GREATER_THAN).asString).time)
+                      java.sql.Date(keyQueryJson.get(QueryOperators.GREATER_THAN).asLong)
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     }
@@ -403,7 +401,7 @@ class QueryService(
                   keyQueryJson.has(QueryOperators.LESS_THAN) -> {
                     keyQuery += " AND ${valueAlias}.dateValue < :v${variableCount}"
                     injectedValues["v${variableCount++}"] = try {
-                      java.sql.Date(dateFormat.parse(keyQueryJson.get(QueryOperators.LESS_THAN).asString).time)
+                      java.sql.Date(keyQueryJson.get(QueryOperators.LESS_THAN).asLong)
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     }
@@ -416,7 +414,7 @@ class QueryService(
                       throw CustomJsonException("{${key.name}: {${QueryOperators.BETWEEN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     keyQueryJson.get(QueryOperators.BETWEEN).asJsonArray.forEach {
                       injectedValues["v${variableCount++}"] = try {
-                        java.sql.Date(dateFormat.parse(it.asString).time)
+                        java.sql.Date(it.asLong)
                       } catch (exception: Exception) {
                         throw CustomJsonException("{${key.name}: {${QueryOperators.BETWEEN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                       }
@@ -430,7 +428,7 @@ class QueryService(
                       throw CustomJsonException("{${key.name}: {${QueryOperators.NOT_BETWEEN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     keyQueryJson.get(QueryOperators.NOT_BETWEEN).asJsonArray.forEach {
                       injectedValues["v${variableCount++}"] = try {
-                        java.sql.Date(dateFormat.parse(it.asString).time)
+                        java.sql.Date(it.asLong)
                       } catch (exception: Exception) {
                         throw CustomJsonException("{${key.name}: {${QueryOperators.NOT_BETWEEN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                       }
@@ -444,7 +442,7 @@ class QueryService(
                       throw CustomJsonException("{${key.name}: {${QueryOperators.IN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
                     injectedValues["v${variableCount++}"] = try {
                       keyQueryJson.get(QueryOperators.IN).asJsonArray.map {
-                        java.sql.Date(dateFormat.parse(it.asString).time)
+                        java.sql.Date(it.asLong)
                       }
                     } catch (exception: Exception) {
                       throw CustomJsonException("{${key.name}: {${QueryOperators.IN}: ${MessageConstants.UNEXPECTED_VALUE}}}")
@@ -667,7 +665,7 @@ class QueryService(
                                 typePermissionRepository.findTypePermission(orgId = key.parentType.organization.id,
                                    typeName = key.type.name,
                                     name = QueryConstants.PUBLIC_USER)
-                                    ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: 'Type cannot be determined'}")
+                                    ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
                               } else {
                                 userService.superimposeUserTypePermissions(jsonParams = JsonObject().apply {
                                   addProperty(OrganizationConstants.ORGANIZATION_ID, key.parentType.organization.id)
@@ -755,9 +753,10 @@ class QueryService(
     }
     return if (keyQueries.size != 0) {
       var hql = if (parentValueAlias != null)
-        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ") + " AND ${variableAlias}=${parentValueAlias}.referencedVariable"
+        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE ${variableAlias}.type = :v${variableCount} AND  EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ") + " AND ${variableAlias}=${parentValueAlias}.referencedVariable"
       else
-        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ")
+        "SELECT DISTINCT $variableAlias FROM Variable $variableAlias WHERE ${variableAlias}.type = :v${variableCount} AND  EXISTS " + keyQueries.joinToString(separator = " AND EXISTS ")
+      injectedValues["v${variableCount++}"] = typePermission.type
       if (queryJson.has(VariableConstants.VARIABLE_NAME)) {
         if (queryJson.get(VariableConstants.VARIABLE_NAME).isJsonObject) {
           val variableQueryJson: JsonObject = queryJson.get(VariableConstants.VARIABLE_NAME).asJsonObject

@@ -11,10 +11,10 @@ package com.pibity.core.api
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.constants.RoleConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.Logger
 import com.pibity.core.utils.validateOrganizationClaim
 import com.pibity.core.serializers.serialize
 import com.pibity.core.services.RoleService
@@ -24,6 +24,8 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -46,7 +48,8 @@ class RoleController(val roleService: RoleService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createRole"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.createRole(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.createRole(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
+        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -60,7 +63,7 @@ class RoleController(val roleService: RoleService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRoleTypePermissions"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.updateRoleTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.updateRoleTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -74,7 +77,7 @@ class RoleController(val roleService: RoleService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateRoleFunctionPermissions"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(roleService.updateRoleFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(roleService.updateRoleFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

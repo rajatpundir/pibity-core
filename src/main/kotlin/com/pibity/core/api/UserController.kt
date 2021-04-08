@@ -11,8 +11,8 @@ package com.pibity.core.api
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.constants.RoleConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
-import com.pibity.core.commons.logger.Logger
+import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.Logger
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.utils.validateOrganizationClaim
@@ -29,6 +29,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
@@ -57,7 +59,8 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      val (user: User, typePermission: TypePermission) = userService.createUser(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      val (user: User, typePermission: TypePermission) = userService.createUser(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
+        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -72,7 +75,7 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserGroups"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      val (user: User, typePermission: TypePermission) = userService.updateUserGroups(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      val (user: User, typePermission: TypePermission) = userService.updateUserGroups(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -87,7 +90,7 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserRoles"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      val (user: User, typePermission: TypePermission) = userService.updateUserRoles(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      val (user: User, typePermission: TypePermission) = userService.updateUserRoles(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -102,7 +105,7 @@ class UserController(val userService: UserService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
-      val (user: User, typePermission: TypePermission) = userService.getUserDetails(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))
+      val (user: User, typePermission: TypePermission) = userService.getUserDetails(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -147,7 +150,7 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserTypePermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -163,7 +166,7 @@ class UserController(val userService: UserService) {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserFunctionPermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
-      ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp(System.currentTimeMillis()))).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

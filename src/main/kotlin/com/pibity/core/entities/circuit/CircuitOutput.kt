@@ -12,6 +12,8 @@ import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.function.FunctionOutput
 import java.io.Serializable
 import java.sql.Timestamp
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
@@ -32,7 +34,7 @@ data class CircuitOutput(
 
   @Version
   @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp(System.currentTimeMillis()),
+  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
   @ManyToOne
   @JoinColumn(name = "circuit_computation_id")
@@ -56,7 +58,7 @@ data class CircuitOutput(
 
   @PreUpdate
   fun onUpdate() {
-    updated = Timestamp(System.currentTimeMillis())
+    updated = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())
   }
 
   override fun equals(other: Any?): Boolean {

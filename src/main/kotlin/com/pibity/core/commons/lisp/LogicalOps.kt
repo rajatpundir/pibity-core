@@ -13,7 +13,7 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.LispConstants
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.TypeConstants
-import com.pibity.core.commons.exceptions.CustomJsonException
+import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.utils.validateOrEvaluateExpression
 import java.util.*
 

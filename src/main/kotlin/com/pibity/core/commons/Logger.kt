@@ -6,7 +6,7 @@
  * The copyright notice above does not evidence any actual or intended publication of such source code.
  */
 
-package com.pibity.core.commons.logger
+package com.pibity.core.commons
 
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
