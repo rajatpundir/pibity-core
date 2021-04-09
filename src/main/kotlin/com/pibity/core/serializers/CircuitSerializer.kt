@@ -12,6 +12,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.entities.accumulator.TypeAccumulator
 import com.pibity.core.entities.circuit.Circuit
 import java.util.*
 
@@ -54,13 +55,23 @@ fun serialize(circuit: Circuit): JsonObject = JsonObject().apply {
                 if (connection.connectedCircuitInput != null) {
                   add(CircuitConstants.INPUT)
                   add(connection.connectedCircuitInput.name)
-                } else {
+                } else if(connection.connectedCircuitComputation != null) {
                   add(CircuitConstants.COMPUTATION)
-                  add(connection.connectedCircuitComputation!!.name)
+                  add(connection.connectedCircuitComputation.name)
                   if (connection.connectedCircuitComputationFunctionOutput != null)
                     add(connection.connectedCircuitComputationFunctionOutput.name)
                   else
                     add(connection.connectedCircuitComputationCircuitOutput!!.name)
+                } else {
+                  val typeAccumulator: TypeAccumulator = connection.connectedCircuitComputationTypeAccumulator!!
+                  add(typeAccumulator.typeUniqueness.type.name)
+                  add(typeAccumulator.typeUniqueness.name)
+                  add(typeAccumulator.name)
+                  add(connection.connectedCircuitComputationAccumulatorKeys.fold(JsonObject()) { acc2, connectionAccumulatorKey ->
+                    acc2.apply {
+                      addProperty(connectionAccumulatorKey.key.name, connectionAccumulatorKey.circuitInput.name)
+                    }
+                  })
                 }
               })
             }
@@ -74,13 +85,23 @@ fun serialize(circuit: Circuit): JsonObject = JsonObject().apply {
                 if (connection.connectedCircuitInput != null) {
                   add(CircuitConstants.INPUT)
                   add(connection.connectedCircuitInput.name)
-                } else {
+                } else if(connection.connectedCircuitComputation != null) {
                   add(CircuitConstants.COMPUTATION)
-                  add(connection.connectedCircuitComputation!!.name)
+                  add(connection.connectedCircuitComputation.name)
                   if (connection.connectedCircuitComputationFunctionOutput != null)
                     add(connection.connectedCircuitComputationFunctionOutput.name)
                   else
                     add(connection.connectedCircuitComputationCircuitOutput!!.name)
+                } else {
+                  val typeAccumulator: TypeAccumulator = connection.connectedCircuitComputationTypeAccumulator!!
+                  add(typeAccumulator.typeUniqueness.type.name)
+                  add(typeAccumulator.typeUniqueness.name)
+                  add(typeAccumulator.name)
+                  add(connection.connectedCircuitComputationAccumulatorKeys.fold(JsonObject()) { acc2, connectionAccumulatorKey ->
+                    acc2.apply {
+                      addProperty(connectionAccumulatorKey.key.name, connectionAccumulatorKey.circuitInput.name)
+                    }
+                  })
                 }
               })
             }

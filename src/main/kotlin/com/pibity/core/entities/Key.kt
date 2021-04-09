@@ -15,7 +15,6 @@ import com.pibity.core.entities.function.FunctionInput
 import com.pibity.core.entities.function.FunctionInputKey
 import com.pibity.core.entities.function.FunctionOutput
 import com.pibity.core.entities.function.FunctionOutputKey
-import com.pibity.core.entities.permission.KeyPermission
 import com.pibity.core.entities.uniqueness.TypeUniqueness
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
@@ -55,9 +54,6 @@ data class Key(
     @ManyToOne
     @JoinColumns(JoinColumn(name = "type_id", referencedColumnName = "id"))
     val type: Type,
-
-    @OneToMany(mappedBy = "key", cascade = [CascadeType.ALL])
-    val permissions: Set<KeyPermission> = HashSet(),
 
     @Column(name = "key_order")
     var keyOrder: Int = 0,

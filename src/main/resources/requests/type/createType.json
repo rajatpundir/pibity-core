@@ -11,14 +11,14 @@
   "keys": {
     "type": "Object"
   },
-  "variables?": {
+  "variables": {
     "type": "Object"
   },
   "uniqueConstraints": {
     "type": "Object"
   },
   "permissions": {
-    "type": "Array"
+    "type": "Object"
   },
   "roles": {
     "type": "Object"

@@ -128,135 +128,73 @@ class TypeService(
       })
     type.uniqueConstraints.addAll(createTypeUniquenessConstraints(jsonParams = jsonParams, files = files, defaultTimestamp = defaultTimestamp))
     type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
-    type.permissions.addAll(createDefaultPermissionsForType(type = type, defaultTimestamp = defaultTimestamp))
-    type.permissions.addAll(createPermissionsForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
+    type.permissions.addAll(typePermissionService.createDefaultTypePermission(type = type, defaultTimestamp = defaultTimestamp))
+    type.permissions.addAll(createTypePermissions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
     assignTypePermissionsToRoles(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp)
-    if (jsonParams.has("variables?"))
-      createVariablesForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp, files = files)
+    createVariablesForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp, files = files)
     return type
   }
 
   fun createTypeUniquenessConstraints(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Set<TypeUniqueness> {
-    val uniqueConstraints: MutableSet<TypeUniqueness> = mutableSetOf()
-    for ((constraintName, jsonKeys) in jsonParams.get("uniqueConstraints").asJsonObject.entrySet()) {
-      uniqueConstraints.add(uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
-        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+    return jsonParams.get("uniqueConstraints").asJsonObject.entrySet().map { (uniquenessName, uniquenessJson) ->
+      uniquenessService.createUniqueness(jsonParams = JsonObject().apply {
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-        addProperty("constraintName", constraintName)
-        add("keys", jsonKeys.asJsonArray)
-      }, files = files, defaultTimestamp = defaultTimestamp))
-    }
-    return uniqueConstraints
+        addProperty("constraintName", uniquenessName)
+        add("keys", uniquenessJson.asJsonObject.get("keys").asJsonArray)
+        add("accumulators", jsonParams.get("accumulators").asJsonObject)
+      }, files = files, defaultTimestamp = defaultTimestamp)
+    }.toSet()
   }
 
   fun createTypeAssertions(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypeAssertion> {
-    val assertions: MutableSet<TypeAssertion> = mutableSetOf()
-    for ((assertionName, assertionExpression) in jsonParams.get("assertions").asJsonObject.entrySet()) {
-      assertions.add(assertionService.createAssertion(jsonParams = JsonObject().apply {
-        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+    return jsonParams.get("assertions").asJsonObject.entrySet().map { (assertionName, assertionJson) ->
+      assertionService.createAssertion(jsonParams = JsonObject().apply {
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         addProperty("assertionName", assertionName)
-        add("expression", assertionExpression.asJsonObject)
-      }, defaultTimestamp = defaultTimestamp))
-    }
-    return assertions
+        add("expression", assertionJson.asJsonObject)
+      }, defaultTimestamp = defaultTimestamp)
+    }.toSet()
   }
 
-  fun createPermissionsForType(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypePermission> {
-    val typePermissions: MutableSet<TypePermission> = mutableSetOf()
-    for (jsonPermission in jsonParams.get("permissions").asJsonArray) {
-      if (jsonPermission.isJsonObject) {
-        val (typePermission, _) = typePermissionService.createTypePermission(jsonParams = JsonObject().apply {
-          addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
-          addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-          try {
-            addProperty("permissionName", jsonParams.get("permissionName").asString)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {permissionName: ${MessageConstants.UNEXPECTED_VALUE}}}")
-          }
-          try {
-            addProperty("creatable", jsonParams.get("creatable").asBoolean)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {creatable: ${MessageConstants.UNEXPECTED_VALUE}}}")
-          }
-          try {
-            addProperty("deletable", jsonParams.get("deletable").asBoolean)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {deletable: ${MessageConstants.UNEXPECTED_VALUE}}}")
-          }
-          try {
-            add("permissions", jsonParams.get("permissions").asJsonArray)
-          } catch (exception: Exception) {
-            throw CustomJsonException("{permissions: {permissions: ${MessageConstants.UNEXPECTED_VALUE}}}")
-          }
-        }, defaultTimestamp = defaultTimestamp)
-        typePermissions.add(typePermission)
-      } else throw CustomJsonException("{permissions: ${MessageConstants.UNEXPECTED_VALUE}}")
-    }
-    return typePermissions
+  fun createTypePermissions(jsonParams: JsonObject, defaultTimestamp: Timestamp): Set<TypePermission> {
+    return jsonParams.get("permissions").asJsonObject.entrySet().map { (permissionName, permissionJson) ->
+      typePermissionService.createTypePermission(jsonParams = permissionJson.asJsonObject.apply {
+        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
+        addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+        addProperty("permissionName", permissionName)
+      }, defaultTimestamp = defaultTimestamp)
+    }.toSet()
   }
 
   fun assignTypePermissionsToRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
-    for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
-      if (permissionNames.isJsonArray) {
-        for (permissionName in permissionNames.asJsonArray) {
-          roleService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
-            addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
+    jsonParams.get("roles").asJsonObject.entrySet().forEach { (roleName, permissionsJson) ->
+      permissionsJson.asJsonArray.forEach {
+        roleService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
+          addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
+          addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
+          addProperty("roleName", roleName)
+          addProperty("permissionName", it.asString)
+        }, defaultTimestamp = defaultTimestamp)
+      }
+    }
+  }
+
+  fun createVariablesForType(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp) {
+    variableService.executeQueue(jsonParams = JsonObject().apply {
+      addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
+      add(VariableConstants.QUEUE, jsonParams.get("variables").asJsonObject.entrySet().foldIndexed(JsonObject()) { index, acc, (variableName, valuesJson) ->
+        acc.apply {
+          add(index.toString(), JsonObject().apply {
+            addProperty(VariableConstants.OPERATION, VariableConstants.CREATE)
             addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-            addProperty("roleName", roleName)
-            try {
-              addProperty("permissionName", permissionName.asString)
-            } catch (exception: Exception) {
-              throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}")
-            }
-            addProperty("operation", "add")
-          }, defaultTimestamp = defaultTimestamp)
+            addProperty(VariableConstants.VARIABLE_NAME, variableName)
+            add(VariableConstants.VALUES, valuesJson.asJsonArray)
+          })
         }
-      } else throw CustomJsonException("{roles: {${roleName}: ${MessageConstants.UNEXPECTED_VALUE}}}")
-    }
-  }
-
-  fun createVariablesForType(jsonParams: JsonObject, defaultTimestamp: Timestamp, files: List<MultipartFile>) {
-    for ((variableName, values) in jsonParams.get("variables?").asJsonObject.entrySet()) {
-      val jsonVariableParams = JsonObject()
-      jsonVariableParams.apply {
-        addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
-        addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
-        addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-        addProperty(VariableConstants.VARIABLE_NAME, variableName)
-        try {
-          add(VariableConstants.VALUES, values.asJsonObject)
-        } catch (exception: Exception) {
-          throw CustomJsonException("{${VariableConstants.VARIABLE_NAME}: {$variableName: {${VariableConstants.VALUES}: ${MessageConstants.UNEXPECTED_VALUE}}}}")
-        }
-      }
-      try {
-        variableService.createVariable(jsonParams = jsonVariableParams, defaultTimestamp = defaultTimestamp, files = files)
-      } catch (exception: CustomJsonException) {
-        throw CustomJsonException("{variables: {$variableName: ${exception.message}}}")
-      }
-    }
-  }
-
-  fun createDefaultPermissionsForType(type: Type, defaultTimestamp: Timestamp): Set<TypePermission> {
-    val defaultPermissions = mutableSetOf<TypePermission>()
-    defaultPermissions.add(
-      typePermissionService.createDefaultTypePermission(
-        type = type,
-        permissionName = "READ_ALL",
-        accessLevel = 1,
-        defaultTimestamp = defaultTimestamp
-      )
-    )
-    defaultPermissions.add(
-      typePermissionService.createDefaultTypePermission(
-        type = type,
-        permissionName = "WRITE_ALL",
-        accessLevel = 2,
-        defaultTimestamp = defaultTimestamp
-      )
-    )
-    return defaultPermissions
+      })
+    }, files = files, defaultTimestamp = defaultTimestamp)
   }
 
   fun getTypeDetails(jsonParams: JsonObject): Type {

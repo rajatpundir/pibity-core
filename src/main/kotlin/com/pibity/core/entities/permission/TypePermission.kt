@@ -9,6 +9,7 @@
 package com.pibity.core.entities.permission
 
 import com.pibity.core.commons.constants.ApplicationConstants
+import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.mappings.RoleTypePermission
 import com.pibity.core.serializers.serialize
@@ -39,14 +40,17 @@ data class TypePermission(
   @Column(name = "version", nullable = false)
   val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
-  @Column(name = "create_permission", nullable = false)
-  var creatable: Boolean = false,
+  @Column(name = "permission_type", nullable = false)
+  val permissionType: String,
 
-  @Column(name = "deletion_permission", nullable = false)
-  var deletable: Boolean = false,
+  @Column(name = "public", nullable = false)
+  val public: Boolean = false,
 
-  @OneToMany(mappedBy = "typePermission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  var keyPermissions: MutableSet<KeyPermission> = HashSet(),
+  @ManyToMany
+  @JoinTable(name = "mapping_type_permission_keys", schema = ApplicationConstants.SCHEMA,
+    joinColumns = [JoinColumn(name = "type_permission_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "key_id", referencedColumnName = "id")])
+  var keys: MutableSet<Key> = HashSet(),
 
   @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
   val permissionRoles: MutableSet<RoleTypePermission> = HashSet(),

@@ -9,13 +9,9 @@
 package com.pibity.core.services
 
 import com.google.gson.JsonObject
-import com.pibity.core.commons.constants.MessageConstants
-import com.pibity.core.commons.constants.OrganizationConstants
-import com.pibity.core.commons.constants.PermissionConstants
-import com.pibity.core.commons.constants.TypeConstants
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.constants.*
 import com.pibity.core.entities.Type
-import com.pibity.core.entities.permission.KeyPermission
 import com.pibity.core.entities.permission.TypePermission
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.jpa.TypePermissionJpaRepository
@@ -32,87 +28,55 @@ class TypePermissionService(
   val typePermissionJpaRepository: TypePermissionJpaRepository
   ) {
 
-  fun createTypePermission(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<TypePermission, Int> {
+  fun createTypePermission(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypePermission {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val typePermission = typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get("permissionName").asString, created = defaultTimestamp).apply {
-      if (jsonParams.has("creatable"))
-        creatable = jsonParams.get("creatable").asBoolean
-      if (jsonParams.has("deletable"))
-        deletable = jsonParams.get("deletable").asBoolean
-      val keyPermissionsJson: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = type)
-      keyPermissions.addAll(type.keys.map { KeyPermission(typePermission = this, key = it, accessLevel = keyPermissionsJson.get(it.name).asInt, created = defaultTimestamp) })
-    })
     return try {
-      typePermissionJpaRepository.save(typePermission)
-      Pair(typePermission, typePermission.keyPermissions.map { it.accessLevel }.maxOrNull() ?: 0)
+      typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get("permissionName").asString,
+        public = if (jsonParams.has("public?")) jsonParams.get("public?").asBoolean else false,
+        permissionType = setOf(VariableConstants.CREATE, "read",VariableConstants.UPDATE, VariableConstants.DELETE).single { it == jsonParams.get("permissionType").asString }, created = defaultTimestamp).apply {
+          if (permissionType != VariableConstants.DELETE)
+            keys = jsonParams.get("keys").asJsonArray.map { type.keys.single { key -> key.name == it.asString } }.toMutableSet()
+      })
     } catch (exception: Exception) {
       throw CustomJsonException("{permissionName: 'Permission could not be saved'}")
     }
   }
 
-  fun updateTypePermission(jsonParams: JsonObject): Pair<TypePermission, Int> {
-    val typePermission: TypePermission = (typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
-      ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}")).apply {
-      if (jsonParams.has("creatable"))
-        creatable = jsonParams.get("creatable").asBoolean
-      if (jsonParams.has("deletable"))
-        deletable = jsonParams.get("deletable").asBoolean
-      val keyPermissionsJson: JsonObject = validateKeyPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, type = this.type)
-      keyPermissions.forEach { keyPermission ->
-        if (keyPermissionsJson.has(keyPermission.key.name))
-          keyPermission.accessLevel = keyPermissionsJson.get(keyPermission.key.name).asInt
-      }
-    }
+  fun updateTypePermission(jsonParams: JsonObject): TypePermission {
+    val typePermission: TypePermission = typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
+      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
+      ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
-      typePermissionJpaRepository.save(typePermission)
-      Pair(typePermission, typePermission.keyPermissions.map { it.accessLevel }.maxOrNull() ?: 0)
+      typePermissionJpaRepository.save(typePermission.apply {
+        if (permissionType != VariableConstants.DELETE)
+          keys = jsonParams.get("keys").asJsonArray.map { type.keys.single { key -> key.name == it.asString } }.toMutableSet()
+      })
     } catch (exception: Exception) {
-      throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: 'Permission could not be updated'}")
+      throw CustomJsonException("{permissionName: 'Permission could not be saved'}")
     }
   }
 
-  fun createDefaultTypePermission(type: Type, permissionName: String, accessLevel: Int, defaultTimestamp: Timestamp): TypePermission {
-    return typePermissionJpaRepository.save(TypePermission(type = type, name = permissionName,
-      creatable = accessLevel == PermissionConstants.WRITE_ACCESS,
-      deletable = accessLevel == PermissionConstants.WRITE_ACCESS, created = defaultTimestamp).apply {
-      keyPermissions.addAll(type.keys.map { key -> KeyPermission(typePermission = this, key = key, accessLevel = accessLevel, created = defaultTimestamp) })
-    })
-  }
-
-  fun validateKeyPermissions(jsonParams: JsonObject, type: Type): JsonObject {
-    return type.keys.fold(JsonObject()) { acc, key ->
-      acc.apply {
-        if (jsonParams.has(key.name)) {
-          val accessLevel: Int = try {
-            jsonParams.get(key.name).asInt
-          } catch (exception: Exception) {
-            throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
-          }
-          when (key.type.name) {
-            TypeConstants.FORMULA -> if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.READ_ACCESS)
-              throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
-            else -> if (accessLevel < PermissionConstants.NO_ACCESS || accessLevel > PermissionConstants.WRITE_ACCESS)
-              throw CustomJsonException("{${key.name}: ${MessageConstants.UNEXPECTED_VALUE}}")
-          }
-          addProperty(key.name, accessLevel)
-        } else throw CustomJsonException("{${key.name}: ${MessageConstants.MISSING_FIELD}}")
-      }
-    }
+  fun createDefaultTypePermission(type: Type, defaultTimestamp: Timestamp): Set<TypePermission> {
+    return typePermissionJpaRepository.saveAll(setOf(
+      TypePermission(type = type, name = "CREATE", permissionType = VariableConstants.CREATE, keys = type.keys, created = defaultTimestamp),
+      TypePermission(type = type, name = "READ", permissionType = "read", keys = type.keys, created = defaultTimestamp),
+      TypePermission(type = type, name = "UPDATE", permissionType = VariableConstants.UPDATE, keys = type.keys, created = defaultTimestamp),
+      TypePermission(type = type, name = "DELETE", permissionType = VariableConstants.DELETE, keys = type.keys, created = defaultTimestamp))).toSet()
   }
 
   fun getTypePermissionDetails(jsonParams: JsonObject): TypePermission {
-    return (typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
+    return (typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
+      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
       ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 
-  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, type: Type, defaultTimestamp: Timestamp): TypePermission {
-    return TypePermission(type = type, name = "SUPERIMPOSED_PERMISSION",
-      creatable = typePermissions.fold(false) { acc, it -> acc || it.creatable },
-      deletable = typePermissions.fold(false) { acc, it -> acc || it.deletable }, created = defaultTimestamp).apply {
-        keyPermissions.addAll(type.keys.map { key ->
-          KeyPermission(typePermission = this, key = key, accessLevel = typePermissions.map { tp -> tp.keyPermissions.single { it.key == key }.accessLevel }.maxOrNull()!!, created = defaultTimestamp)
-        })
-    }
+  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, type: Type, permissionType: String, defaultTimestamp: Timestamp): TypePermission {
+    return TypePermission(type = type, name = "SUPERIMPOSED_PERMISSION", permissionType = permissionType,
+      keys = typePermissions.filter { it.type == type && it.permissionType == permissionType }.fold(mutableSetOf()) {acc, typePermission ->
+        acc.apply {
+          addAll(typePermission.keys)
+        }
+      }, created = defaultTimestamp)
   }
 }
