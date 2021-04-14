@@ -10,7 +10,7 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.RoleConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
 import com.pibity.core.serializers.serialize
@@ -46,7 +46,7 @@ class GroupController(val groupService: GroupService) {
   fun createGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createGroup"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(groupService.createGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -61,7 +61,7 @@ class GroupController(val groupService: GroupService) {
   fun updateGroup(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateGroup"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(groupService.updateGroup(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -75,7 +75,7 @@ class GroupController(val groupService: GroupService) {
   fun getGroupDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getGroupDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(groupService.getGroupDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

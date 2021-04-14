@@ -10,7 +10,7 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.RoleConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
 import com.pibity.core.utils.getExpectedParams
@@ -64,7 +64,7 @@ class MapperController(val mapperService: MapperService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getMapperDetails"]
         ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
       ResponseEntity(serialize(mapperService.getMapperDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -80,7 +80,7 @@ class MapperController(val mapperService: MapperService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeMapper"]
         ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
       ResponseEntity(mapperService.executeMapper(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

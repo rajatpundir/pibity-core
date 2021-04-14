@@ -10,7 +10,7 @@ package com.pibity.core.utils
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.OrganizationConstants
-import com.pibity.core.commons.constants.RoleConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.constants.realmResource
 import org.keycloak.admin.client.CreatedResponseUtil
 import org.keycloak.admin.client.resource.UserResource
@@ -21,7 +21,7 @@ import org.keycloak.representations.idm.UserRepresentation
 fun createKeycloakGroup(jsonParams: JsonObject) {
   realmResource.groups().add(GroupRepresentation().apply { name = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString }).use { response ->
     val parentGroupId: String = CreatedResponseUtil.getCreatedId(response)
-    setOf(RoleConstants.ADMIN, RoleConstants.USER).forEach { subGroupName ->
+    setOf(SpaceConstants.ADMIN, SpaceConstants.USER).forEach { subGroupName ->
       realmResource.groups().group(parentGroupId).subGroup(GroupRepresentation().apply { name = subGroupName })
     }
   }

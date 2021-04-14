@@ -10,14 +10,14 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.commons.Logger
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.utils.validateOrganizationClaim
 import com.pibity.core.serializers.serialize
-import com.pibity.core.services.TypePermissionService
+import com.pibity.core.services.SubspaceService
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -30,39 +30,24 @@ import javax.annotation.security.RolesAllowed
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = ["/api/typePermission"], consumes = [MediaType.APPLICATION_JSON_VALUE])
-class TypePermissionController(val typePermissionService: TypePermissionService) {
+@RequestMapping(path = ["/api/subspace"], consumes = [MediaType.APPLICATION_JSON_VALUE])
+class SubspaceController(val subspaceService: SubspaceService) {
 
   private val logger by Logger()
 
   private val expectedParams: Map<String, JsonObject> = mapOf(
-      "createPermission" to getExpectedParams("typePermission", "createPermission"),
-      "updatePermission" to getExpectedParams("typePermission", "updatePermission"),
-      "getPermissionDetails" to getExpectedParams("typePermission", "getPermissionDetails")
+      "createSubspace" to getExpectedParams("subspace", "createSubspace"),
+      "getSubspaceDetails" to getExpectedParams("subspace", "getSubspaceDetails")
   )
 
   @PostMapping(path = ["/create"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun createPermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun createSubspace(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createPermission"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["createSubspace"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
-      ResponseEntity(serialize(typePermissionService.createTypePermission(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
-        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).first).toString(), HttpStatus.OK)
-    } catch (exception: CustomJsonException) {
-      val message: String = exception.message
-      logger.info("Exception caused via request: $request with message: $message")
-      ResponseEntity(message, HttpStatus.BAD_REQUEST)
-    }
-  }
-
-  @PostMapping(path = ["/update"], produces = [MediaType.APPLICATION_JSON_VALUE])
-  @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun updatePermission(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
-    return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["updatePermission"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
-      ResponseEntity(serialize(typePermissionService.updateTypePermission(jsonParams = jsonParams).first).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(subspaceService.createSubspace(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
+        ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")
@@ -72,11 +57,11 @@ class TypePermissionController(val typePermissionService: TypePermissionService)
 
   @PostMapping(path = ["/details"], produces = [MediaType.APPLICATION_JSON_VALUE])
   @RolesAllowed(KeycloakConstants.ROLE_SUPERUSER)
-  fun getPermissionDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
+  fun getSubspaceDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
-      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getPermissionDetails"] ?: JsonObject())
+      val jsonParams: JsonObject = getJsonParams(request, expectedParams["getSubspaceDetails"] ?: JsonObject())
       validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
-      ResponseEntity(serialize(typePermissionService.getTypePermissionDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
+      ResponseEntity(serialize(subspaceService.getSubspaceDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
       logger.info("Exception caused via request: $request with message: $message")

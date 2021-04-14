@@ -13,11 +13,11 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Organization
-import com.pibity.core.entities.Role
+import com.pibity.core.entities.Subspace
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.User
-import com.pibity.core.entities.mappings.UserRole
-import com.pibity.core.entities.mappings.embeddables.UserRoleId
+import com.pibity.core.entities.mappings.UserSubspace
+import com.pibity.core.entities.mappings.embeddables.UserSubspaceId
 import com.pibity.core.repositories.jpa.*
 import com.pibity.core.repositories.query.RoleRepository
 import com.pibity.core.utils.*
@@ -28,15 +28,15 @@ import java.sql.Timestamp
 
 @Service
 class OrganizationService(
-    val organizationJpaRepository: OrganizationJpaRepository,
-    val typeJpaRepository: TypeJpaRepository,
-    val typeService: TypeService,
-    val userJpaRepository: UserJpaRepository,
-    val userService: UserService,
-    val roleService: RoleService,
-    val roleRepository: RoleRepository,
-    val variableService: VariableService,
-    val functionService: FunctionService
+  val organizationJpaRepository: OrganizationJpaRepository,
+  val typeJpaRepository: TypeJpaRepository,
+  val typeService: TypeService,
+  val userJpaRepository: UserJpaRepository,
+  val userService: UserService,
+  val subspaceService: SubspaceService,
+  val roleRepository: RoleRepository,
+  val variableService: VariableService,
+  val functionService: FunctionService
 ) {
 
   fun createOrganization(jsonParams: JsonObject, files: List<MultipartFile>, defaultTimestamp: Timestamp): Organization {
@@ -72,9 +72,9 @@ class OrganizationService(
       created = defaultTimestamp
     )
     superuser = userJpaRepository.save(superuser)
-    val role: Role = roleRepository.findRole(orgId = organization.id, name = RoleConstants.ADMIN)
+    val role: Subspace = roleRepository.findRole(orgId = organization.id, name = SpaceConstants.ADMIN)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-    superuser.userRoles.add(UserRole(id = UserRoleId(user = superuser, role = role), created = defaultTimestamp))
+    superuser.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = superuser, role = role), created = defaultTimestamp))
     superuser = userJpaRepository.save(superuser)
     createCustomTypes(organization = organization, username = superuser.username, defaultTimestamp = defaultTimestamp, files = files)
     superuser.details = try {
@@ -102,7 +102,7 @@ class OrganizationService(
       addProperty("firstName", jsonParams.get("firstName").asString)
       addProperty("lastName", jsonParams.get("lastName").asString)
       addProperty("password", jsonParams.get("password").asString)
-      add("roles", JsonArray().apply { add(RoleConstants.ADMIN) })
+      add("roles", JsonArray().apply { add(SpaceConstants.ADMIN) })
       add("details", jsonParams.get("details").asJsonObject)
     }, defaultTimestamp = defaultTimestamp, files = files)
     return organization
@@ -111,7 +111,7 @@ class OrganizationService(
   fun createDefaultRoles(organization: Organization, defaultTimestamp: Timestamp) {
     val jsonRoles: JsonArray = gson.fromJson(FileReader("src/main/resources/roles/index.json"), JsonArray::class.java)
     for (jsonRole in jsonRoles) {
-      roleService.createRole(JsonObject().apply {
+      subspaceService.createRole(JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, organization.id)
         addProperty("roleName", jsonRole.asString)
       }, defaultTimestamp = defaultTimestamp)

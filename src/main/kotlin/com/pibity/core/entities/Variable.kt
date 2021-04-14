@@ -18,7 +18,7 @@ import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
-@Table(name = "variable", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["type_id", "name"])])
+@Table(name = "variable", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["subspace_id", "type_id", "name"])])
 data class Variable(
 
   @Id
@@ -27,6 +27,11 @@ data class Variable(
   val id: Long = -1,
 
   @ManyToOne
+  @JoinColumn(name = "subspace_id", nullable = false)
+  val subspace: Subspace,
+
+  @ManyToOne
+  @JoinColumn(name = "type_id", nullable = false)
   val type: Type,
 
   @Column(name = "name", nullable = false)
@@ -68,7 +73,7 @@ data class Variable(
     other ?: return false
     if (this === other) return true
     other as Variable
-    return this.type == other.type && this.name == other.name
+    return this.subspace == other.subspace && this.type == other.type && this.name == other.name
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()

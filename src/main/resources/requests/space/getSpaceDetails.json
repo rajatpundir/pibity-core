@@ -1,0 +1,8 @@
+{
+  "orgId": {
+    "type": "Long"
+  },
+  "spaceName": {
+    "type": "String"
+  }
+}

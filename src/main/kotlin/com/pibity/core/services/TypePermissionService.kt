@@ -71,7 +71,9 @@ class TypePermissionService(
       ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 
-  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, type: Type, permissionType: String, defaultTimestamp: Timestamp): TypePermission {
+  fun superimposeTypePermissions(typePermissions: Set<TypePermission>, permissionType: String, defaultTimestamp: Timestamp): TypePermission? {
+    if (typePermissions.isNotEmpty())
+      typePermissions.fold(TypePermission(type = typePermissions.first().type, name = "SUPERIMPOSED_PERMISSION", ))
     return TypePermission(type = type, name = "SUPERIMPOSED_PERMISSION", permissionType = permissionType,
       keys = typePermissions.filter { it.type == type && it.permissionType == permissionType }.fold(mutableSetOf()) {acc, typePermission ->
         acc.apply {

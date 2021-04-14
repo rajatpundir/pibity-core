@@ -10,7 +10,7 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.RoleConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
 import com.pibity.core.utils.getExpectedParams
@@ -58,7 +58,7 @@ class UserController(val userService: UserService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createUser"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       val (user: User, typePermission: TypePermission) = userService.createUser(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
@@ -74,7 +74,7 @@ class UserController(val userService: UserService) {
   fun updateUserGroups(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserGroups"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       val (user: User, typePermission: TypePermission) = userService.updateUserGroups(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -89,7 +89,7 @@ class UserController(val userService: UserService) {
   fun updateUserRoles(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["updateUserRoles"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       val (user: User, typePermission: TypePermission) = userService.updateUserRoles(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -104,7 +104,7 @@ class UserController(val userService: UserService) {
   fun getUserDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
       val (user: User, typePermission: TypePermission) = userService.getUserDetails(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(userService.serialize(user, typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -119,7 +119,7 @@ class UserController(val userService: UserService) {
   fun getUserTypePermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserTypePermissions"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(userService.getUserTypePermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -133,7 +133,7 @@ class UserController(val userService: UserService) {
   fun getUserFunctionPermissions(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getUserFunctionPermissions"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(userService.getUserFunctionPermissions(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -149,7 +149,7 @@ class UserController(val userService: UserService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserTypePermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(userService.superimposeUserTypePermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message
@@ -165,7 +165,7 @@ class UserController(val userService: UserService) {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["superimposeUserFunctionPermissions"]
           ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
       ResponseEntity(serialize(userService.superimposeUserFunctionPermissions(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

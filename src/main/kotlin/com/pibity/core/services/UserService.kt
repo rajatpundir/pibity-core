@@ -18,15 +18,15 @@ import com.pibity.core.utils.gson
 import com.pibity.core.utils.joinKeycloakGroups
 import com.pibity.core.entities.*
 import com.pibity.core.entities.mappings.UserGroup
-import com.pibity.core.entities.mappings.UserRole
+import com.pibity.core.entities.mappings.UserSubspace
 import com.pibity.core.entities.mappings.embeddables.UserGroupId
-import com.pibity.core.entities.mappings.embeddables.UserRoleId
+import com.pibity.core.entities.mappings.embeddables.UserSubspaceId
 import com.pibity.core.entities.permission.FunctionPermission
 import com.pibity.core.entities.permission.TypePermission
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
 import com.pibity.core.repositories.jpa.UserJpaRepository
 import com.pibity.core.repositories.mappings.UserGroupRepository
-import com.pibity.core.repositories.mappings.UserRoleRepository
+import com.pibity.core.repositories.mappings.UserSubspaceRepository
 import com.pibity.core.repositories.query.GroupRepository
 import com.pibity.core.repositories.query.RoleRepository
 import com.pibity.core.repositories.query.UserRepository
@@ -44,7 +44,7 @@ class UserService(
   val userJpaRepository: UserJpaRepository,
   val typePermissionService: TypePermissionService,
   val functionPermissionService: FunctionPermissionService,
-  val userRoleRepository: UserRoleRepository,
+  val userSubspaceRepository: UserSubspaceRepository,
   val userGroupRepository: UserGroupRepository,
   @Lazy val variableService: VariableService
 ) {
@@ -60,7 +60,7 @@ class UserService(
     joinKeycloakGroups(jsonParams = jsonParams.apply {
       addProperty("keycloakUserId", keycloakId)
       if (!jsonParams.has("subGroups"))
-        jsonParams.add("subGroups", gson.fromJson(gson.toJson(listOf(RoleConstants.USER)), JsonArray::class.java))
+        jsonParams.add("subGroups", gson.fromJson(gson.toJson(listOf(SpaceConstants.USER)), JsonArray::class.java))
     })
     var user = User(organization = organization, username = keycloakId,
       active = jsonParams.get("active").asBoolean,
@@ -76,9 +76,9 @@ class UserService(
       } catch (exception: Exception) {
         throw CustomJsonException("{roles: ${MessageConstants.UNEXPECTED_VALUE}}")
       }
-      val role: Role = roleRepository.findRole(orgId = organization.id, name = roleName)
+      val role: Subspace = roleRepository.findRole(orgId = organization.id, name = roleName)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-      user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role), created = defaultTimestamp))
+      user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
     }
     user = userJpaRepository.save(user)
     val (details: Variable, typePermission: TypePermission) = try {
@@ -128,13 +128,13 @@ class UserService(
   fun updateUserRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
     val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val role: Role = roleRepository.findRole(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("roleName").asString)
+    val role: Subspace = roleRepository.findRole(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("roleName").asString)
       ?: throw CustomJsonException("{roleName: ${MessageConstants.UNEXPECTED_VALUE}}")
     when (jsonParams.get("operation").asString) {
-      "add" -> user.userRoles.add(UserRole(id = UserRoleId(user = user, role = role), created = defaultTimestamp))
+      "add" -> user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
       "remove" -> {
-        userRoleRepository.delete(UserRole(id = UserRoleId(user = user, role = role), created = defaultTimestamp))
-        user.userRoles.remove(UserRole(id = UserRoleId(user = user, role = role), created = defaultTimestamp))
+        userSubspaceRepository.delete(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
+        user.userSubspaces.remove(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
       }
       else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
@@ -218,7 +218,7 @@ class UserService(
     addProperty("lastName", user.lastName)
     add("details", variableService.serialize(user.details!!, typePermission))
     add("groups", com.pibity.core.serializers.mappings.serialize(user.userGroups))
-    add("roles", com.pibity.core.serializers.mappings.serialize(user.userRoles))
+    add("roles", com.pibity.core.serializers.mappings.serialize(user.userSubspaces))
   }
 
   fun serialize(entities: Set<User>, typePermission: TypePermission): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity, typePermission)) } }

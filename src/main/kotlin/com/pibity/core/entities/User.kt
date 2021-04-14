@@ -10,8 +10,7 @@ package com.pibity.core.entities
 
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.mappings.UserGroup
-import com.pibity.core.entities.mappings.UserRole
-import com.pibity.core.serializers.serialize
+import com.pibity.core.entities.mappings.UserSubspace
 import java.io.Serializable
 import java.sql.Timestamp
 import java.time.ZoneId
@@ -57,7 +56,7 @@ data class User(
   var details: Variable? = null,
 
   @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val userRoles: MutableSet<UserRole> = HashSet(),
+  val userSubspaces: MutableSet<UserSubspace> = HashSet(),
 
   @OneToMany(mappedBy = "id.user", cascade = [CascadeType.ALL], orphanRemoval = true)
   val userGroups: MutableSet<UserGroup> = HashSet(),

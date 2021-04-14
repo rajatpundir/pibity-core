@@ -10,7 +10,7 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.RoleConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
 import com.pibity.core.services.VariableQueryService
@@ -59,7 +59,7 @@ class QueryController(
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryVariables"]
         ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
       val (variables: List<Variable>, typePermission: TypePermission) = variableQueryService.queryVariables(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(variableService.serialize(variables = variables.toSet(), typePermission = typePermission).toString(), HttpStatus.OK)
@@ -90,7 +90,7 @@ class QueryController(
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["queryAccumulators"]
         ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = RoleConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
       val (variableAccumulators: List<VariableAccumulator>, typePermission: TypePermission) = accumulatorQueryService.queryAccumulators(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))
       ResponseEntity(accumulatorService.serialize(variableAccumulators = variableAccumulators.toSet(), typePermission = typePermission).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {

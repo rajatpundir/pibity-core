@@ -2,13 +2,13 @@
   "orgId": {
     "type": "Long"
   },
-  "groupName": {
-    "type": "String"
-  },
   "spaceName": {
     "type": "String"
   },
-  "subspaceName": {
+  "typeName": {
+    "type": "String"
+  },
+  "permissionName": {
     "type": "String"
   },
   "operation": {

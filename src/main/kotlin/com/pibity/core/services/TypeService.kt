@@ -40,7 +40,7 @@ class TypeService(
   val variableRepository: VariableRepository,
   val variableService: VariableService,
   val typePermissionService: TypePermissionService,
-  val roleService: RoleService
+  val subspaceService: SubspaceService
 ) {
 
   @Suppress("UNCHECKED_CAST")
@@ -171,7 +171,7 @@ class TypeService(
   fun assignTypePermissionsToRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
     jsonParams.get("roles").asJsonObject.entrySet().forEach { (roleName, permissionsJson) ->
       permissionsJson.asJsonArray.forEach {
-        roleService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
+        subspaceService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
           addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
           addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
           addProperty("roleName", roleName)

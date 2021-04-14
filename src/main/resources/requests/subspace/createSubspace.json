@@ -2,16 +2,10 @@
   "orgId": {
     "type": "Long"
   },
-  "groupName": {
-    "type": "String"
-  },
   "spaceName": {
     "type": "String"
   },
   "subspaceName": {
-    "type": "String"
-  },
-  "operation": {
     "type": "String"
   }
 }

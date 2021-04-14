@@ -48,7 +48,7 @@ class FunctionService(
   val functionPermissionService: FunctionPermissionService,
   val variableRepository: VariableRepository,
   val variableService: VariableService,
-  val roleService: RoleService,
+  val subspaceService: SubspaceService,
   val userService: UserService
 ) {
 
@@ -203,7 +203,7 @@ class FunctionService(
     for ((roleName, permissionNames) in jsonParams.get("roles").asJsonObject.entrySet()) {
       if (permissionNames.isJsonArray) {
         for (permissionName in permissionNames.asJsonArray) {
-          roleService.updateRoleFunctionPermissions(jsonParams = JsonObject().apply {
+          subspaceService.updateRoleFunctionPermissions(jsonParams = JsonObject().apply {
             addProperty("orgId", jsonParams.get("orgId").asString)
             addProperty(FunctionConstants.FUNCTION_NAME, jsonParams.get(FunctionConstants.FUNCTION_NAME).asString)
             addProperty("roleName", roleName)

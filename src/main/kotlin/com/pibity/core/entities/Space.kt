@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2020-2021 Pibity Infotech Private Limited - All Rights Reserved
  * Unauthorized copying of this file, via any medium is strictly prohibited
  * Proprietary and confidential
@@ -9,9 +9,8 @@
 package com.pibity.core.entities
 
 import com.pibity.core.commons.constants.ApplicationConstants
-import com.pibity.core.entities.mappings.GroupSubspace
-import com.pibity.core.entities.mappings.UserGroup
-import com.pibity.core.serializers.serialize
+import com.pibity.core.entities.mappings.SpaceFunctionPermission
+import com.pibity.core.entities.mappings.SpaceTypePermission
 import java.io.Serializable
 import java.sql.Timestamp
 import java.time.ZoneId
@@ -19,12 +18,12 @@ import java.time.ZonedDateTime
 import javax.persistence.*
 
 @Entity
-@Table(name = "groups", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
-data class Group(
+@Table(name = "space", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [UniqueConstraint(columnNames = ["organization_id", "name"])])
+data class Space(
 
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "group_generator")
-  @SequenceGenerator(name = "group_generator", sequenceName = "group_sequence")
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "space_generator")
+  @SequenceGenerator(name="space_generator", sequenceName = "space_sequence")
   val id: Long = -1,
 
   @ManyToOne
@@ -34,15 +33,14 @@ data class Group(
   @Column(name = "name", nullable = false)
   val name: String,
 
-  @Version
-  @Column(name = "version", nullable = false)
-  val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
+  @Column(name = "active", nullable = false)
+  var active: Boolean,
 
-  @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val groupSubspaces: MutableSet<GroupSubspace> = HashSet(),
+  @OneToMany(mappedBy = "id.space", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val spaceTypePermissions: MutableSet<SpaceTypePermission> = HashSet(),
 
-  @OneToMany(mappedBy = "id.group", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val groupUsers: MutableSet<UserGroup> = HashSet(),
+  @OneToMany(mappedBy = "id.space", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val spaceFunctionPermissions: MutableSet<SpaceFunctionPermission> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,
@@ -60,11 +58,9 @@ data class Group(
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as Group
+    other as Space
     return this.organization == other.organization && this.name == other.name
   }
 
   override fun hashCode(): Int = (id % Int.MAX_VALUE).toInt()
-
-  override fun toString(): String = serialize(this).toString()
 }

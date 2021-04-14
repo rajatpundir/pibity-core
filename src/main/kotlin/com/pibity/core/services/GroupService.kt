@@ -14,24 +14,24 @@ import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Group
 import com.pibity.core.entities.Organization
-import com.pibity.core.entities.Role
-import com.pibity.core.entities.mappings.GroupRole
-import com.pibity.core.entities.mappings.embeddables.GroupRoleId
+import com.pibity.core.entities.Subspace
+import com.pibity.core.entities.mappings.GroupSubspace
+import com.pibity.core.entities.mappings.embeddables.GroupSubspaceId
 import com.pibity.core.repositories.jpa.GroupJpaRepository
 import com.pibity.core.repositories.query.GroupRepository
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
-import com.pibity.core.repositories.query.RoleRepository
-import com.pibity.core.repositories.mappings.GroupRoleRepository
+import com.pibity.core.repositories.query.SubspaceRepository
+import com.pibity.core.repositories.mappings.GroupSubspaceRepository
 import org.springframework.stereotype.Service
 import java.sql.Timestamp
 
 @Service
 class GroupService(
-    val organizationJpaRepository: OrganizationJpaRepository,
-    val groupRepository: GroupRepository,
-    val roleRepository: RoleRepository,
-    val groupRoleRepository: GroupRoleRepository,
-    val groupJpaRepository: GroupJpaRepository
+  val organizationJpaRepository: OrganizationJpaRepository,
+  val groupRepository: GroupRepository,
+  val subspaceRepository: SubspaceRepository,
+  val groupSubspaceRepository: GroupSubspaceRepository,
+  val groupJpaRepository: GroupJpaRepository
 ) {
 
   fun createGroup(jsonParams: JsonObject, defaultTimestamp: Timestamp): Group {
@@ -46,26 +46,27 @@ class GroupService(
 
   fun updateGroup(jsonParams: JsonObject, defaultTimestamp: Timestamp): Group {
     val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
-      ?: throw CustomJsonException("{groupName: 'Group could not be determined'}")
-    val role: Role = roleRepository.findRole(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("roleName").asString)
-      ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
+      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}")
+    val subspace: Subspace = subspaceRepository.findSubspace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
+      spaceName = jsonParams.get("spaceName").asString, name = jsonParams.get("subspaceName").asString)
+      ?: throw CustomJsonException("{subspaceName: ${MessageConstants.UNEXPECTED_VALUE}}")
     when (jsonParams.get("operation").asString) {
-      "add" -> group.groupRoles.add(GroupRole(id = GroupRoleId(group = group, role = role), created = defaultTimestamp))
+      "add" -> group.groupSubspaces.add(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
       "remove" -> {
-        groupRoleRepository.delete(GroupRole(id = GroupRoleId(group = group, role = role), created = defaultTimestamp))
-        group.groupRoles.remove(GroupRole(id = GroupRoleId(group = group, role = role), created = defaultTimestamp))
+        groupSubspaceRepository.delete(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
+        group.groupSubspaces.remove(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
       }
-      else -> throw CustomJsonException("{operation: 'Unexpected value for parameter'}")
+      else -> throw CustomJsonException("{operation: '${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return try {
       groupJpaRepository.save(group)
     } catch (exception: Exception) {
-      throw CustomJsonException("{groupName: 'Unable to update role for group'}")
+      throw CustomJsonException("{groupName: 'Unable to update subspace for group'}")
     }
   }
 
   fun getGroupDetails(jsonParams: JsonObject): Group {
     return (groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
-      ?: throw CustomJsonException("{groupName: 'Group could not be determined'}"))
+      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 }
