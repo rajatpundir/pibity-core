@@ -2,7 +2,7 @@
   "orgId": {
     "type": "Long"
   },
-  "username": {
+  OrganizationConstants.USERNAME: {
     "type": "String"
   },
   "active?": {

@@ -26,7 +26,7 @@ class UserRepository(val entityManager: EntityManager) {
           .createQuery(hql, User::class.java)
           .apply {
             setParameter("orgId", orgId)
-            setParameter("username", username)
+            setParameter(OrganizationConstants.USERNAME, username)
           }
           .singleResult
     } catch (exception: Exception) {
@@ -88,7 +88,7 @@ class UserRepository(val entityManager: EntityManager) {
         .createQuery(hql, TypePermission::class.java)
         .apply {
           setParameter("orgId", orgId)
-          setParameter("username", username)
+          setParameter(OrganizationConstants.USERNAME, username)
           setParameter("subspaceName", subspaceName)
           setParameter("spaceName", spaceName)
           setParameter("permissionType", permissionType)
@@ -149,7 +149,7 @@ class UserRepository(val entityManager: EntityManager) {
       .createQuery(hql, FunctionPermission::class.java)
       .apply {
         setParameter("orgId", orgId)
-        setParameter("username", username)
+        setParameter(OrganizationConstants.USERNAME, username)
         setParameter("subspaceName", subspaceName)
         setParameter("spaceName", spaceName)
         setParameter("functionName", functionName)

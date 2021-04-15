@@ -11,7 +11,7 @@
   "subspaceName": {
     "type": "String"
   },
-  "operation": {
+  "op": {
     "type": "String"
   }
 }

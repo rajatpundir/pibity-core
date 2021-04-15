@@ -19,7 +19,7 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "user", schema = ApplicationConstants.SCHEMA, uniqueConstraints = [
-  UniqueConstraint(columnNames = ["organization_id", "username"]),
+  UniqueConstraint(columnNames = ["organization_id", OrganizationConstants.USERNAME]),
   UniqueConstraint(columnNames = ["organization_id", "email"])
 ])
 data class User(
@@ -33,7 +33,7 @@ data class User(
   @JoinColumn(name = "organization_id", nullable = false)
   val organization: Organization,
 
-  @Column(name = "username", nullable = false)
+  @Column(name = OrganizationConstants.USERNAME, nullable = false)
   val username: String,
 
   @Version

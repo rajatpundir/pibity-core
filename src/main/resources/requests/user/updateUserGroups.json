@@ -2,13 +2,13 @@
   "orgId": {
     "type": "Long"
   },
-  "username": {
+  OrganizationConstants.USERNAME: {
     "type": "String"
   },
   "groupName": {
     "type": "String"
   },
-  "operation": {
+  "op": {
     "type": "String"
   }
 }

@@ -14,7 +14,6 @@ import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.commons.Logger
-import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.utils.validateOrganizationClaim
 import com.pibity.core.serializers.serialize
 import com.pibity.core.services.SubspaceService
@@ -45,7 +44,7 @@ class SubspaceController(val subspaceService: SubspaceService) {
   fun createSubspace(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createSubspace"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = KeycloakConstants.SUBGROUP_ADMIN)
       ResponseEntity(serialize(subspaceService.createSubspace(jsonParams = jsonParams, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -60,7 +59,7 @@ class SubspaceController(val subspaceService: SubspaceService) {
   fun getSubspaceDetails(@RequestBody request: String, authentication: KeycloakAuthenticationToken): ResponseEntity<String> {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getSubspaceDetails"] ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = KeycloakConstants.SUBGROUP_ADMIN)
       ResponseEntity(serialize(subspaceService.getSubspaceDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

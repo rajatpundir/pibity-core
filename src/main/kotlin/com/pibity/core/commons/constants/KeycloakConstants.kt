@@ -23,6 +23,12 @@ object KeycloakConstants {
   const val REALM = ApplicationConstants.SCHEMA
   const val CLIENT_ID = "pibity-erp-admin"
   val CLIENT_SECRET: String = gson.fromJson(FileReader("src/main/resources/postmaster.json"), JsonObject::class.java).get("keycloakClientSecret").asString
+  // Subgroups
+  const val KEYCLOAK_USERNAME = "keycloakUserId"
+  const val SUBGROUPS = "subGroups"
+  const val SUBGROUP_NAME = "subgroupName"
+  const val SUBGROUP_ADMIN = "ADMIN"
+  const val SUBGROUP_USER = "USER"
 }
 
 val keycloak: Keycloak = Keycloak.getInstance(

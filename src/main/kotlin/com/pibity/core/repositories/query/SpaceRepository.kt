@@ -17,6 +17,14 @@ import javax.persistence.EntityManager
 class SpaceRepository(val entityManager: EntityManager) {
 
   @Transactional(readOnly = true)
+  fun findDefaultSpaces(orgId: Long): Set<Space> {
+    val hql = "SELECT s FROM Space s WHERE s.organization.id = :orgId AND s.default = true"
+    return entityManager.createQuery(hql, Space::class.java).apply {
+      setParameter("orgId", orgId)
+    }.resultList.toSet()
+  }
+
+  @Transactional(readOnly = true)
   fun findSpace(orgId: Long, name: String): Space? {
     val hql = "SELECT s FROM Space s WHERE s.organization.id = :orgId AND s.name = :name"
     return try {

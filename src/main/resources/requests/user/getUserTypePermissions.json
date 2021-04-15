@@ -2,10 +2,19 @@
   "orgId": {
     "type": "Long"
   },
-  "username": {
+  OrganizationConstants.USERNAME: {
+    "type": "String"
+  },
+  "spaceName": {
+    "type": "String"
+  },
+  "subspaceName": {
     "type": "String"
   },
   "typeName": {
+    "type": "String"
+  },
+  "permissionType": {
     "type": "String"
   }
 }

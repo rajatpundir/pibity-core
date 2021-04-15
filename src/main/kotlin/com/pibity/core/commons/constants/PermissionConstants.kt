@@ -9,6 +9,8 @@
 package com.pibity.core.commons.constants
 
 object PermissionConstants {
+  const val PERMISSION_NAME = "permissionName"
+  const val PERMISSION_TYPE = "permissionType"
   const val CREATE = "CREATE"
   const val READ = "READ"
   const val UPDATE = "UPDATE"

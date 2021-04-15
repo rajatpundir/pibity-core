@@ -24,10 +24,13 @@ import com.pibity.core.entities.mappings.embeddables.UserSubspaceId
 import com.pibity.core.entities.permission.FunctionPermission
 import com.pibity.core.entities.permission.TypePermission
 import com.pibity.core.repositories.jpa.OrganizationJpaRepository
+import com.pibity.core.repositories.jpa.SubspaceJpaRepository
 import com.pibity.core.repositories.jpa.UserJpaRepository
 import com.pibity.core.repositories.mappings.UserGroupRepository
 import com.pibity.core.repositories.mappings.UserSubspaceRepository
 import com.pibity.core.repositories.query.GroupRepository
+import com.pibity.core.repositories.query.SpaceRepository
+import com.pibity.core.repositories.query.SubspaceRepository
 import com.pibity.core.repositories.query.UserRepository
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
@@ -38,7 +41,9 @@ import java.sql.Timestamp
 class UserService(
   val organizationJpaRepository: OrganizationJpaRepository,
   val groupRepository: GroupRepository,
-  val subspaceRe
+  val spaceRepository: SpaceRepository,
+  val subspaceRepository: SubspaceRepository,
+  val subspaceJpaRepository: SubspaceJpaRepository,
   val userRepository: UserRepository,
   val userJpaRepository: UserJpaRepository,
   val userSubspaceRepository: UserSubspaceRepository,
@@ -50,44 +55,44 @@ class UserService(
     val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val keycloakId: String = try {
-      getKeycloakId(jsonParams.get("email").asString)
+      getKeycloakId(jsonParams.get(UserConstants.EMAIL).asString)
     } catch (exception: Exception) {
       createKeycloakUser(jsonParams = jsonParams)
     }
     joinKeycloakGroups(jsonParams = jsonParams.apply {
-      addProperty("keycloakUserId", keycloakId)
-      if (!jsonParams.has("subGroups"))
-        jsonParams.add("subGroups", gson.fromJson(gson.toJson(listOf(SpaceConstants.USER)), JsonArray::class.java))
+      addProperty(KeycloakConstants.KEYCLOAK_USERNAME, keycloakId)
+      if (!jsonParams.has(KeycloakConstants.SUBGROUPS))
+        jsonParams.add(KeycloakConstants.SUBGROUPS, gson.fromJson(gson.toJson(listOf(KeycloakConstants.SUBGROUP_USER)), JsonArray::class.java))
     })
-    var user = User(organization = organization, username = keycloakId,
-      active = jsonParams.get("active").asBoolean,
-      email = jsonParams.get("email").asString,
-      firstName = jsonParams.get("firstName").asString,
-      lastName = jsonParams.get("lastName").asString,
+    val user = userJpaRepository.save(User(organization = organization, username = keycloakId,
+      active = jsonParams.get(UserConstants.ACTIVE).asBoolean,
+      email = jsonParams.get(UserConstants.EMAIL).asString,
+      firstName = jsonParams.get(UserConstants.FIRST_NAME).asString,
+      lastName = jsonParams.get(UserConstants.LAST_NAME).asString,
       created = defaultTimestamp
-    )
-    user = userJpaRepository.save(user)
-    jsonParams.get("roles").asJsonArray.forEach {
-      val roleName: String = try {
-        it.asString
-      } catch (exception: Exception) {
-        throw CustomJsonException("{roles: ${MessageConstants.UNEXPECTED_VALUE}}")
-      }
-      val subspace: Subspace = subspaceRepository.findRole(orgId = organization.id, name = roleName)
-        ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-      user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, subspace = subspace), created = defaultTimestamp))
+    )).apply {
+      this.userSubspaces.addAll(jsonParams.get("subspaces").asJsonArray.map {
+        userSubspaceRepository.save(UserSubspace(id = UserSubspaceId(user = this,
+          subspace = subspaceRepository.findSubspace(orgId = this.organization.id, spaceName = it.asJsonObject.get(SpaceConstants.SPACE_NAME).asString, name = it.asJsonObject.get(SpaceConstants.SUBSPACE_NAME).asString)
+            ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")),
+          created = defaultTimestamp))
+      })
+      this.userSubspaces.addAll(spaceRepository.findDefaultSpaces(orgId = this.organization.id).map {
+        userSubspaceRepository.save(UserSubspace(id = UserSubspaceId(user = this,
+          subspace = subspaceJpaRepository.save(Subspace(space = it, name = it.name + "_" + this.username, created = defaultTimestamp))),
+          created = defaultTimestamp))
+      })
     }
-    user = userJpaRepository.save(user)
     val (details: Variable, typePermission: TypePermission) = try {
       variableService.createVariable(jsonParams = JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asString)
         addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
         addProperty(OrganizationConstants.TYPE_NAME, "User")
         addProperty(VariableConstants.VARIABLE_NAME, keycloakId)
-        add(VariableConstants.VALUES, jsonParams.get("details").asJsonObject)
+        add(VariableConstants.VALUES, jsonParams.get(UserConstants.DETAILS).asJsonObject)
       }, defaultTimestamp = defaultTimestamp, files = files)
     } catch (exception: CustomJsonException) {
-      throw CustomJsonException("{details: ${exception.message}}")
+      throw CustomJsonException("{${UserConstants.DETAILS}: ${exception.message}}")
     }
     user.details = details
     return try {
@@ -100,21 +105,21 @@ class UserService(
   fun updateUserGroups(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
     val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
-      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}")
-    when (jsonParams.get("operation").asString) {
-      "add" -> user.userGroups.add(UserGroup(id = UserGroupId(user = user, group = group), created = defaultTimestamp))
-      "remove" -> {
+    val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(GroupConstants.GROUP_NAME).asString)
+      ?: throw CustomJsonException("{${GroupConstants.GROUP_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+    when (jsonParams.get(GroupConstants.OPERATION).asString) {
+      GroupConstants.ADD -> user.userGroups.add(UserGroup(id = UserGroupId(user = user, group = group), created = defaultTimestamp))
+      GroupConstants.REMOVE -> {
         userGroupRepository.delete(UserGroup(id = UserGroupId(user = user, group = group), created = defaultTimestamp))
         user.userGroups.remove(UserGroup(id = UserGroupId(user = user, group = group), created = defaultTimestamp))
       }
-      else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
+      else -> throw CustomJsonException("{${GroupConstants.OPERATION}: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     val typePermission: TypePermission = getUserTypePermission(
       orgId = user.organization.id,
       username = user.username,
-      subspaceName = "User_" + user.username,
-      spaceName = "User",
+      subspaceName = "${SpaceConstants.SPACE_USER}_${user.username}",
+      spaceName = SpaceConstants.SPACE_USER,
       typeName = "User",
       permissionType = PermissionConstants.READ,
       defaultTimestamp = defaultTimestamp)
@@ -125,24 +130,24 @@ class UserService(
     }
   }
 
-  fun updateUserRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
+  fun updateUserSubspaces(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
     val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val role: Subspace = roleRepository.findRole(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("roleName").asString)
-      ?: throw CustomJsonException("{roleName: ${MessageConstants.UNEXPECTED_VALUE}}")
-    when (jsonParams.get("operation").asString) {
-      "add" -> user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
-      "remove" -> {
-        userSubspaceRepository.delete(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
-        user.userSubspaces.remove(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
+    val subspace: Subspace = subspaceRepository.findSubspace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, spaceName = jsonParams.get(SpaceConstants.SPACE_NAME).asString, name = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString)
+      ?: throw CustomJsonException("{${SpaceConstants.SUBSPACE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+    when (jsonParams.get(GroupConstants.OPERATION).asString) {
+      GroupConstants.ADD -> user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, subspace = subspace), created = defaultTimestamp))
+      GroupConstants.REMOVE -> {
+        userSubspaceRepository.delete(UserSubspace(id = UserSubspaceId(user = user, subspace = subspace), created = defaultTimestamp))
+        user.userSubspaces.remove(UserSubspace(id = UserSubspaceId(user = user, subspace = subspace), created = defaultTimestamp))
       }
-      else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
+      else -> throw CustomJsonException("{${GroupConstants.OPERATION}: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
     val typePermission: TypePermission = getUserTypePermission(
       orgId = user.organization.id,
       username = user.username,
-      subspaceName = "User_" + user.username,
-      spaceName = "User",
+      subspaceName = "${SpaceConstants.SPACE_USER}_${user.username}",
+      spaceName = SpaceConstants.SPACE_USER,
       typeName = "User",
       permissionType = PermissionConstants.READ,
       defaultTimestamp = defaultTimestamp)
@@ -156,19 +161,19 @@ class UserService(
   fun updateUserDetails(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
     val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    if (jsonParams.has("active?"))
-      user.active = jsonParams.get("active?").asBoolean
-    if (jsonParams.has("email?"))
-      user.email = jsonParams.get("email?").asString
-    if (jsonParams.has("fistName?"))
-      user.firstName = jsonParams.get("fistName?").asString
-    if (jsonParams.has("lastName?"))
-      user.lastName = jsonParams.get("fistName?").asString
+    if (jsonParams.has("${UserConstants.ACTIVE}?"))
+      user.active = jsonParams.get("${UserConstants.ACTIVE}?").asBoolean
+    if (jsonParams.has("${UserConstants.EMAIL}?"))
+      user.email = jsonParams.get("${UserConstants.EMAIL}?").asString
+    if (jsonParams.has("${UserConstants.FIRST_NAME}?"))
+      user.firstName = jsonParams.get("${UserConstants.FIRST_NAME}?").asString
+    if (jsonParams.has("${UserConstants.LAST_NAME}?"))
+      user.lastName = jsonParams.get("${UserConstants.LAST_NAME}?").asString
     val typePermission: TypePermission = getUserTypePermission(
       orgId = user.organization.id,
       username = user.username,
-      subspaceName = "User_" + user.username,
-      spaceName = "User",
+      subspaceName = "${user.username}_${user.username}",
+      spaceName = user.username,
       typeName = "User",
       permissionType = PermissionConstants.READ,
       defaultTimestamp = defaultTimestamp)
@@ -185,8 +190,8 @@ class UserService(
     val typePermission: TypePermission = getUserTypePermission(
       orgId = user.organization.id,
       username = user.username,
-      subspaceName = "User_" + user.username,
-      spaceName = "User",
+      subspaceName = "${user.username}_${user.username}",
+      spaceName = user.username,
       typeName = "User",
       permissionType = PermissionConstants.READ,
       defaultTimestamp = defaultTimestamp)
@@ -197,18 +202,18 @@ class UserService(
     return (userRepository.getUserTypePermissions(
       orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
       username = jsonParams.get(OrganizationConstants.USERNAME).asString,
-      subspaceName = jsonParams.get("subspaceName").asString,
-      spaceName = jsonParams.get("spaceName").asString,
+      subspaceName = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString,
+      spaceName = jsonParams.get(SpaceConstants.SPACE_NAME).asString,
       typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString,
-      permissionType = jsonParams.get("permissionType").asString))
+      permissionType = jsonParams.get(PermissionConstants.PERMISSION_TYPE).asString))
   }
 
   fun getUserFunctionPermissions(jsonParams: JsonObject): Set<FunctionPermission> {
     return (userRepository.getUserFunctionPermissions(
       orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
       username = jsonParams.get(OrganizationConstants.USERNAME).asString,
-      subspaceName = jsonParams.get("subspaceName").asString,
-      spaceName = jsonParams.get("spaceName").asString,
+      subspaceName = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString,
+      spaceName = jsonParams.get(SpaceConstants.SPACE_NAME).asString,
       functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString))
   }
 
@@ -241,11 +246,11 @@ class UserService(
   fun serialize(user: User, typePermission: TypePermission): JsonObject = JsonObject().apply {
     addProperty(OrganizationConstants.ORGANIZATION_ID, user.organization.id)
     addProperty(OrganizationConstants.USERNAME, user.username)
-    addProperty("active", user.active)
-    addProperty("email", user.email)
-    addProperty("firstName", user.firstName)
-    addProperty("lastName", user.lastName)
-    add("details", variableService.serialize(user.details!!, typePermission))
+    addProperty(UserConstants.ACTIVE, user.active)
+    addProperty(UserConstants.EMAIL, user.email)
+    addProperty(UserConstants.FIRST_NAME, user.firstName)
+    addProperty(UserConstants.LAST_NAME, user.lastName)
+    add(UserConstants.DETAILS, variableService.serialize(user.details!!, typePermission))
     add("groups", com.pibity.core.serializers.mappings.serialize(user.userGroups))
     add("subspaces", com.pibity.core.serializers.mappings.serialize(user.userSubspaces))
   }

@@ -9,6 +9,9 @@
 package com.pibity.core.commons.constants
 
 object SpaceConstants {
-  const val ADMIN = "ADMIN"
-  const val USER = "USER"
+  const val SPACE_NAME = "spaceName"
+  const val SUBSPACE_NAME = "subspaceName"
+  const val SPACE_ADMIN = "ADMIN"
+  const val SPACE_USER = "USER"
+  const val SUBSPACE_MASTER = "MASTER"
 }

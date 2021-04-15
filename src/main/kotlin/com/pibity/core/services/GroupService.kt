@@ -12,6 +12,8 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.constants.GroupConstants
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.entities.Group
 import com.pibity.core.entities.Organization
 import com.pibity.core.entities.Subspace
@@ -38,35 +40,35 @@ class GroupService(
     val organization: Organization = organizationJpaRepository.getById(jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
-      groupJpaRepository.save(Group(organization = organization, name = jsonParams.get("groupName").asString, created = defaultTimestamp))
+      groupJpaRepository.save(Group(organization = organization, name = jsonParams.get(GroupConstants.GROUP_NAME).asString, created = defaultTimestamp))
     } catch (exception: Exception) {
-      throw CustomJsonException("{groupName: 'Group could not be created'}")
+      throw CustomJsonException("{${GroupConstants.GROUP_NAME}: 'Group could not be created'}")
     }
   }
 
   fun updateGroup(jsonParams: JsonObject, defaultTimestamp: Timestamp): Group {
-    val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
-      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}")
+    val group: Group = groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(GroupConstants.GROUP_NAME).asString)
+      ?: throw CustomJsonException("{${GroupConstants.GROUP_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val subspace: Subspace = subspaceRepository.findSubspace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
-      spaceName = jsonParams.get("spaceName").asString, name = jsonParams.get("subspaceName").asString)
-      ?: throw CustomJsonException("{subspaceName: ${MessageConstants.UNEXPECTED_VALUE}}")
-    when (jsonParams.get("operation").asString) {
-      "add" -> group.groupSubspaces.add(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
-      "remove" -> {
+      spaceName = jsonParams.get(SpaceConstants.SPACE_NAME).asString, name = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString)
+      ?: throw CustomJsonException("{${SpaceConstants.SUBSPACE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
+    when (jsonParams.get(GroupConstants.OPERATION).asString) {
+      GroupConstants.ADD -> group.groupSubspaces.add(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
+      GroupConstants.REMOVE -> {
         groupSubspaceRepository.delete(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
         group.groupSubspaces.remove(GroupSubspace(id = GroupSubspaceId(group = group, subspace = subspace), created = defaultTimestamp))
       }
-      else -> throw CustomJsonException("{operation: '${MessageConstants.UNEXPECTED_VALUE}}")
+      else -> throw CustomJsonException("{${GroupConstants.OPERATION}: '${MessageConstants.UNEXPECTED_VALUE}}")
     }
     return try {
       groupJpaRepository.save(group)
     } catch (exception: Exception) {
-      throw CustomJsonException("{groupName: 'Unable to update subspace for group'}")
+      throw CustomJsonException("{${GroupConstants.GROUP_NAME}: 'Unable to update subspace for group'}")
     }
   }
 
   fun getGroupDetails(jsonParams: JsonObject): Group {
-    return (groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("groupName").asString)
-      ?: throw CustomJsonException("{groupName: ${MessageConstants.UNEXPECTED_VALUE}}"))
+    return (groupRepository.findGroup(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(GroupConstants.GROUP_NAME).asString)
+      ?: throw CustomJsonException("{${GroupConstants.GROUP_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 }

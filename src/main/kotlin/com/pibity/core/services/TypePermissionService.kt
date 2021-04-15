@@ -26,33 +26,33 @@ class TypePermissionService(
   val typeRepository: TypeRepository,
   val typePermissionRepository: TypePermissionRepository,
   val typePermissionJpaRepository: TypePermissionJpaRepository
-  ) {
+) {
 
   fun createTypePermission(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypePermission {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
-      typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get("permissionName").asString,
-        permissionType = permissionTypes.single { it == jsonParams.get("permissionType").asString }, created = defaultTimestamp).apply {
+      typePermissionJpaRepository.save(TypePermission(type = type, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString,
+        permissionType = permissionTypes.single { it == jsonParams.get(PermissionConstants.PERMISSION_TYPE).asString }, created = defaultTimestamp).apply {
           if (permissionType != VariableConstants.DELETE)
             keys = jsonParams.get("keys").asJsonArray.map { type.keys.single { key -> key.name == it.asString } }.toMutableSet()
       })
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissionName: 'Permission could not be saved'}")
+      throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be saved'}")
     }
   }
 
   fun updateTypePermission(jsonParams: JsonObject): TypePermission {
     val typePermission: TypePermission = typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
-      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
-      ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}")
+      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString)
+      ?: throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
       typePermissionJpaRepository.save(typePermission.apply {
         if (permissionType != VariableConstants.DELETE)
           keys = jsonParams.get("keys").asJsonArray.map { type.keys.single { key -> key.name == it.asString } }.toMutableSet()
       })
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissionName: 'Permission could not be saved'}")
+      throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be saved'}")
     }
   }
 
@@ -66,7 +66,7 @@ class TypePermissionService(
 
   fun getTypePermissionDetails(jsonParams: JsonObject): TypePermission {
     return (typePermissionRepository.findTypePermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
-      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get("permissionName").asString)
-      ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}"))
+      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString)
+      ?: throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 }

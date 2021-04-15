@@ -10,9 +10,9 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
+import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.services.VariableService
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
@@ -47,8 +47,8 @@ class VariableController(val variableService: VariableService) {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["mutateVariables"]
-        ?: JsonObject()).apply { addProperty("username", token.subject) }
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
+        ?: JsonObject()).apply { addProperty(OrganizationConstants.USERNAME, token.subject) }
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = KeycloakConstants.SUBGROUP_USER)
       ResponseEntity(variableService.executeQueue(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {

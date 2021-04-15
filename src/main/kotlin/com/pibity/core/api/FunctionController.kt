@@ -12,6 +12,7 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.commons.Logger
+import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
 import com.pibity.core.services.FunctionService
@@ -46,7 +47,7 @@ class FunctionController(val functionService: FunctionService) {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createFunction"]
-          ?: JsonObject()).apply { addProperty("username", token.subject) }
+          ?: JsonObject()).apply { addProperty(OrganizationConstants.USERNAME, token.subject) }
       ResponseEntity(functionService.createFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -62,7 +63,7 @@ class FunctionController(val functionService: FunctionService) {
     return try {
       val token: AccessToken = (authentication.details as SimpleKeycloakAccount).keycloakSecurityContext.token
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["executeFunction"]
-          ?: JsonObject()).apply { addProperty("username", token.subject) }
+          ?: JsonObject()).apply { addProperty(OrganizationConstants.USERNAME, token.subject) }
       ResponseEntity(functionService.executeFunction(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime())).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

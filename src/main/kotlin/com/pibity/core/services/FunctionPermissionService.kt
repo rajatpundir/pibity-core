@@ -13,6 +13,7 @@ import com.pibity.core.commons.constants.FunctionConstants
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.constants.PermissionConstants
 import com.pibity.core.entities.function.Function
 import com.pibity.core.entities.permission.FunctionPermission
 import com.pibity.core.repositories.query.FunctionPermissionRepository
@@ -33,19 +34,19 @@ class FunctionPermissionService(
         ?: throw CustomJsonException("{${FunctionConstants.FUNCTION_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
     val functionPermissionsJson: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = function)
     return try {
-      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = jsonParams.get("permissionName").asString, created = defaultTimestamp).apply {
+      functionPermissionJpaRepository.save(FunctionPermission(function = function, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString, created = defaultTimestamp).apply {
         functionInputPermissions = function.inputs.map { FunctionInputPermission(functionPermission = this, functionInput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.INPUTS).asJsonObject.get(it.name).asBoolean, created = defaultTimestamp) }.toMutableSet()
         functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = functionPermissionsJson.get(FunctionConstants.OUTPUTS).asJsonObject.get(it.name).asBoolean, created = defaultTimestamp) }.toMutableSet()
 
       })
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissionName: 'Permission could not be created'}")
+      throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be created'}")
     }
   }
 
   fun updateFunctionPermission(jsonParams: JsonObject): FunctionPermission {
-    val functionPermission: FunctionPermission = (functionPermissionRepository.findFunctionPermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get("functionName").asString, name = jsonParams.get("permissionName").asString)
-        ?: throw CustomJsonException("{permissionName: ${MessageConstants.UNEXPECTED_VALUE}}")).apply {
+    val functionPermission: FunctionPermission = (functionPermissionRepository.findFunctionPermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get("functionName").asString, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString)
+        ?: throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")).apply {
       val functionPermissionsJson: JsonObject = validateFunctionPermissions(jsonParams = jsonParams.get("permissions").asJsonObject, function = this.function)
       functionInputPermissions.forEach { it.accessLevel = functionPermissionsJson.get(FunctionConstants.INPUTS).asJsonObject.get(it.functionInput.name).asBoolean }
       functionOutputPermissions.forEach { it.accessLevel = functionPermissionsJson.get(FunctionConstants.OUTPUTS).asJsonObject.get(it.functionOutput.name).asBoolean }
@@ -53,7 +54,7 @@ class FunctionPermissionService(
     return try {
       functionPermissionJpaRepository.save(functionPermission)
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissionName: 'Permission could not be created'}")
+      throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be saved'}")
     }
   }
 
@@ -64,7 +65,7 @@ class FunctionPermissionService(
         functionOutputPermissions = function.outputs.map { FunctionOutputPermission(functionPermission = this, functionOutput = it, accessLevel = true, created = defaultTimestamp) }.toMutableSet()
       })
     } catch (exception: Exception) {
-      throw CustomJsonException("{permissionName: 'Permission could not be created'}")
+      throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be saved'}")
     }
   }
 
@@ -104,19 +105,7 @@ class FunctionPermissionService(
   }
 
   fun getFunctionPermissionDetails(jsonParams: JsonObject): FunctionPermission {
-    return (functionPermissionRepository.findFunctionPermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, name = jsonParams.get("permissionName").asString)
-      ?: throw CustomJsonException("{permissionName: 'Permission could not be determined'}"))
-  }
-
-  fun superimposeFunctionPermissions(functionPermissions: Set<FunctionPermission>, function: Function, defaultTimestamp: Timestamp): FunctionPermission {
-    return FunctionPermission(function = function, name = "SUPERIMPOSED_PERMISSION", created = defaultTimestamp).apply {
-      functionInputPermissions = function.inputs.map { input ->
-        FunctionInputPermission(functionPermission = this, functionInput = input, accessLevel = functionPermissions.map { fp -> fp.functionInputPermissions.single { it.functionInput.name == input.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }, created = defaultTimestamp)
-      }.toMutableSet()
-      functionOutputPermissions = function.outputs.map { output ->
-        FunctionOutputPermission(functionPermission = this, functionOutput = output,
-          accessLevel = functionPermissions.map { fp -> fp.functionOutputPermissions.single { it.functionOutput.name == output.name }.accessLevel }.fold(initial = false) { acc, accessLevel -> acc || accessLevel }, created = defaultTimestamp)
-      }.toMutableSet()
-    }
+    return (functionPermissionRepository.findFunctionPermission(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, name = jsonParams.get(PermissionConstants.PERMISSION_NAME).asString)
+      ?: throw CustomJsonException("{${PermissionConstants.PERMISSION_NAME}: 'Permission could not be determined'}"))
   }
 }

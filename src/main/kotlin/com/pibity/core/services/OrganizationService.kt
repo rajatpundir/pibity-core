@@ -58,10 +58,10 @@ class OrganizationService(
       getKeycloakId(KeycloakConstants.SUPERUSER_USERNAME)
     } catch (exception: Exception) {
       createKeycloakUser(jsonParams = JsonObject().apply {
-        addProperty("firstName", "System")
-        addProperty("lastName", "Administrator")
-        addProperty("email", KeycloakConstants.SUPERUSER_USERNAME)
-        addProperty("isEnabled", true)
+        addProperty(UserConstants.FIRST_NAME, "System")
+        addProperty(UserConstants.LAST_NAME, "Administrator")
+        addProperty(UserConstants.EMAIL, KeycloakConstants.SUPERUSER_USERNAME)
+        addProperty(KeycloakConstants.SUBGROUP_NAME, KeycloakConstants.SUBGROUP_ADMIN)
       })
     }
     var superuser = User(organization = organization, username = superuserId,
@@ -86,7 +86,7 @@ class OrganizationService(
         add(VariableConstants.VALUES, JsonObject())
       }, defaultTimestamp = defaultTimestamp, files = files).first
     } catch (exception: CustomJsonException) {
-      throw CustomJsonException("{details: ${exception.message}}")
+      throw CustomJsonException("{${UserConstants.DETAILS}: ${exception.message}}")
     }
     try {
       userJpaRepository.save(superuser)
@@ -97,13 +97,19 @@ class OrganizationService(
     userService.createUser(JsonObject().apply {
       addProperty(OrganizationConstants.ORGANIZATION_ID, organization.id)
       addProperty(OrganizationConstants.USERNAME, superuserId)
-      addProperty("email", jsonParams.get("admin").asString)
-      addProperty("active", true)
-      addProperty("firstName", jsonParams.get("firstName").asString)
-      addProperty("lastName", jsonParams.get("lastName").asString)
-      addProperty("password", jsonParams.get("password").asString)
-      add("roles", JsonArray().apply { add(SpaceConstants.ADMIN) })
-      add("details", jsonParams.get("details").asJsonObject)
+      addProperty(UserConstants.EMAIL, jsonParams.get("admin").asString)
+      addProperty(UserConstants.ACTIVE, true)
+      addProperty(UserConstants.FIRST_NAME, jsonParams.get(UserConstants.FIRST_NAME).asString)
+      addProperty(UserConstants.LAST_NAME, jsonParams.get(UserConstants.LAST_NAME).asString)
+      addProperty(UserConstants.PASSWORD, jsonParams.get(UserConstants.PASSWORD).asString)
+      add("subspaces", JsonArray().apply {
+        add(JsonObject().apply {
+          addProperty(SpaceConstants.SPACE_NAME, SpaceConstants.SPACE_ADMIN)
+          addProperty(SpaceConstants.SUBSPACE_NAME, SpaceConstants.SUBSPACE_MASTER)
+        })
+      })
+      add(UserConstants.DETAILS, jsonParams.get(UserConstants.DETAILS).asJsonObject)
+      addProperty(KeycloakConstants.SUBGROUP_NAME, KeycloakConstants.SUBGROUP_ADMIN)
     }, defaultTimestamp = defaultTimestamp, files = files)
     return organization
   }

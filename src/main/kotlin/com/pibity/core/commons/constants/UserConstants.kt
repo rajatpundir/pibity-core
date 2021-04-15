@@ -8,9 +8,11 @@
 
 package com.pibity.core.commons.constants
 
-object OrganizationConstants {
-  const val ORGANIZATION_ID = "orgId"
-  const val USERNAME = OrganizationConstants.USERNAME
-  const val TYPE_NAME = "typeName"
-  const val ERROR = "error"
+object UserConstants {
+  const val FIRST_NAME = "firstName"
+  const val LAST_NAME = "lastName"
+  const val EMAIL = "email"
+  const val PASSWORD = "password"
+  const val ACTIVE = "active"
+  const val DETAILS = "details"
 }

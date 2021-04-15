@@ -11,7 +11,7 @@
   "permissionName": {
     "type": "String"
   },
-  "operation": {
+  "op": {
     "type": "String"
   }
 }

@@ -5,7 +5,7 @@
   "typeName": {
     "type": "String"
   },
-  "autoId?": {
+  "autoId": {
     "type": "Boolean"
   },
   "keys": {

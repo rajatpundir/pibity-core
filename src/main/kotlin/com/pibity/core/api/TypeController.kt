@@ -10,7 +10,6 @@ package com.pibity.core.api
 
 import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.KeycloakConstants
-import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.utils.getExpectedParams
 import com.pibity.core.utils.getJsonParams
@@ -47,7 +46,7 @@ class TypeController(val typeService: TypeService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["createType"]
           ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.ADMIN)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = KeycloakConstants.SUBGROUP_ADMIN)
       ResponseEntity(serialize(typeService.createType(jsonParams = jsonParams, files = files, defaultTimestamp = Timestamp.valueOf(
         ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()))).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
@@ -63,7 +62,7 @@ class TypeController(val typeService: TypeService) {
     return try {
       val jsonParams: JsonObject = getJsonParams(request, expectedParams["getTypeDetails"]
           ?: JsonObject())
-      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = SpaceConstants.USER)
+      validateOrganizationClaim(authentication = authentication, jsonParams = jsonParams, subGroupName = KeycloakConstants.SUBGROUP_USER)
       ResponseEntity(serialize(typeService.getTypeDetails(jsonParams = jsonParams)).toString(), HttpStatus.OK)
     } catch (exception: CustomJsonException) {
       val message: String = exception.message

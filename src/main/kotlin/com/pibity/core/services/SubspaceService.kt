@@ -12,6 +12,7 @@ import com.google.gson.JsonObject
 import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.constants.SpaceConstants
 import com.pibity.core.entities.Space
 import com.pibity.core.entities.Subspace
 import com.pibity.core.repositories.jpa.SubspaceJpaRepository
@@ -28,17 +29,17 @@ class SubspaceService(
 ) {
 
   fun createSubspace(jsonParams: JsonObject, defaultTimestamp: Timestamp): Subspace {
-    val space: Space = spaceRepository.findSpace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get("spaceName").asString)
+    val space: Space = spaceRepository.findSpace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(SpaceConstants.SPACE_NAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
-      subspaceJpaRepository.save(Subspace(space = space, name = jsonParams.get("subspaceName").asString, created = defaultTimestamp))
+      subspaceJpaRepository.save(Subspace(space = space, name = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString, created = defaultTimestamp))
     } catch (exception: Exception) {
-      throw CustomJsonException("{subspaceName: 'Subspace could not be created'}")
+      throw CustomJsonException("{${SpaceConstants.SUBSPACE_NAME}: 'Subspace could not be saved'}")
     }
   }
 
   fun getSubspaceDetails(jsonParams: JsonObject): Subspace {
-    return (subspaceRepository.findSubspace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, spaceName = jsonParams.get("spaceName").asString, name = jsonParams.get("subspaceName").asString)
-        ?: throw CustomJsonException("{subspaceName: ${MessageConstants.UNEXPECTED_VALUE}}"))
+    return (subspaceRepository.findSubspace(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, spaceName = jsonParams.get(SpaceConstants.SPACE_NAME).asString, name = jsonParams.get(SpaceConstants.SUBSPACE_NAME).asString)
+        ?: throw CustomJsonException("{${SpaceConstants.SUBSPACE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}"))
   }
 }

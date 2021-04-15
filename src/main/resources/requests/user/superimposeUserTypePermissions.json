@@ -1,8 +1,0 @@
-{
-  "orgId": {
-    "type": "Long"
-  },
-  "typeName": {
-    "type": "String"
-  }
-}

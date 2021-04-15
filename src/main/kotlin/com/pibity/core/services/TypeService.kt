@@ -40,7 +40,7 @@ class TypeService(
   val variableRepository: VariableRepository,
   val variableService: VariableService,
   val typePermissionService: TypePermissionService,
-  val subspaceService: SubspaceService
+  val spaceService: SpaceService
 ) {
 
   @Suppress("UNCHECKED_CAST")
@@ -49,9 +49,9 @@ class TypeService(
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: 'Organization could not be found'}")
     val validTypes: MutableSet<Type> = typeRepository.findTypes(orgId = organization.id) as MutableSet<Type>
     val keys: JsonObject = validateTypeKeys(jsonParams.get("keys").asJsonObject, validTypes = validTypes, files = files)
-    val type = typeJpaRepository.save(Type(organization = organization, name = validateTypeName(jsonParams.get(OrganizationConstants.TYPE_NAME).asString),
-        autoId = if (jsonParams.has("autoId?")) jsonParams.get("autoId?").asBoolean else false, created = defaultTimestamp
-    ))
+    val type = typeJpaRepository.save(Type(organization = organization,
+      name = validateTypeName(jsonParams.get(OrganizationConstants.TYPE_NAME).asString),
+      autoId = jsonParams.get("autoId").asBoolean, created = defaultTimestamp))
     type.keys.addAll(
       keys.entrySet()
         .filter { (_, json) -> json.asJsonObject.get(KeyConstants.KEY_TYPE).asString != TypeConstants.FORMULA }
@@ -89,7 +89,7 @@ class TypeService(
                       type = this.type,
                       name = keyJson.get(KeyConstants.DEFAULT).asString
                     )
-                      ?: throw CustomJsonException("{keys: {${this.name}: {default: 'Variable reference is not correct'}}}")
+                      ?: throw CustomJsonException("{keys: {${this.name}: {${KeyConstants.DEFAULT}: 'Variable reference is not correct'}}}")
                   }
                 }
               }
@@ -130,7 +130,7 @@ class TypeService(
     type.typeAssertions.addAll(createTypeAssertions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
     type.permissions.addAll(typePermissionService.createDefaultTypePermission(type = type, defaultTimestamp = defaultTimestamp))
     type.permissions.addAll(createTypePermissions(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp))
-    assignTypePermissionsToRoles(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp)
+    assignTypePermissionsToSpaces(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp)
     createVariablesForType(jsonParams = jsonParams, defaultTimestamp = defaultTimestamp, files = files)
     return type
   }
@@ -152,8 +152,8 @@ class TypeService(
       assertionService.createAssertion(jsonParams = JsonObject().apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-        addProperty("assertionName", assertionName)
-        add("expression", assertionJson.asJsonObject)
+        addProperty(AssertionConstants.ASSERTION_NAME, assertionName)
+        add(AssertionConstants.EXPRESSION, assertionJson.asJsonObject)
       }, defaultTimestamp = defaultTimestamp)
     }.toSet()
   }
@@ -163,19 +163,19 @@ class TypeService(
       typePermissionService.createTypePermission(jsonParams = permissionJson.asJsonObject.apply {
         addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
         addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-        addProperty("permissionName", permissionName)
+        addProperty(PermissionConstants.PERMISSION_NAME, permissionName)
       }, defaultTimestamp = defaultTimestamp)
     }.toSet()
   }
 
-  fun assignTypePermissionsToRoles(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
-    jsonParams.get("roles").asJsonObject.entrySet().forEach { (roleName, permissionsJson) ->
+  fun assignTypePermissionsToSpaces(jsonParams: JsonObject, defaultTimestamp: Timestamp) {
+    jsonParams.get("spaces").asJsonObject.entrySet().forEach { (spaceName, permissionsJson) ->
       permissionsJson.asJsonArray.forEach {
-        subspaceService.updateRoleTypePermissions(jsonParams = JsonObject().apply {
+        spaceService.updateSpaceTypePermissions(jsonParams = JsonObject().apply {
           addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
           addProperty(OrganizationConstants.TYPE_NAME, jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
-          addProperty("roleName", roleName)
-          addProperty("permissionName", it.asString)
+          addProperty(SpaceConstants.SPACE_NAME, spaceName)
+          addProperty(PermissionConstants.PERMISSION_NAME, it.asString)
         }, defaultTimestamp = defaultTimestamp)
       }
     }

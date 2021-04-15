@@ -9,11 +9,8 @@
 package com.pibity.core.services
 
 import com.google.gson.JsonObject
-import com.pibity.core.commons.constants.LispConstants
-import com.pibity.core.commons.constants.MessageConstants
-import com.pibity.core.commons.constants.OrganizationConstants
-import com.pibity.core.commons.constants.TypeConstants
 import com.pibity.core.commons.CustomJsonException
+import com.pibity.core.commons.constants.*
 import com.pibity.core.commons.lisp.validateSymbols
 import com.pibity.core.entities.assertion.TypeAssertion
 import com.pibity.core.entities.Key
@@ -34,24 +31,24 @@ class AssertionService(
   fun createAssertion(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypeAssertion {
     val type: Type = typeRepository.findType(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, name = jsonParams.get(OrganizationConstants.TYPE_NAME).asString)
         ?: throw CustomJsonException("{${OrganizationConstants.TYPE_NAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val assertionName: String = if (typeIdentifierPattern.matcher(jsonParams.get("assertionName").asString).matches())
-      jsonParams.get("assertionName").asString
+    val assertionName: String = if (typeIdentifierPattern.matcher(jsonParams.get(AssertionConstants.ASSERTION_NAME).asString).matches())
+      jsonParams.get(AssertionConstants.ASSERTION_NAME).asString
     else
-      throw CustomJsonException("{assertionName: 'Assertion name ${jsonParams.get("assertionName").asString} is not a valid identifier'}")
+      throw CustomJsonException("{${AssertionConstants.ASSERTION_NAME}: 'Assertion name ${jsonParams.get(AssertionConstants.ASSERTION_NAME).asString} is not a valid identifier'}")
     val keyDependencies: MutableSet<Key> = mutableSetOf()
-    val symbolPaths: Set<String> = validateOrEvaluateExpression(expression = jsonParams.get("expression").asJsonObject,
+    val symbolPaths: Set<String> = validateOrEvaluateExpression(expression = jsonParams.get(AssertionConstants.EXPRESSION).asJsonObject,
       symbols = JsonObject(), mode = LispConstants.VALIDATE, expectedReturnType = TypeConstants.BOOLEAN) as Set<String>
     val symbols: JsonObject = validateSymbols(getSymbolsForAssertion(type = type, symbolPaths = symbolPaths.toMutableSet(), keyDependencies = keyDependencies, excludeTopLevelFormulas = false))
     return try {
       assertionJpaRepository.save(
         TypeAssertion(type = type, name = assertionName,
         symbolPaths = gson.toJson(symbolPaths),
-        expression = (validateOrEvaluateExpression(expression = jsonParams.get("expression").asJsonObject, symbols = symbols,
+        expression = (validateOrEvaluateExpression(expression = jsonParams.get(AssertionConstants.EXPRESSION).asJsonObject, symbols = symbols,
           mode = LispConstants.REFLECT, expectedReturnType = TypeConstants.BOOLEAN) as JsonObject).toString(),
         keyDependencies = keyDependencies, created = defaultTimestamp)
       )
     } catch (exception: Exception) {
-      throw CustomJsonException("{assertionName: 'Unable to create Type Assertion'}")
+      throw CustomJsonException("{${AssertionConstants.ASSERTION_NAME}: 'Unable to create Type Assertion'}")
     }
   }
 }
