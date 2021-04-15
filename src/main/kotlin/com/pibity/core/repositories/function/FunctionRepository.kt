@@ -13,7 +13,6 @@ import com.pibity.core.entities.function.FunctionInput
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
-import javax.persistence.LockModeType
 import javax.persistence.TypedQuery
 
 @Repository

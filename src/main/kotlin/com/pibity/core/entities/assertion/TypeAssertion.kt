@@ -11,7 +11,6 @@ package com.pibity.core.entities.assertion
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
-import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
 import java.time.ZoneId

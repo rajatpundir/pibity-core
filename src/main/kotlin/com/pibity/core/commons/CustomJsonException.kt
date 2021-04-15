@@ -9,7 +9,6 @@
 package com.pibity.core.commons
 
 import com.google.gson.JsonParser
-import com.pibity.core.commons.Logger
 
 data class CustomJsonException(val json: String) : RuntimeException() {
 

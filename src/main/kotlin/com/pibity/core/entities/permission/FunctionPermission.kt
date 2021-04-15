@@ -10,7 +10,8 @@ package com.pibity.core.entities.permission
 
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.function.Function
-import com.pibity.core.entities.mappings.RoleFunctionPermission
+import com.pibity.core.entities.function.FunctionInput
+import com.pibity.core.entities.mappings.SpaceFunctionPermission
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
@@ -39,14 +40,20 @@ data class FunctionPermission(
   @Column(name = "version", nullable = false)
   val version: Timestamp = Timestamp.valueOf(ZonedDateTime.now(ZoneId.of("Etc/UTC")).toLocalDateTime()),
 
-  @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  var functionInputPermissions: MutableSet<FunctionInputPermission> = HashSet(),
+  @ManyToMany
+  @JoinTable(name = "mapping_function_permission_function_inputs", schema = ApplicationConstants.SCHEMA,
+    joinColumns = [JoinColumn(name = "function_permission_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "function_input_id", referencedColumnName = "id")])
+  var functionInputs: MutableSet<FunctionInput> = HashSet(),
 
-  @OneToMany(mappedBy = "functionPermission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  var functionOutputPermissions: MutableSet<FunctionOutputPermission> = HashSet(),
+  @ManyToMany
+  @JoinTable(name = "mapping_function_permission_function_outputs", schema = ApplicationConstants.SCHEMA,
+    joinColumns = [JoinColumn(name = "function_permission_id", referencedColumnName = "id")],
+    inverseJoinColumns = [JoinColumn(name = "function_output_id", referencedColumnName = "id")])
+  var functionOutputs: MutableSet<FunctionInput> = HashSet(),
 
   @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val permissionRoles: MutableSet<RoleFunctionPermission> = HashSet(),
+  val permissionSpaces: MutableSet<SpaceFunctionPermission> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,

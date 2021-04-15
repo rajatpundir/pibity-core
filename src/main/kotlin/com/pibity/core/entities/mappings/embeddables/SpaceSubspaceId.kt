@@ -8,8 +8,8 @@
 
 package com.pibity.core.entities.mappings.embeddables
 
+import com.pibity.core.entities.Space
 import com.pibity.core.entities.Subspace
-import com.pibity.core.entities.User
 import java.io.Serializable
 import java.util.*
 import javax.persistence.Embeddable
@@ -18,11 +18,11 @@ import javax.persistence.JoinColumns
 import javax.persistence.ManyToOne
 
 @Embeddable
-data class UserSubspaceId(
+data class SpaceSubspaceId(
 
   @ManyToOne
-  @JoinColumns(JoinColumn(name = "user_id", referencedColumnName = "id"))
-  val user: User,
+  @JoinColumns(JoinColumn(name = "space_id", referencedColumnName = "id"))
+  val space: Space,
 
   @ManyToOne
   @JoinColumns(JoinColumn(name = "subspace_id", referencedColumnName = "id"))
@@ -33,9 +33,9 @@ data class UserSubspaceId(
   override fun equals(other: Any?): Boolean {
     other ?: return false
     if (this === other) return true
-    other as UserSubspaceId
-    return this.user == other.user && this.subspace == other.subspace
+    other as SpaceSubspaceId
+    return this.space == other.space && this.subspace == other.subspace
   }
 
-  override fun hashCode(): Int = Objects.hash(user, subspace)
+  override fun hashCode(): Int = Objects.hash(space, subspace)
 }

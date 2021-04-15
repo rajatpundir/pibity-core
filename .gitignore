@@ -34,5 +34,4 @@ out/
 ### Others ###
 .DS_Store
 bin/
-build/
 libs/

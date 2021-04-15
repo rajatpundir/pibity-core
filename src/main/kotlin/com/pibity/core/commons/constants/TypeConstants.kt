@@ -8,7 +8,7 @@
 
 package com.pibity.core.commons.constants
 
-val primitiveTypes = listOf(
+val primitiveTypes = setOf(
   TypeConstants.TEXT,
   TypeConstants.NUMBER,
   TypeConstants.DECIMAL,

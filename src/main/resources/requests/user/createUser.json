@@ -20,7 +20,7 @@
   "details": {
     "type": "Object"
   },
-  "roles": {
+  "subspaces": {
     "type": "Array"
   }
 }

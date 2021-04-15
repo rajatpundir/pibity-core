@@ -20,7 +20,7 @@
   "permissions": {
     "type": "Object"
   },
-  "roles": {
+  "spaces": {
     "type": "Object"
   }
 }

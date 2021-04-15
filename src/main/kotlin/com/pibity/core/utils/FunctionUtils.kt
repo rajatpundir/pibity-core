@@ -14,7 +14,6 @@ import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
 import com.pibity.core.entities.function.FunctionInput
-import com.pibity.core.entities.permission.FunctionInputPermission
 import org.springframework.web.multipart.MultipartFile
 import java.sql.Timestamp
 

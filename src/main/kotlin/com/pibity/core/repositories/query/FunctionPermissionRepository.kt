@@ -12,8 +12,6 @@ import com.pibity.core.entities.permission.FunctionPermission
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import javax.persistence.EntityManager
-import javax.persistence.LockModeType
-import javax.persistence.TypedQuery
 
 @Repository
 class FunctionPermissionRepository(val entityManager: EntityManager) {

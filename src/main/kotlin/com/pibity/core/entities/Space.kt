@@ -10,6 +10,7 @@ package com.pibity.core.entities
 
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.mappings.SpaceFunctionPermission
+import com.pibity.core.entities.mappings.SpaceSubspace
 import com.pibity.core.entities.mappings.SpaceTypePermission
 import java.io.Serializable
 import java.sql.Timestamp
@@ -36,11 +37,17 @@ data class Space(
   @Column(name = "active", nullable = false)
   var active: Boolean,
 
+  @Column(name = "default", nullable = false)
+  val default: Boolean,
+
   @OneToMany(mappedBy = "id.space", cascade = [CascadeType.ALL], orphanRemoval = true)
   val spaceTypePermissions: MutableSet<SpaceTypePermission> = HashSet(),
 
   @OneToMany(mappedBy = "id.space", cascade = [CascadeType.ALL], orphanRemoval = true)
   val spaceFunctionPermissions: MutableSet<SpaceFunctionPermission> = HashSet(),
+
+  @OneToMany(mappedBy = "id.space", cascade = [CascadeType.ALL], orphanRemoval = true)
+  val spaceSubspaces: MutableSet<SpaceSubspace> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,

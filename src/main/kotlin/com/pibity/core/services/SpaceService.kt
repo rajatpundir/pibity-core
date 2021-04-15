@@ -50,7 +50,8 @@ class SpaceService(
       ?: throw CustomJsonException("{${OrganizationConstants.ORGANIZATION_ID}: ${MessageConstants.UNEXPECTED_VALUE}}")
     return try {
       subspaceJpaRepository.save(Subspace(
-        space = spaceJpaRepository.save(Space(organization = organization, name = jsonParams.get("spaceName").asString, active = jsonParams.get("active").asBoolean, created = defaultTimestamp)),
+        space = spaceJpaRepository.save(Space(organization = organization, name = jsonParams.get("spaceName").asString,
+          active = jsonParams.get("active").asBoolean, default = jsonParams.get("default").asBoolean, created = defaultTimestamp)),
         name = "MASTER", created = defaultTimestamp)).space
     } catch (exception: Exception) {
       throw CustomJsonException("{spaceName: 'Space could not be created'}")

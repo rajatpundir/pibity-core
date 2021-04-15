@@ -14,8 +14,6 @@ import com.pibity.core.commons.constants.MessageConstants
 import com.pibity.core.commons.constants.OrganizationConstants
 import com.pibity.core.commons.CustomJsonException
 import com.pibity.core.entities.function.Function
-import com.pibity.core.entities.permission.FunctionInputPermission
-import com.pibity.core.entities.permission.FunctionOutputPermission
 import com.pibity.core.entities.permission.FunctionPermission
 import com.pibity.core.repositories.query.FunctionPermissionRepository
 import com.pibity.core.repositories.function.FunctionRepository

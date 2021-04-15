@@ -20,13 +20,13 @@ import javax.persistence.ManyToOne
 @Embeddable
 data class UserGroupId(
 
-    @ManyToOne
-    @JoinColumns(JoinColumn(name = "user_id", referencedColumnName = "id"))
-    val user: User,
+  @ManyToOne
+  @JoinColumns(JoinColumn(name = "user_id", referencedColumnName = "id"))
+  val user: User,
 
-    @ManyToOne
-    @JoinColumns(JoinColumn(name = "group_id", referencedColumnName = "id"))
-    val group: Group
+  @ManyToOne
+  @JoinColumns(JoinColumn(name = "group_id", referencedColumnName = "id"))
+  val group: Group
 
 ) : Serializable {
 

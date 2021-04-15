@@ -10,8 +10,5 @@
   },
   "permissionType": {
     "type": "String"
-  },
-  "public?": {
-    "type": "Boolean"
   }
 }

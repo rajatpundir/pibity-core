@@ -28,7 +28,6 @@ import com.pibity.core.repositories.jpa.UserJpaRepository
 import com.pibity.core.repositories.mappings.UserGroupRepository
 import com.pibity.core.repositories.mappings.UserSubspaceRepository
 import com.pibity.core.repositories.query.GroupRepository
-import com.pibity.core.repositories.query.RoleRepository
 import com.pibity.core.repositories.query.UserRepository
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
@@ -38,12 +37,10 @@ import java.sql.Timestamp
 @Service
 class UserService(
   val organizationJpaRepository: OrganizationJpaRepository,
-  val roleRepository: RoleRepository,
   val groupRepository: GroupRepository,
+  val subspaceRe
   val userRepository: UserRepository,
   val userJpaRepository: UserJpaRepository,
-  val typePermissionService: TypePermissionService,
-  val functionPermissionService: FunctionPermissionService,
   val userSubspaceRepository: UserSubspaceRepository,
   val userGroupRepository: UserGroupRepository,
   @Lazy val variableService: VariableService
@@ -76,9 +73,9 @@ class UserService(
       } catch (exception: Exception) {
         throw CustomJsonException("{roles: ${MessageConstants.UNEXPECTED_VALUE}}")
       }
-      val role: Subspace = roleRepository.findRole(orgId = organization.id, name = roleName)
+      val subspace: Subspace = subspaceRepository.findRole(orgId = organization.id, name = roleName)
         ?: throw CustomJsonException("{roleName: 'Role could not be determined'}")
-      user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, role = role), created = defaultTimestamp))
+      user.userSubspaces.add(UserSubspace(id = UserSubspaceId(user = user, subspace = subspace), created = defaultTimestamp))
     }
     user = userJpaRepository.save(user)
     val (details: Variable, typePermission: TypePermission) = try {
@@ -113,11 +110,14 @@ class UserService(
       }
       else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
-    val typePermission: TypePermission = superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-      addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-      addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
-      addProperty(OrganizationConstants.TYPE_NAME, "User")
-    }, defaultTimestamp = defaultTimestamp)
+    val typePermission: TypePermission = getUserTypePermission(
+      orgId = user.organization.id,
+      username = user.username,
+      subspaceName = "User_" + user.username,
+      spaceName = "User",
+      typeName = "User",
+      permissionType = PermissionConstants.READ,
+      defaultTimestamp = defaultTimestamp)
     return try {
       Pair(userJpaRepository.save(user), typePermission)
     } catch (exception: Exception) {
@@ -138,11 +138,14 @@ class UserService(
       }
       else -> throw CustomJsonException("{operation: ${MessageConstants.UNEXPECTED_VALUE}}")
     }
-    val typePermission: TypePermission = superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-      addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-      addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
-      addProperty(OrganizationConstants.TYPE_NAME, "User")
-    }, defaultTimestamp = defaultTimestamp)
+    val typePermission: TypePermission = getUserTypePermission(
+      orgId = user.organization.id,
+      username = user.username,
+      subspaceName = "User_" + user.username,
+      spaceName = "User",
+      typeName = "User",
+      permissionType = PermissionConstants.READ,
+      defaultTimestamp = defaultTimestamp)
     return try {
       Pair(userJpaRepository.save(user), typePermission)
     } catch (exception: Exception) {
@@ -161,11 +164,14 @@ class UserService(
       user.firstName = jsonParams.get("fistName?").asString
     if (jsonParams.has("lastName?"))
       user.lastName = jsonParams.get("fistName?").asString
-    val typePermission: TypePermission = superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-      addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-      addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
-      addProperty(OrganizationConstants.TYPE_NAME, "User")
-    }, defaultTimestamp = defaultTimestamp)
+    val typePermission: TypePermission = getUserTypePermission(
+      orgId = user.organization.id,
+      username = user.username,
+      subspaceName = "User_" + user.username,
+      spaceName = "User",
+      typeName = "User",
+      permissionType = PermissionConstants.READ,
+      defaultTimestamp = defaultTimestamp)
     return try {
       Pair(userJpaRepository.save(user), typePermission)
     } catch (exception: Exception) {
@@ -176,37 +182,60 @@ class UserService(
   fun getUserDetails(jsonParams: JsonObject, defaultTimestamp: Timestamp): Pair<User, TypePermission> {
     val user: User = userRepository.findUser(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
       ?: throw CustomJsonException("{${OrganizationConstants.USERNAME}: ${MessageConstants.UNEXPECTED_VALUE}}")
-    val typePermission: TypePermission = superimposeUserTypePermissions(jsonParams = JsonObject().apply {
-      addProperty(OrganizationConstants.ORGANIZATION_ID, jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong)
-      addProperty(OrganizationConstants.USERNAME, jsonParams.get(OrganizationConstants.USERNAME).asString)
-      addProperty(OrganizationConstants.TYPE_NAME, "User")
-    }, defaultTimestamp = defaultTimestamp)
+    val typePermission: TypePermission = getUserTypePermission(
+      orgId = user.organization.id,
+      username = user.username,
+      subspaceName = "User_" + user.username,
+      spaceName = "User",
+      typeName = "User",
+      permissionType = PermissionConstants.READ,
+      defaultTimestamp = defaultTimestamp)
     return(Pair(user, typePermission))
   }
 
   fun getUserTypePermissions(jsonParams: JsonObject): Set<TypePermission> {
-    return (userRepository.getUserTypePermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString))
+    return (userRepository.getUserTypePermissions(
+      orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
+      username = jsonParams.get(OrganizationConstants.USERNAME).asString,
+      subspaceName = jsonParams.get("subspaceName").asString,
+      spaceName = jsonParams.get("spaceName").asString,
+      typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString,
+      permissionType = jsonParams.get("permissionType").asString))
   }
 
   fun getUserFunctionPermissions(jsonParams: JsonObject): Set<FunctionPermission> {
-    return (userRepository.getUserFunctionPermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString))
+    return (userRepository.getUserFunctionPermissions(
+      orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong,
+      username = jsonParams.get(OrganizationConstants.USERNAME).asString,
+      subspaceName = jsonParams.get("subspaceName").asString,
+      spaceName = jsonParams.get("spaceName").asString,
+      functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString))
   }
 
-  fun superimposeUserTypePermissions(jsonParams: JsonObject, defaultTimestamp: Timestamp): TypePermission {
-    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(orgId = jsonParams.get(
-      OrganizationConstants.ORGANIZATION_ID).asLong, typeName = jsonParams.get(OrganizationConstants.TYPE_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
-    if (typePermissions.isNotEmpty())
-      return typePermissionService.superimposeTypePermissions(typePermissions = typePermissions, type = typePermissions.first().type, defaultTimestamp = defaultTimestamp)
-    else
+  fun getUserTypePermission(orgId: Long, username: String, subspaceName: String, spaceName: String, permissionType: String, typeName: String, defaultTimestamp: Timestamp): TypePermission {
+    val typePermissions: Set<TypePermission> = userRepository.getUserTypePermissions(orgId = orgId, username = username, subspaceName = subspaceName, spaceName = spaceName,
+      permissionType = permissionTypes.single { it == permissionType }, typeName = typeName)
+    return if (typePermissions.isEmpty())
       throw CustomJsonException("{${OrganizationConstants.ERROR}: ${MessageConstants.UNAUTHORIZED_ACCESS}}")
+    else {
+      val typePermission: TypePermission = typePermissions.first()
+      TypePermission(type = typePermission.type, name = "*", permissionType = typePermission.permissionType,
+        keys = typePermissions.fold(mutableSetOf()) { acc, tp -> acc.apply { addAll(tp.keys) } },
+        created = defaultTimestamp)
+    }
   }
 
-  fun superimposeUserFunctionPermissions(jsonParams: JsonObject, defaultTimestamp: Timestamp): FunctionPermission {
-    val functionPermissions: Set<FunctionPermission> = userRepository.getUserFunctionPermissions(orgId = jsonParams.get(OrganizationConstants.ORGANIZATION_ID).asLong, functionName = jsonParams.get(FunctionConstants.FUNCTION_NAME).asString, username = jsonParams.get(OrganizationConstants.USERNAME).asString)
-    if (functionPermissions.isNotEmpty())
-      return functionPermissionService.superimposeFunctionPermissions(functionPermissions = functionPermissions, function = functionPermissions.first().function, defaultTimestamp)
-    else
+  fun getUserFunctionPermission(orgId: Long, username: String, subspaceName: String, spaceName: String, permissionType: String, functionName: String, defaultTimestamp: Timestamp): FunctionPermission {
+    val functionPermissions: Set<FunctionPermission> = userRepository.getUserFunctionPermissions(orgId = orgId, username = username, subspaceName = subspaceName, spaceName = spaceName, functionName = functionName)
+    return if (functionPermissions.isEmpty())
       throw CustomJsonException("{${OrganizationConstants.ERROR}: ${MessageConstants.UNAUTHORIZED_ACCESS}}")
+    else {
+      val functionPermission: FunctionPermission = functionPermissions.first()
+      FunctionPermission(function = functionPermission.function, name = "*",
+        functionInputs = functionPermissions.fold(mutableSetOf()) { acc, tp -> acc.apply { addAll(tp.functionInputs) } },
+        functionOutputs = functionPermissions.fold(mutableSetOf()) { acc, tp -> acc.apply { addAll(tp.functionOutputs) } },
+        created = defaultTimestamp)
+    }
   }
 
   fun serialize(user: User, typePermission: TypePermission): JsonObject = JsonObject().apply {
@@ -218,7 +247,7 @@ class UserService(
     addProperty("lastName", user.lastName)
     add("details", variableService.serialize(user.details!!, typePermission))
     add("groups", com.pibity.core.serializers.mappings.serialize(user.userGroups))
-    add("roles", com.pibity.core.serializers.mappings.serialize(user.userSubspaces))
+    add("subspaces", com.pibity.core.serializers.mappings.serialize(user.userSubspaces))
   }
 
   fun serialize(entities: Set<User>, typePermission: TypePermission): JsonArray = entities.fold(JsonArray()) { acc, entity -> acc.apply { add(serialize(entity, typePermission)) } }

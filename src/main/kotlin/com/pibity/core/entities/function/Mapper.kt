@@ -9,7 +9,6 @@
 package com.pibity.core.entities.function
 
 import com.pibity.core.commons.constants.ApplicationConstants
-import com.pibity.core.entities.Key
 import com.pibity.core.entities.Organization
 import com.pibity.core.serializers.serialize
 import java.io.Serializable

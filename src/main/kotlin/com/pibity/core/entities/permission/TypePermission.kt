@@ -11,7 +11,7 @@ package com.pibity.core.entities.permission
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.Key
 import com.pibity.core.entities.Type
-import com.pibity.core.entities.mappings.RoleTypePermission
+import com.pibity.core.entities.mappings.SpaceTypePermission
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
 import java.sql.Timestamp
@@ -43,9 +43,6 @@ data class TypePermission(
   @Column(name = "permission_type", nullable = false)
   val permissionType: String,
 
-  @Column(name = "public", nullable = false)
-  val public: Boolean = false,
-
   @ManyToMany
   @JoinTable(name = "mapping_type_permission_keys", schema = ApplicationConstants.SCHEMA,
     joinColumns = [JoinColumn(name = "type_permission_id", referencedColumnName = "id")],
@@ -53,7 +50,7 @@ data class TypePermission(
   var keys: MutableSet<Key> = HashSet(),
 
   @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val permissionRoles: MutableSet<RoleTypePermission> = HashSet(),
+  val permissionSpaces: MutableSet<SpaceTypePermission> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,

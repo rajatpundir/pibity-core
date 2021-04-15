@@ -9,7 +9,17 @@
 package com.pibity.core.commons.constants
 
 object PermissionConstants {
-  const val NO_ACCESS = 0
-  const val READ_ACCESS = 1
-  const val WRITE_ACCESS = 2
+  const val CREATE = "CREATE"
+  const val READ = "READ"
+  const val UPDATE = "UPDATE"
+  const val DELETE = "DELETE"
+  const val PUBLIC = "PUBLIC"
 }
+
+val permissionTypes = setOf(
+  PermissionConstants.CREATE,
+  PermissionConstants.READ,
+  PermissionConstants.UPDATE,
+  PermissionConstants.DELETE,
+  PermissionConstants.PUBLIC
+)
