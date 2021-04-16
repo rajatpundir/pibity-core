@@ -11,6 +11,7 @@ package com.pibity.core.entities.permission
 import com.pibity.core.commons.constants.ApplicationConstants
 import com.pibity.core.entities.function.Function
 import com.pibity.core.entities.function.FunctionInput
+import com.pibity.core.entities.function.FunctionOutput
 import com.pibity.core.entities.mappings.SpaceFunctionPermission
 import com.pibity.core.serializers.serialize
 import java.io.Serializable
@@ -44,16 +45,16 @@ data class FunctionPermission(
   @JoinTable(name = "mapping_function_permission_function_inputs", schema = ApplicationConstants.SCHEMA,
     joinColumns = [JoinColumn(name = "function_permission_id", referencedColumnName = "id")],
     inverseJoinColumns = [JoinColumn(name = "function_input_id", referencedColumnName = "id")])
-  var functionInputs: MutableSet<FunctionInput> = HashSet(),
+  var inputs: Set<FunctionInput> = HashSet(),
 
   @ManyToMany
   @JoinTable(name = "mapping_function_permission_function_outputs", schema = ApplicationConstants.SCHEMA,
     joinColumns = [JoinColumn(name = "function_permission_id", referencedColumnName = "id")],
     inverseJoinColumns = [JoinColumn(name = "function_output_id", referencedColumnName = "id")])
-  var functionOutputs: MutableSet<FunctionInput> = HashSet(),
+  var outputs: Set<FunctionOutput> = HashSet(),
 
   @OneToMany(mappedBy = "id.permission", cascade = [CascadeType.ALL], orphanRemoval = true)
-  val permissionSpaces: MutableSet<SpaceFunctionPermission> = HashSet(),
+  val permissionSpaces: Set<SpaceFunctionPermission> = HashSet(),
 
   @Column(name = "created", nullable = false)
   val created: Timestamp,

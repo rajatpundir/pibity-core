@@ -19,7 +19,7 @@ import com.pibity.core.entities.User
 import com.pibity.core.entities.mappings.UserSubspace
 import com.pibity.core.entities.mappings.embeddables.UserSubspaceId
 import com.pibity.core.repositories.jpa.*
-import com.pibity.core.repositories.query.RoleRepository
+import com.pibity.core.repositories.query.SpaceRepository
 import com.pibity.core.utils.*
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -34,7 +34,7 @@ class OrganizationService(
   val userJpaRepository: UserJpaRepository,
   val userService: UserService,
   val subspaceService: SubspaceService,
-  val roleRepository: RoleRepository,
+  val spaceRepository: SpaceRepository,
   val variableService: VariableService,
   val functionService: FunctionService
 ) {

@@ -8,10 +8,7 @@
   "permissionName": {
     "type": "String"
   },
-  "permissionType": {
-    "type": "String"
-  },
-  "public?": {
-    "type": "Boolean"
+  "keys": {
+    "type": "Array"
   }
 }

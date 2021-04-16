@@ -10,5 +10,8 @@
   },
   "permissionType": {
     "type": "String"
+  },
+  "keys": {
+    "type": "Array"
   }
 }

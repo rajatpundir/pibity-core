@@ -8,7 +8,10 @@
   "permissionName": {
     "type": "String"
   },
-  "permissions": {
-    "type": "Object"
+  "inputs": {
+    "type": "Array"
+  },
+  "outputs": {
+    "type": "Array"
   }
 }
